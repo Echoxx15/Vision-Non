@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cognex.VisionPro;
 using Cognex.VisionPro.Display;
+using Cognex.VisionPro.ToolBlock;
 using Logger;
 using Vision.Comm.Modbus;
 using Vision.Comm.TcpManager;
@@ -26,9 +27,9 @@ namespace Vision.Solutions.WorkFlow;
 public sealed class ImageFrame
 {
     /// <summary>
-    /// 工位名称，用于标识该图像来自哪个工位
+    /// 工位枚举，用于标识该图像来自哪个工位
     /// </summary>
-    public string StationName { get; set; }
+    public EnumStation enumStation { get; set; }
 
     /// <summary>
     /// VisionPro图像对象，包含实际的图像数据
@@ -74,11 +75,19 @@ internal sealed class WorkFlow : IDisposable
 
   #region 通讯模块
 
+  #region 地址定义
+
   /// <summary>
-  /// Modbus TCP访问器，用于与PLC通讯（兼容旧代码）
-  /// 实际连接由 ModbusManager 管理
+  /// 触发相机拍照信号，1-左下相机，2-左机械手,3-右下相机，4-右机械手
   /// </summary>
-  private ModbusAccessor _plc => ModbusManager.Instance.GetAccessor();
+  private string[] trgCameraAddressArray = ["220", "240", "320", "340"];
+
+  /// <summary>
+  /// 工位结果返回地址，工位对应触发值1-OK，2-NG
+  /// </summary>
+  private string[] reResultAddressArray = ["221", "241", "244", "321", "341", "344"];
+
+  #endregion
 
   #endregion
 
@@ -119,19 +128,6 @@ internal sealed class WorkFlow : IDisposable
   /// </summary>
   private readonly CancellationTokenSource _cts;
 
-  /// <summary>
-  /// PLC轮询任务引用
-  /// 持续读取PLC寄存器，检测触发信号
-  /// </summary>
-  private Task _plcPollTask;
-
-  /// <summary>
-  /// Modbus轮询暂停标志
-  /// true: 暂停轮询（配置界面打开时）
-  /// false: 正常轮询
-  /// </summary>
-  private volatile bool _modbusPollingPaused;
-
   #endregion
 
   #region 并发控制
@@ -171,15 +167,6 @@ internal sealed class WorkFlow : IDisposable
 
   #endregion
 
-  #region 属性
-
-  /// <summary>
-  /// 判断PLC是否已连接
-  /// </summary>
-  public bool HasPlc => _plc != null && _plc.IsConnected;
-
-  #endregion
-
   #region 构造函数
 
   /// <summary>
@@ -201,6 +188,12 @@ internal sealed class WorkFlow : IDisposable
 
     // 从当前方案加载工位配置
     RebuildStationsFromSolution();
+
+    var threadModbusPolling = new Thread(StartModbusPolling)
+    {
+      IsBackground = true
+    };
+    threadModbusPolling.Start();
 
     try
     {
@@ -294,9 +287,6 @@ internal sealed class WorkFlow : IDisposable
     RebuildStationsFromSolution();
     InitializeTcpFromSolution();
 
-    // 方案切换后初始化Modbus通讯（使用 ModbusManager）
-    InitializeModbusFromSolution();
-
     // 方案切换后应用所有工位的相机参数
     ApplyCameraParameters();
 
@@ -382,301 +372,6 @@ internal sealed class WorkFlow : IDisposable
 
   #endregion
 
-  #region TCP消息处理
-
-  /// <summary>
-  /// TCP消息统一处理入口
-  /// 参数：(TCP名称, 客户端ID, 消息内容)
-  /// </summary>
-  private void OnTcpMessageReceived(string tcpName, string clientId, string msg)
-  {
-    if (string.IsNullOrWhiteSpace(msg)) return;
-
-    // 系统离线检查：离线时不处理通讯触发
-    if (!IsOnline)
-    {
-      LogHelper.Warn($"系统离线中，收到TCP[{tcpName}]消息但不执行操作");
-      return;
-    }
-
-    var line = msg.Trim();
-    var strTrigger = "T,";
-
-    // 解析触发消息格式：T,<工位代码>
-    if (line.StartsWith(strTrigger, StringComparison.OrdinalIgnoreCase))
-    {
-      var str = line.Substring(strTrigger.Length).Trim();
-
-      switch (str)
-      {
-        case "U":
-          // 触发上料工位相机
-          TriggerCamera(nameof(StationEnum.上料工位), clientId);
-          break;
-        case "D":
-          // 触发检测工位相机
-          TriggerCamera(nameof(StationEnum.检测工位), clientId);
-          break;
-          // TODO: 添加更多工位代码映射
-      }
-    }
-  }
-
-  #endregion
-
-  #region Modbus通讯
-
-  /// <summary>
-  /// 从方案配置初始化Modbus连接（单设备模式）
-  /// 自动连接已启用的Modbus配置，并启动轮询
-  /// 
-  /// 调用时机：
-  /// 1. 程序启动后（在 OnSolutionChanged 中）
-  /// 2. 方案切换后（在 OnSolutionChanged 中）
-  /// 
-  /// 设计说明：
-  /// - 单设备模式：使用 ModbusManager 管理唯一连接
-  /// - 如果已经连接，则先断开再重新连接
-  /// - 连接成功后自动启动轮询任务
-  /// </summary>
-  private void InitializeModbusFromSolution()
-  {
-    try
-    {
-      var solution = SolutionManager.Instance.Current;
-      if (solution == null) return;
-
-      // 先清理旧连接
-      CleanupModbusConnections();
-
-      // 使用 ModbusManager 初始化连接
-      ModbusManager.Instance.InitializeFromSolution(solution);
-
-      // 检查是否连接成功
-      if (ModbusManager.Instance.IsConnected())
-      {
-        // 自动启动轮询（使用默认间隔100ms）
-        StartModbusPolling(10);
-      }
-    }
-    catch (Exception ex)
-    {
-      LogHelper.Error(ex, "初始化Modbus通讯失败");
-    }
-  }
-
-  /// <summary>
-  /// 清理Modbus连接（单设备模式）
-  /// 方案切换时调用，释放旧连接避免内存泄漏
-  /// 
-  /// 处理流程：
-  /// 1. 停止轮询任务（设置停止标志）
-  /// 2. 等待轮询任务完成（最多1秒）
-  /// 3. 通过 ModbusManager 关闭连接
-  /// 4. 清空任务引用
-  /// </summary>
-  private void CleanupModbusConnections()
-  {
-    try
-    {
-      // 1. 停止轮询任务
-      _modbusPollingPaused = true;
-
-      // 2. 等待轮询任务完成（最多1秒）
-      if (_plcPollTask != null && !_plcPollTask.IsCompleted)
-      {
-        try
-        {
-          _plcPollTask.Wait(1000);
-        }
-        catch
-        {
-          // 忽略等待超时
-        }
-      }
-
-      // 3. 通过 ModbusManager 关闭连接
-      ModbusManager.Instance.DisposeAll();
-
-      // 4. 清空任务引用
-      _plcPollTask = null;
-      _modbusPollingPaused = false;
-
-      LogHelper.Info("Modbus连接已清理");
-    }
-    catch (Exception ex)
-    {
-      LogHelper.Error(ex, "清理Modbus连接异常");
-    }
-  }
-
-  /// <summary>
-  /// 暂停Modbus轮询
-  /// 用于配置界面打开时，避免与配置界面的连接冲突
-  /// </summary>
-  public void PauseModbusPolling()
-  {
-    _modbusPollingPaused = true;
-    LogHelper.Info("Modbus轮询已暂停");
-  }
-
-  /// <summary>
-  /// 恢复Modbus轮询
-  /// 用于配置界面关闭后，恢复正常轮询
-  /// </summary>
-  public void ResumeModbusPolling()
-  {
-    _modbusPollingPaused = false;
-    LogHelper.Info("Modbus轮询已恢复");
-  }
-
-  /// <summary>
-  /// 开启Modbus轮询任务（单设备模式）
-  /// 持续读取Modbus触发寄存器，检测到触发信号时调用TriggerCamera
-  /// 
-
-  /// 
-  /// 典型使用：
-  /// StartModbusPolling(100); // 每100ms轮询一次
-  /// </summary>
-  /// <param name="intervalMs">轮询间隔（毫秒）</param>
-  private void StartModbusPolling(int intervalMs = 100)
-  {
-    // 检查连接是否有效
-    if (!ModbusManager.Instance.IsConnected())
-    {
-      LogHelper.Warn("Modbus未连接，无法启动轮询");
-      return;
-    }
-
-    // 如果轮询任务已经在运行，不重复启动
-    if (_plcPollTask != null && !_plcPollTask.IsCompleted)
-    {
-      LogHelper.Info("Modbus轮询已在运行中");
-      return;
-    }
-
-    var token = _cts.Token;
-    _plcPollTask = Task.Factory.StartNew(async () =>
-    {
-      LogHelper.Info("Modbus轮询已启动");
-
-      while (!token.IsCancellationRequested)
-      {
-        try
-        {
-          // 检查是否暂停（配置界面打开时）
-          if (_modbusPollingPaused)
-          {
-            await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            continue;
-          }
-
-          // 检查连接是否有效
-          if (!ModbusManager.Instance.IsConnected())
-          {
-            await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            continue;
-          }
-
-          // 只在系统在线时轮询
-          if (!IsOnline)
-          {
-            await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            continue;
-          }
-
-          // 获取Modbus配置（单设备模式）
-          var config = ModbusManager.Instance.GetConfig();
-          if (config == null || !config.Enabled)
-          {
-            await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            continue;
-          }
-
-          // 获取访问器
-          var accessor = ModbusManager.Instance.GetAccessor();
-          if (accessor == null)
-          {
-            await Task.Delay(intervalMs, token).ConfigureAwait(false);
-            continue;
-          }
-
-          // 遍历所有输入变量
-          var inputVars = config.Variables
-              .Where(v => v.Direction == ModbusDirection.Input)
-     .ToList();
-
-          foreach (var variable in inputVars)
-          {
-            try
-            {
-              // 读取变量值
-              object value = variable.Type switch
-              {
-                ModbusDataType.Bool => accessor.ReadBool(variable.Address, 1)?[0],
-                ModbusDataType.Short => accessor.ReadInt16(variable.Address),
-                ModbusDataType.Float => accessor.ReadFloat(variable.Address),
-                ModbusDataType.String => accessor.ReadString(variable.Address, (ushort)variable.Length),
-                _ => null
-              };
-
-              if (value != null)
-              {
-                // 处理输入变量的值变化
-                HandleInputVariable(variable.Name, value, variable.Type);
-              }
-            }
-            catch (Exception ex)
-            {
-              // 单个变量读取失败不影响其他变量
-              LogHelper.Error(ex, $"读取Modbus变量失败: {variable.Name}");
-            }
-          }
-        }
-        catch (Exception ex)
-        {
-          // 轮询健壮性：忽略单次异常，继续下次轮询
-          LogHelper.Error(ex, "Modbus轮询异常");
-        }
-
-        await Task.Delay(intervalMs, token).ConfigureAwait(false);
-      }
-
-      LogHelper.Info("Modbus轮询已停止");
-    }, TaskCreationOptions.LongRunning);
-  }
-
-  /// <summary>
-  /// 处理输入变量的值变化
-  /// 根据变量名称执行不同的业务逻辑
-  /// </summary>
-  /// <param name="variableName">变量名称（Value1, Value2...）</param>
-  /// <param name="value">变量值</param>
-  /// <param name="type">变量类型</param>
-  private void HandleInputVariable(string variableName, object value, ModbusDataType type)
-  {
-    // 根据变量名称执行不同的逻辑
-    switch (variableName)
-    {
-      case "Value1": // 触发拍照信号
-        if (type == ModbusDataType.Short && Convert.ToInt16(value) == 1)
-        {
-          TriggerCamera("工位1");
-          LogHelper.Info("Modbus触发工位1拍照");
-        }
-        break;
-
-      case "Value2": // 温度监控或其他信号
-        break;
-
-      case "Value3": // 停止信号
-        break;
-    }
-  }
-
-  #endregion
-
   #region 相机操作
 
   /// <summary>
@@ -688,8 +383,9 @@ internal sealed class WorkFlow : IDisposable
   /// </summary>
   /// <param name="stationName">工位名称</param>
   /// <param name="clientId">客户端ID（可选，用于结果回传）</param>
-  private void TriggerCamera(string stationName, string clientId = "")
+  private void TriggerCamera(EnumStation enumStation, string clientId = "")
   {
+    var stationName = enumStation.ToString();
     // 1. 参数验证
     if (string.IsNullOrWhiteSpace(stationName)) return;
 
@@ -745,9 +441,7 @@ internal sealed class WorkFlow : IDisposable
 
     // 6. 初始化图像索引计数器（本次触发从0开始）
     var imageIndex = 1; // 
-
     // 7. 定义采图事件处理器
-    // 注意：硬触发模式下可能多次回调，每次回调索引递增
     EventHandler<ICogImage> handler = null;
     handler = (_, e) =>
     {
@@ -759,7 +453,7 @@ internal sealed class WorkFlow : IDisposable
         // 将图像包装成ImageFrame并入队
         _imageQueue.Enqueue(new ImageFrame
         {
-          StationName = stationName,
+          enumStation = enumStation,
           Image = e,
           ImageIndex = currentIndex,
           ClientId = clientId
@@ -850,7 +544,11 @@ internal sealed class WorkFlow : IDisposable
 
     try
     {
-      TriggerCamera(stationName);
+      if (Enum.TryParse(stationName, out EnumStation enumStation))
+      {
+        TriggerCamera(enumStation);
+      }
+
     }
     catch (Exception ex)
     {
@@ -875,6 +573,12 @@ internal sealed class WorkFlow : IDisposable
 
     try
     {
+      if (!Enum.TryParse(stationName, out EnumStation enumStation))
+      {
+        LogHelper.Warn($"[{stationName}]工位不在枚举类型中");
+        return;
+      }
+
       // 1. 加载图片文件
       using var img = Image.FromFile(imagePath);
       using var bmp = new Bitmap(img);
@@ -887,7 +591,7 @@ internal sealed class WorkFlow : IDisposable
       // 3. 创建图像帧
       var frame = new ImageFrame
       {
-        StationName = stationName,
+        enumStation = enumStation,
         Image = cogImg,
         ImageIndex = 0, // 本地图片索引为0
         ClientId = string.Empty // 手动加载无客户端ID
@@ -934,6 +638,116 @@ internal sealed class WorkFlow : IDisposable
 
   #endregion
 
+  #region 不同程序常需修改的方法
+  #region TCP消息处理
+
+  /// <summary>
+  /// TCP消息统一处理入口
+  /// 参数：(TCP名称, 客户端ID, 消息内容)
+  /// </summary>
+  private void OnTcpMessageReceived(string tcpName, string clientId, string msg)
+  {
+    if (string.IsNullOrWhiteSpace(msg)) return;
+
+    // 系统离线检查：离线时不处理通讯触发
+    if (!IsOnline)
+    {
+      LogHelper.Warn($"系统离线中，收到TCP[{tcpName}]消息但不执行操作");
+      return;
+    }
+
+    var line = msg.Trim();
+    var strTrigger = "T,";
+
+    // 解析触发消息格式：T,<工位代码>
+    if (line.StartsWith(strTrigger, StringComparison.OrdinalIgnoreCase))
+    {
+      //var str = line.Substring(strTrigger.Length).Trim();
+
+    }
+  }
+
+  #endregion
+
+  #region Modbus通讯
+
+  /// <summary>
+  /// 开启Modbus轮询任务
+  /// </summary>
+  private void StartModbusPolling()
+  {
+    var token = _cts.Token;
+
+
+    while (!token.IsCancellationRequested)
+    {
+      try
+      {
+        // 获取Modbus配置（单设备模式）
+        var config = ModbusManager.Instance.GetConfig();
+        // 获取访问器
+        var accessor = ModbusManager.Instance.GetAccessor();
+        //只在连接以及系统在线时轮询
+        if (!ModbusManager.Instance.IsConnected() || !IsOnline || config is not { Enabled: true })
+        {
+          Thread.Sleep(100);
+          continue;
+        }
+
+        var val = accessor.ReadShort(trgCameraAddressArray[0]);
+        if (val == 1)
+        {
+
+          var station = EnumStation.左下相机工位;
+          LogHelper.Info($"收到[{nameof(station)}]请求");
+          TriggerCamera(station);
+          accessor.WriteShort(trgCameraAddressArray[0], 0);
+        }
+
+        val = accessor.ReadShort(trgCameraAddressArray[1]);
+        if (val == 1)
+        {
+
+          var station = EnumStation.左上相机工位;
+          LogHelper.Info($"收到[{station.ToString()}]请求");
+          TriggerCamera(station);
+          accessor.WriteShort(trgCameraAddressArray[1], 0);
+        }
+
+        val = accessor.ReadShort(trgCameraAddressArray[2]);
+        if (val == 1)
+        {
+
+          var station = EnumStation.右下相机工位;
+          LogHelper.Info($"收到[{station.ToString()}]请求");
+          TriggerCamera(station);
+          accessor.WriteShort(trgCameraAddressArray[2], 0);
+        }
+
+        val = accessor.ReadShort(trgCameraAddressArray[3]);
+        if (val == 1)
+        {
+
+          var station = EnumStation.右上相机工位;
+          LogHelper.Info($"收到[{station.ToString()}]请求");
+          TriggerCamera(station);
+          accessor.WriteShort(trgCameraAddressArray[3], 0);
+        }
+      }
+      catch (Exception)
+      {
+        // 轮询健壮性：忽略单次异常，继续下次轮询
+        //LogHelper.Error(ex, "Modbus轮询异常");
+      }
+
+      Thread.Sleep(50);
+    }
+
+    LogHelper.Info("Modbus轮询已停止");
+  }
+
+  #endregion
+
   #region 核心处理逻辑
 
   /// <summary>
@@ -943,10 +757,10 @@ internal sealed class WorkFlow : IDisposable
   /// <param name="frame">图像帧数据</param>
   private void RunTool(ImageFrame frame)
   {
-    var stationName = frame.StationName;
+    var strStationName = frame.enumStation.ToString();
 
     // 1. 验证工位配置和检测工具
-    if (!_stationByName.TryGetValue(stationName, out var station) ||
+    if (!_stationByName.TryGetValue(strStationName, out var station) ||
         station?.DetectionTool?.ToolBlock == null)
       return;
 
@@ -968,6 +782,7 @@ internal sealed class WorkFlow : IDisposable
         return;
       }
 
+      LogHelper.Info($"[{station.Name}]开始执行检测");
       var cogImg = frame.Image;
 
       // 4. 执行棋盘格标定工具（如果启用）
@@ -992,18 +807,62 @@ internal sealed class WorkFlow : IDisposable
 
       // 6. 执行检测工具 ? 核心耗时操作
       tool.Inputs["Image"].Value = cogImg;
-      tool.Run();
+      if (frame.enumStation == EnumStation.左上相机工位 || frame.enumStation == EnumStation.右上相机工位)
+      {
+        if (_stationByName.TryGetValue(strStationName, out var st))
+        {
+        }
+
+        CogToolBlock tb;
+        if (frame.enumStation == EnumStation.左上相机工位)
+        {
+          tool.Inputs["stdDownX"].Value = SolutionManager.GetGlobal("左下相机基准X");
+          tool.Inputs["stdDownY"].Value = SolutionManager.GetGlobal("左下相机基准Y");
+          tool.Inputs["stdDownA"].Value = SolutionManager.GetGlobal("左下相机基准角度");
+          tool.Inputs["RotationX"].Value = SolutionManager.GetGlobal("左下相机旋转中心X");
+          tool.Inputs["RotationY"].Value = SolutionManager.GetGlobal("左下相机旋转中心Y");
+
+          tb = _stationByName[EnumStation.左上相机工位.ToString()].DetectionTool.ToolBlock;
+        }
+        else
+        {
+          tool.Inputs["stdDownX"].Value = SolutionManager.GetGlobal("右下相机基准X");
+          tool.Inputs["stdDownY"].Value = SolutionManager.GetGlobal("右下相机基准Y");
+          tool.Inputs["stdDownA"].Value = SolutionManager.GetGlobal("右下相机基准角度");
+          tool.Inputs["RotationX"].Value = SolutionManager.GetGlobal("右下相机旋转中心X");
+          tool.Inputs["RotationY"].Value = SolutionManager.GetGlobal("右下相机旋转中心Y");
+
+          tb = _stationByName[EnumStation.右上相机工位.ToString()].DetectionTool.ToolBlock;
+        }
+
+        tool.Inputs["curDownX"].Value = tb.Outputs["curX"].Value;
+        tool.Inputs["curDownY"].Value = tb.Outputs["curY"].Value;
+        tool.Inputs["curDownA"].Value = tb.Outputs["curA"].Value;
+        tool.Run();
+      }
+      else
+      {
+        tool.Run();
+      }
+
+
 
       // 7. 获取检测结果
       result = (bool)tool.Outputs["Result"].Value; // OK/NG
-      var sendData = (string)tool.Outputs["outData"].Value; // 结果数据字符串
 
-      // 8. 发送检测结果数据（通过工位配置的TCP连接）
+      var plc = ModbusManager.Instance.GetAccessor();
+      var send = result ? 1 : 2;
+      plc.WriteShort(reResultAddressArray[(int)frame.enumStation], (short)send);
+      LogHelper.Info($"[{station.Name}]检测结束，检测结果[{(result ? "OK" : "NG")}]");
+
+      #region Tcp数据发送
+
       // 检查是否启用TCP并且配置了TCP连接名称
       if (station.EnableTcp && !string.IsNullOrWhiteSpace(station.TcpConnectionName))
       {
         try
         {
+          var sendData = (string)tool.Outputs["outData"].Value; // 结果数据字符串
           // 准备发送的消息
           string messageToSend = sendData ?? string.Empty;
 
@@ -1050,24 +909,35 @@ internal sealed class WorkFlow : IDisposable
           LogHelper.Error(ex, $"[{station.Name}]发送TCP结果异常");
         }
       }
-      else
+
+      #endregion
+
+      #region modbus数据发送
+
+      if (station.EnableModbus)
       {
-        // 未启用TCP或未配置TCP连接，仅记录日志
-        if (!station.EnableTcp)
+        try
         {
-          LogHelper.Info($"[{station.Name}]检测完成，TCP发送已禁用，结果数据: {sendData}");
+          var pos = (double[])tool.Outputs["PosArray"].Value;
+          var floatArray = pos.Select(d => (float)d).ToArray();
+          LogHelper.Info($"[{station.Name}]坐标计算完成,坐标[{string.Join(",", floatArray)}]");
+          plc.WriteFloat(reResultAddressArray[(int)frame.enumStation + 1], floatArray);
         }
-        else
+        catch (Exception e)
         {
-          LogHelper.Info($"[{station.Name}]检测完成，结果数据: {sendData}（未配置TCP发送）");
+          LogHelper.Error(e, $"[{station.Name}]modbus发送数据异常");
         }
       }
 
-      // 9. 检查工具运行状态
+      #endregion
+
+      // 打印工具运行异常信息
       if (tool.RunStatus.Result != CogToolResultConstants.Accept)
       {
         LogHelper.Warn($"[{station.Name}]工具运行错误，错误信息:{tool.RunStatus.Message}");
       }
+
+
 
       // 10. 提前创建显示记录（避免在显示部分重复创建）
       // 仅当工位启用显示且配置了显示界面时才创建
@@ -1080,13 +950,13 @@ internal sealed class WorkFlow : IDisposable
         }
         catch (Exception ex)
         {
-          LogHelper.Error(ex, $"工位[{stationName}]创建记录失败");
+          LogHelper.Error(ex, $"工位[{strStationName}]创建记录失败");
         }
       }
     }
     catch (Exception ex)
     {
-      LogHelper.Error(ex, $"工位[{stationName}]工具运行异常");
+      LogHelper.Error(ex, $"工位[{strStationName}]工具运行异常");
       return;
     }
 
@@ -1222,8 +1092,8 @@ internal sealed class WorkFlow : IDisposable
           catch (Exception ex)
           {
             LogHelper.Error(ex, $"工位[{stationName}]创建处理图失败");
-    }
-  }
+          }
+        }
       }
       catch (Exception ex)
       {
@@ -1233,22 +1103,6 @@ internal sealed class WorkFlow : IDisposable
     }).ConfigureAwait(false);
 
     #endregion
-  }
-
-  /// <summary>
-  /// 某些工位的特殊处理
-  /// 
-  /// 使用场景：
-  /// - 发送数据给PLC（Modbus写入）
-  /// - 控制外部设备（如剔除机构）
-  /// - 特殊的结果处理逻辑
-  /// 
-  /// TODO: 根据实际项目需求实现
-  /// </summary>
-  private void RunSpecial()
-  {
-    // 示例代码（未启用）：
-    // _plc.Write("M200.0", true);  // 写入PLC结果
   }
 
   /// <summary>
@@ -1271,6 +1125,8 @@ internal sealed class WorkFlow : IDisposable
   }
 
   #endregion
+  #endregion
+
 
   #region 图像队列处理
 
@@ -1304,7 +1160,7 @@ internal sealed class WorkFlow : IDisposable
               catch (Exception ex)
               {
                 // 单个工位错误不影响其他工位
-                LogHelper.Error(ex, $"工位[{frame.StationName}]处理异常");
+                LogHelper.Error(ex, $"工位[{frame.enumStation}]处理异常");
               }
               finally
               {

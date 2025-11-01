@@ -33,8 +33,10 @@ public class ProcessStation
 
     [Category("通讯配置"), DisplayName("是否启用TCP")]
     [Description("是否启用TCP发送检测结果，禁用后不会发送数据")]
-    public bool EnableTcp { get; set; } = true;
-
+    public bool EnableTcp { get; set; } = false;
+    [Category("通讯配置"), DisplayName("是否启用Modbus")]
+    [Description("是否启用Modbus发送坐标，仅针对需要发送坐标的工位，禁用只需要发送拍照结果")]
+    public bool EnableModbus { get; set; } = false;
     /// <summary>
     /// 光源控制配置
     /// </summary>

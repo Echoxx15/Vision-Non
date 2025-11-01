@@ -67,9 +67,15 @@ public sealed class ModbusAccessor
     public ModbusAccessor(ModbusTcpNet client) { _client = client; }
 
     /// <summary>是否已连接（来自 Hsl 的 IsConnectSuccess）。</summary>
-    public bool IsConnected => _client != null && _client.ConnectionId !="";
+    public bool IsConnected { get; private set; }
     /// <summary>尝试连接。</summary>
-    public OperateResult Connect() => _client.ConnectServer();
+    public OperateResult Connect()
+    {
+        var result = _client.ConnectServer();
+        IsConnected = result.IsSuccess;
+        return result;
+    }
+
     /// <summary>关闭连接。</summary>
     public void Close() { try { _client.ConnectClose(); } catch { } }
 
@@ -78,11 +84,11 @@ public sealed class ModbusAccessor
     public bool[] ReadBool(string address, ushort length) => _client.ReadBool(address, length).Content;
 
     // Int16/UInt16
-    public bool WriteInt16(string address, short value) => _client.Write(address, value).IsSuccess;
-    public short ReadInt16(string address) => _client.ReadInt16(address).Content;
-    public short[] ReadInt16(string address, ushort length) => _client.ReadInt16(address, length).Content;
+    public bool WriteShort(string address, short value) => _client.Write(address, value).IsSuccess;
+    public short ReadShort(string address) => _client.ReadInt16(address).Content;
+    public short[] ReadShort(string address, ushort length) => _client.ReadInt16(address, length).Content;
 
-    public bool WriteUInt16(string address, ushort value) => _client.Write(address, value).IsSuccess;
+    public bool WriteShort(string address, ushort value) => _client.Write(address, value).IsSuccess;
     public ushort ReadUInt16(string address) => _client.ReadUInt16(address).Content;
     public ushort[] ReadUInt16(string address, ushort length) => _client.ReadUInt16(address, length).Content;
 

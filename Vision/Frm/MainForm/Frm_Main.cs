@@ -12,6 +12,7 @@ using Vision.Manager.CameraManager;
 using Vision.Manager.PluginServer;
 using Vision.Localization;
 using Vision.Auth;
+using Vision.Frm.LightSource;
 using Vision.Frm.Link;
 using Vision.Frm.Modbus;
 using Vision.Frm.Process;
@@ -19,6 +20,7 @@ using Vision.Frm.Solution;
 using Vision.Frm.TcpConfig;
 using Vision.Solutions.Models;
 using Vision.Solutions.WorkFlow;
+using Vision.UI;  // 添加 ImageDisplay 的命名空间
 
 namespace Vision.Frm.MainForm;
 
@@ -45,7 +47,7 @@ public partial class Frm_Main : Form
   /// <summary>
   /// 日志窗体（显示系统运行日志）
   /// </summary>
-  private Frm_Log frm_Log;
+  private Frm_Log frm_Log = new Frm_Log() { Dock = DockStyle.Fill };
 
   /// <summary>
   /// 硬件状态窗体（显示相机、PLC等硬件连接状态）
@@ -175,7 +177,7 @@ public partial class Frm_Main : Form
 
     // 4. 初始化工作流（触发单例创建，启动后台任务）
     // 使用占位符防止编译器优化掉
-    var __ = WorkFlow.Instance;
+    _ = WorkFlow.Instance;
 
     // 5. 初始化Modbus连接
     splash.SetProgress(55, "初始化Modbus连接...");
@@ -183,12 +185,12 @@ public partial class Frm_Main : Form
     {
       var solution = SolutionManager.Instance.Current;
       if (solution != null)
-{
+      {
         Comm.Modbus.ModbusManager.Instance.InitializeFromSolution(solution);
-    }
+      }
     }
     catch (Exception ex)
-  {
+    {
       LogHelper.Error(ex, "初始化Modbus连接失败");
     }
 
@@ -211,7 +213,7 @@ public partial class Frm_Main : Form
     // 8. 应用本地化语言（中文/英文）
     LocalizationManager.Apply(this);
 
-  // 9. 应用当前用户的权限（控制菜单/工具栏可见性）
+    // 9. 应用当前用户的权限（控制菜单/工具栏可见性）
     ApplyPermissionsForCurrentUser();
 
     // 10. 加载显示布局（根据方案配置）
@@ -219,7 +221,7 @@ public partial class Frm_Main : Form
 
     // 11. 更新用户信息显示
     barStaticItem1.Text = UserManager.Instance.CurrentUser != null
-   ? $"用户:{UserManager.Instance.CurrentUser.Username}"
+      ? $"用户:{UserManager.Instance.CurrentUser.Username}"
       : "用户:无";
 
     // 再次应用权限（确保正确）
@@ -235,13 +237,14 @@ public partial class Frm_Main : Form
     ShowInTaskbar = true;
     splash.Close();
     splash = null;
-    WindowState = FormWindowState.Maximized;
 
     // 14. 触发初始在线状态显示（确保UI与WorkFlow状态同步）
     // 注意：WorkFlow默认在线状态为true，需要同步到界面
     OnSystemOnlineStateChanged(WorkFlow.Instance.IsOnline);
-    
+
     LogHelper.Info($"程序启动完成，系统初始状态: {(WorkFlow.Instance.IsOnline ? "在线" : "离线")}");
+
+    WindowState = FormWindowState.Maximized;
   }
 
   /// <summary>
@@ -770,12 +773,12 @@ public partial class Frm_Main : Form
   private void InitFormUI()
   {
     try
-  {
-    // 1. 创建日志窗体
-      frm_Log = new Frm_Log { Dock = DockStyle.Fill };
+    {
+      // 1. 创建日志窗体
+      //frm_Log = new Frm_Log { Dock = DockStyle.Fill };
       LocalizationManager.EnableAutoLocalization(frm_Log);
       LocalizationManager.Apply(frm_Log);
-  
+
       if (grb_Log != null)
       {
         grb_Log.Controls.Add(frm_Log);
@@ -786,7 +789,7 @@ public partial class Frm_Main : Form
       LogHelper.Error(ex, "初始化日志窗体失败");
     }
 
-try
+    try
     {
       // 2. 创建硬件状态窗体
       if (frm_HardwareState == null)
@@ -796,10 +799,10 @@ try
         LocalizationManager.Apply(frm_HardwareState);
       }
 
-   if (grb_State != null)
-   {
+      if (grb_State != null)
+      {
         grb_State.Controls.Add(frm_HardwareState);
-  }
+      }
     }
     catch (Exception ex)
     {
@@ -853,78 +856,102 @@ try
     // 1. 获取显示配置（默认2行2列）
     var cfg = sol.Display ?? new DisplayConfig { Rows = 2, Cols = 2 };
 
-    // 2. 暂停布局更新（提高性能）
+    // 2. 计算所需的显示项数量
+    int total = Math.Max(1, cfg.Rows) * Math.Max(1, cfg.Cols);
+    cfg.Items ??= new List<DisplayItem>();
+
+    // 3. 确保Items数量与行列配置匹配，不足则补充默认项
+    // 注意：保留已存在的DisplayName，只对新增项使用默认名
+    while (cfg.Items.Count < total)
+    {
+      int index = cfg.Items.Count + 1;
+      var key = $"显示{index}";
+      cfg.Items.Add(new DisplayItem { Key = key, DisplayName = key });
+  }
+
+    // 4. 移除多余的项（如果行列数减少了）
+    if (cfg.Items.Count > total)
+    {
+  cfg.Items = cfg.Items.Take(total).ToList();
+    }
+
+    // 5. 更新方案配置（确保修改被持久化）
+  sol.Display = cfg;
+
+    // 6. 暂停布局更新（提高性能）
     tlp_Display.SuspendLayout();
 
-    // 3. 清空现有内容
+    // 7. 清空现有内容
     tlp_Display.Controls.Clear();
     tlp_Display.ColumnStyles.Clear();
     tlp_Display.RowStyles.Clear();
 
-    // 4. 设置行列数
+    // 8. 设置行列数
     tlp_Display.ColumnCount = Math.Max(1, cfg.Cols);
     tlp_Display.RowCount = Math.Max(1, cfg.Rows);
 
-    // 5. 添加列样式（平均分配宽度）
-    for (int c = 0; c < tlp_Display.ColumnCount; c++)
+    // 9. 添加列样式（平均分配宽度）
+  for (int c = 0; c < tlp_Display.ColumnCount; c++)
     {
       tlp_Display.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / tlp_Display.ColumnCount));
     }
 
-    // 6. 添加行样式（平均分配高度）
+    // 10. 添加行样式（平均分配高度）
     for (int r = 0; r < tlp_Display.RowCount; r++)
     {
-      tlp_Display.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / tlp_Display.RowCount));
+    tlp_Display.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / tlp_Display.RowCount));
     }
 
-    var items = cfg.Items ?? new List<DisplayItem>();
-    int total = tlp_Display.RowCount * tlp_Display.ColumnCount;
+    var items = cfg.Items;
 
-    // 7. 填充显示控件
+    // 11. 填充显示控件
     for (int i = 0; i < total; i++)
     {
-      // 获取显示项配置（不足时创建默认项）
-      var di = (i < items.Count)
-        ? items[i]
-        : new DisplayItem { Key = $"显示{i + 1}", DisplayName = $"显示{i + 1}" };
+      // 获取显示项配置（现在Items数量已经足够，直接使用）
+      var di = items[i];
 
       // 从方案中获取显示控件（可能不存在）
       sol.DisplayControls.TryGetValue(di.Key, out var ctrl);
 
       // 准备添加的控件（优先使用真实控件，否则用占位Panel）
-      Control add = ctrl as Control ?? new Panel
+ Control add = ctrl as Control ?? new Panel
       {
-        Dock = DockStyle.Fill,
+ Dock = DockStyle.Fill,
         Margin = new Padding(2),
         BackColor = Color.FromArgb(45, 45, 45), // 深灰色背景
         BorderStyle = BorderStyle.FixedSingle
       };
 
-      // 如果是占位Panel，添加标题标签
+      // 如果是占位Panel，添加标题标签（使用DisplayName）
       if (add is Panel p)
       {
         p.Controls.Clear();
         p.Controls.Add(new Label
-        {
-          Dock = DockStyle.Top,
-          Text = di.DisplayName ?? di.Key,
+      {
+       Dock = DockStyle.Top,
+        Text = di.DisplayName ?? di.Key,
           ForeColor = Color.White,
           BackColor = Color.FromArgb(64, 64, 64),
           Height = 22,
-          TextAlign = ContentAlignment.MiddleLeft,
-          Padding = new Padding(4, 2, 0, 0)
+       TextAlign = ContentAlignment.MiddleLeft,
+    Padding = new Padding(4, 2, 0, 0)
         });
+ }
+      else if (add is ImageDisplay imgDisplay)
+      {
+      // 如果是ImageDisplay控件，更新其DisplayName
+  imgDisplay.DisplayName = di.DisplayName ?? di.Key;
       }
 
       // 计算行列位置（从左到右、从上到下）
       int row = i / tlp_Display.ColumnCount;
-      int col = i % tlp_Display.ColumnCount;
+int col = i % tlp_Display.ColumnCount;
 
       // 添加到TableLayoutPanel
-      tlp_Display.Controls.Add(add, col, row);
+  tlp_Display.Controls.Add(add, col, row);
     }
 
-    // 8. 恢复布局更新
+    // 12. 恢复布局更新
     tlp_Display.ResumeLayout(true);
   }
 
@@ -1143,6 +1170,7 @@ try
   }
 
   #endregion
+
   /// <summary>
   /// Tcp通讯配置按钮点击事件
   /// </summary>
@@ -1151,61 +1179,22 @@ try
     using var frm = new Frm_TcpConfig();
     frm.ShowDialog();
   }
+
   /// <summary>
   /// Modbus通讯配置按钮点击事件
   /// 打开配置界面时暂停轮询，关闭后重新初始化并恢复轮询
   /// </summary>
   private void tsm_ModbusConfig_Click(object sender, EventArgs e)
   {
-    try
-    {
-   // 1. 暂停WorkFlow中的轮询（避免配置界面与轮询任务冲突）
-      WorkFlow.Instance.PauseModbusPolling();
-      LogHelper.Info("Modbus配置界面打开，轮询已暂停");
-
-      // 2. 打开配置界面
-      using var frm = new Frm_ModbusConfig();
+    // 2. 打开配置界面
+    using var frm = new Frm_ModbusConfig();
     frm.ShowDialog(this);
+  }
 
- // 3. 关闭配置界面后，重新初始化连接并恢复轮询
-      // 注意：ModbusManager 和 WorkFlow 都会清理旧连接并初始化新配置
-      try
-      {
-        // 先断开ModbusManager中的连接
-        Comm.Modbus.ModbusManager.Instance.DisposeAll();
-      
-        // 重新从方案初始化（会自动启动轮询）
-     var solution = SolutionManager.Instance.Current;
-        if (solution != null)
+  private void tsm_LightControl_Click(object sender, EventArgs e)
   {
-   Comm.Modbus.ModbusManager.Instance.InitializeFromSolution(solution);
-  }
-   
-        // WorkFlow 也需要重新初始化轮询（使用 ModbusManager 的连接）
- // 注意：如果 ModbusManager 连接成功，WorkFlow 才启动轮询
-        if (Comm.Modbus.ModbusManager.Instance.IsConnected())
-        {
-          WorkFlow.Instance.ResumeModbusPolling();
-   // 注意：StartModbusPolling 会检查是否已在运行，如果需要重启则手动处理
-        }
-     else
-        {
-LogHelper.Warn("Modbus未连接，轮询未恢复");
-        }
-
- LogHelper.Info("Modbus配置界面关闭，连接已重新初始化");
-      }
-   catch (Exception ex)
-      {
-        LogHelper.Error(ex, "重新初始化Modbus连接失败");
-      }
-    }
-    catch (Exception ex)
-    {
-      LogHelper.Error(ex, "打开Modbus配置失败");
-      MessageBox.Show($"打开Modbus配置失败: {ex.Message}", "错误", 
-        MessageBoxButtons.OK, MessageBoxIcon.Error);
-  }
+    using var frm = new Frm_LightConfig();
+    frm.ShowDialog();
   }
 }
 

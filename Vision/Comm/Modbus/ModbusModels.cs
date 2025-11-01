@@ -125,14 +125,8 @@ public class ModbusConfig
   /// </summary>
     [Category("数据格式"), DisplayName("字符串反转")]
     [Description("字符串是否需要反转")]
-    public bool StringReverse { get; set; } = false;
+    public bool StringReverse { get; set; }
     
-    /// <summary>
-    /// 变量列表
-    /// </summary>
- [Browsable(false)]
-    public List<ModbusVariable> Variables { get; set; } = new List<ModbusVariable>();
-  
     /// <summary>
     /// 备注
     /// </summary>
@@ -143,133 +137,6 @@ public class ModbusConfig
     public override string ToString()
     {
         return $"{Name} ({IpAddress}:{Port})";
-    }
-}
-
-/// <summary>
-/// Modbus变量定义
-/// </summary>
-[Serializable]
-public class ModbusVariable
-{
-    /// <summary>
-    /// 序号（自动生成）
-    /// </summary>
-    [DisplayName("序号")]
-    public int Index { get; set; }
-    
-    /// <summary>
-    /// 变量类型
-    /// </summary>
-    [DisplayName("类型")]
-    public ModbusDataType Type { get; set; } = ModbusDataType.Float;
-    
-    /// <summary>
-    /// 变量名称（唯一标识，用于代码访问）
-    /// </summary>
-    [DisplayName("名称")]
- public string Name { get; set; }
-    
-    /// <summary>
-    /// Modbus地址
-    /// </summary>
-    [DisplayName("地址")]
-    public string Address { get; set; }
-    
-    /// <summary>
-    /// 数组长度（仅对数组类型有效）
-    /// </summary>
-    [DisplayName("长度")]
-    public int Length { get; set; } = 1;
-    
-    /// <summary>
-    /// 注释说明
-    /// </summary>
-    [DisplayName("注释")]
-    public string Comment { get; set; } = string.Empty;
-    
-    /// <summary>
- /// 变量方向（输入/输出）
-    /// </summary>
-    public ModbusDirection Direction { get; set; } = ModbusDirection.Input;
-
-    /// <summary>
-    /// 获取类型的显示名称
-    /// </summary>
-  public string TypeName
-    {
-        get
-        {
-            return Type switch
-            {
-                ModbusDataType.Bool => "Bool",
-   ModbusDataType.Short => "Short",
-           ModbusDataType.Float => "Float",
-        ModbusDataType.String => "String",
- ModbusDataType.BoolArray => "Bool[]",
-      ModbusDataType.ShortArray => "Short[]",
-       ModbusDataType.FloatArray => "Float[]",
-      ModbusDataType.StringArray => "String[]",
-          _ => "Unknown"
-            };
-        }
-    }
-    
-    /// <summary>
-    /// 获取方向名称（用于显示）
-    /// </summary>
-    [XmlIgnore]
-    public string DirectionName => Direction == ModbusDirection.Input ? "输入" : "输出";
-    
-    /// <summary>
-    /// 是否为数组类型
-    /// </summary>
-    public bool IsArray => Type >= ModbusDataType.BoolArray;
-}
-
-/// <summary>
-/// Modbus配置集合
-/// </summary>
-[Serializable]
-public class ModbusConfigCollection
-{
-    public List<ModbusConfig> Configs { get; set; } = new List<ModbusConfig>();
-
-    public void Add(ModbusConfig config)
-    {
-        Configs.Add(config);
-    }
-
-    public void Remove(ModbusConfig config)
-    {
- Configs.Remove(config);
-    }
-
-    /// <summary>
-    /// 生成唯一的配置名称
-    /// </summary>
-    public string GenerateUniqueName()
- {
-      int index = 1;
-        while (Configs.Any(c => c.Name == $"Modbus客户端{index}"))
-    {
-     index++;
-     }
-        return $"Modbus客户端{index}";
-    }
-
-    /// <summary>
-    /// 生成唯一的变量名称
-    /// </summary>
-    public string GenerateUniqueVariableName(ModbusConfig config, ModbusDirection direction)
-    {
-        var prefix = direction == ModbusDirection.Input ? "Input" : "Output";
-        int index = 1;
-      while (config.Variables.Any(v => v.Name == $"{prefix}Value{index}"))
-        {
-index++;
-        }
-        return $"{prefix}Value{index}";
     }
 }
 

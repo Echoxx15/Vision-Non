@@ -126,11 +126,12 @@ public class TcpConfigCollection
         while (true)
         {
             var name = $"{prefix}{index}";
-  if (!Configs.Exists(c => c.Name == name))
+            if (!Configs.Exists(c => c.Name == name))
             {
                 return name;
-      }
-       index++;
+            }
+
+            index++;
         }
     }
 
@@ -144,29 +145,29 @@ public class TcpConfigCollection
         // 确保名称唯一
         if (string.IsNullOrWhiteSpace(config.Name))
         {
-          config.Name = GenerateUniqueName(config.Type);
-    }
+            config.Name = GenerateUniqueName(config.Type);
+        }
         else if (Configs.Exists(c => c.Name == config.Name))
         {
             config.Name = GenerateUniqueName(config.Type);
         }
 
-   Configs.Add(config);
+        Configs.Add(config);
     }
 
-  /// <summary>
+    /// <summary>
     /// 删除配置
     /// </summary>
     public bool Remove(TcpConfigModel config)
     {
-   return config != null && Configs.Remove(config);
+        return config != null && Configs.Remove(config);
     }
 
     /// <summary>
     /// 根据名称查找配置
     /// </summary>
     public TcpConfigModel FindByName(string name)
- {
+    {
         return Configs.Find(c => c.Name == name);
     }
 }

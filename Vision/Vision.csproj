@@ -72,19 +72,18 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>YZZN.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'remote|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>\\DESKTOP-HG62LVV\soft\Debug\</OutputPath>
+    <OutputPath>\\Desktop-3bb9gm0\共享\Remote\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>preview</LangVersion>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>5</WarningLevel>
+    <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'remote|x64'">
@@ -379,14 +378,6 @@
     <EmbeddedResource Include="UserUI\uAddValueCollection.resx">
       <DependentUpon>uAddValueCollection.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="Docs\IMPLEMENTATION_CHECKLIST.md" />
-    <None Include="Docs\IMPLEMENTATION_SUMMARY.md" />
-    <None Include="Docs\MODBUS_QUICK_IMPL_GUIDE.md" />
-    <None Include="Docs\MODBUS_SINGLE_DEVICE_OPTIMIZATION.md" />
-    <None Include="Docs\QUICK_START_GUIDE.md" />
-    <None Include="Docs\README_MODBUS_TCP_OPTIMIZATION.md" />
-    <None Include="Docs\WORKFLOW_MODBUS_AUTO_INIT.md" />
-    <None Include="Frm\MainForm\SystemOnlineFunctionSummary.md" />
     <None Include="Frm\Process\Frm_StationConfig_Designer_Modification.md" />
     <None Include="NLog.config" />
     <None Include="packages.config" />
@@ -427,7 +418,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="YZZN.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -15,54 +15,54 @@ namespace Vision.Comm.TcpManager;
 /// </summary>
 public class TcpRuntimeInstance
 {
-    /// <summary>
-    /// 配置信息
-    /// </summary>
-    public TcpConfigModel Config { get; set; }
+  /// <summary>
+  /// 配置信息
+  /// </summary>
+  public TcpConfigModel Config { get; set; }
 
-    /// <summary>
-    /// TCP客户端实例（如果是客户端模式）
-    /// </summary>
-    public NetTcpClient Client { get; set; }
+  /// <summary>
+  /// TCP客户端实例（如果是客户端模式）
+  /// </summary>
+  public NetTcpClient Client { get; set; }
 
-    /// <summary>
-    /// TCP服务器实例（如果是服务器模式）
-    /// </summary>
-    public NetTcpServer Server { get; set; }
+  /// <summary>
+  /// TCP服务器实例（如果是服务器模式）
+  /// </summary>
+  public NetTcpServer Server { get; set; }
 
-    /// <summary>
-    /// 服务器是否已启动（手动标志）
-    /// </summary>
-    public bool ServerStarted { get; set; }
+  /// <summary>
+  /// 服务器是否已启动（手动标志）
+  /// </summary>
+  public bool ServerStarted { get; set; }
 
-    /// <summary>
-    /// 是否已连接/启动
-    /// </summary>
-    public bool IsActive
+  /// <summary>
+  /// 是否已连接/启动
+  /// </summary>
+  public bool IsActive
+  {
+    get
     {
-        get
-        {
-       if (Config.Type == TcpType.Client)
-   return Client?.IsConnected ?? false;
-            else
-return ServerStarted;
-        }
+      if (Config.Type == TcpType.Client)
+        return Client?.IsConnected ?? false;
+      else
+        return ServerStarted;
     }
-
-    /// <summary>
-    /// 获取编码对象
-    /// </summary>
-    public Encoding GetEncoding()
-    {
-      try
-    {
-        return Encoding.GetEncoding(Config.Encoding);
-        }
-    catch
-   {
-        return Encoding.UTF8;
   }
+
+  /// <summary>
+  /// 获取编码对象
+  /// </summary>
+  public Encoding GetEncoding()
+  {
+    try
+    {
+      return Encoding.GetEncoding(Config.Encoding);
     }
+    catch
+    {
+      return Encoding.UTF8;
+    }
+  }
 }
 
 /// <summary>

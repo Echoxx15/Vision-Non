@@ -63,7 +63,7 @@ public class Solution
     /// <summary>
     /// Modbus通讯配置集合（参与序列化）
     /// </summary>
-    public Comm.Modbus.ModbusConfigCollection ModbusConfigs { get; set; } = new();
+    public Comm.Modbus.ModbusConfig ModbusConfig { get; set; } = new();
 
     // 运行时全局变量值（不参与序列化），按名称索引，大小写不敏感
     [XmlIgnore]
@@ -116,7 +116,7 @@ public sealed class SolutionManager
     // 索引文件全路径（保存 Solutions 列表）
     private string IndexFile => Path.Combine(SolutionsDir, "solutions.index.xml");
 
-    // 默认方案文件路径（用于首次启动或没有方案时）
+    // 默认方案文件路径（用于第一次启动或没有方案时）
     private string DefaultFile => Path.Combine(SolutionsDir, "默认方案", "默认方案.uv");
 
     // 方案切换事件（例如用于 UI 刷新）
@@ -136,6 +136,11 @@ public sealed class SolutionManager
     }
 
     /// <summary>
+    /// 静态便捷方法：按名称读取全局变量（object）。
+    /// </summary>
+    public static object GetGlobal(string name) => Instance?.GetGlobalValue(name);
+
+    /// <summary>
     /// 读取全局变量（泛型）。若类型不匹配，则尝试 Convert.ChangeType，失败返回默认值。
     /// </summary>
     public T GetGlobalValue<T>(string name, T defaultValue = default)
@@ -151,6 +156,11 @@ public sealed class SolutionManager
             return defaultValue;
         }
     }
+
+    /// <summary>
+    /// 静态便捷方法：按名称读取全局变量（泛型）。
+    /// </summary>
+    public static T GetGlobal<T>(string name, T defaultValue = default) => Instance != null ? Instance.GetGlobalValue(name, defaultValue) : defaultValue;
 
     /// <summary>
     /// 尝试设置全局变量值：校验是否定义、类型是否匹配（或可转换），并写入运行时字典。
@@ -216,14 +226,27 @@ public sealed class SolutionManager
 
         if (Current == null)
         {
-            var start = Solutions.FirstOrDefault(s => s.Enable) ?? Solutions.FirstOrDefault();
-            if (start != null)
+            // 按优先顺序尝试加载可用方案，遇到损坏跳过
+            foreach (var start in Solutions.OrderByDescending(s => s.Enable))
             {
                 var uv = GetUvPath(start);
-                if (!string.IsNullOrEmpty(uv) && File.Exists(uv))
+                if (string.IsNullOrEmpty(uv) || !File.Exists(uv)) continue;
+                try
                 {
                     Current = Load(uv);
+                    break; // 成功加载
                 }
+                catch (Exception ex)
+                {
+                    LogHelper.Error(ex, $"加载方案失败，已跳过: {start.Name}");
+                    //继续尝试下一个方案
+                }
+            }
+
+            // 如果仍未能加载任何方案，则创建一个内存默认方案但不覆盖磁盘文件
+            if (Current == null)
+            {
+                Current = CreateDefaultInMemory("默认方案");
             }
         }
     }
@@ -390,36 +413,164 @@ public sealed class SolutionManager
         var uv = GetUvPath(info);
         if (string.IsNullOrEmpty(uv) || !File.Exists(uv))
             throw new FileNotFoundException("方案文件不存在", uv);
-        Current = Load(uv);
-        CurrentChanged?.Invoke();
-        return Current;
+        try
+        {
+            var sol = Load(uv);
+            Current = sol;
+            CurrentChanged?.Invoke();
+            return Current;
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"打开方案失败: {info?.Name}");
+            throw new InvalidOperationException($"打开方案失败: {info?.Name}", ex);
+        }
     }
 
     /// <summary>
-    /// 根据显示配置重建运行时的显示控件缓存。
-    /// 注意：控件的实际添加/移除由主界面负责，这里仅重建字典引用。
+    /// 对 DisplayConfig进行归一化：
+    /// - 确保 Items 长度 == Rows*Cols，缺失项使用默认Key/DisplayName
+    /// - 保证 Key 唯一（忽略大小写），必要时生成 "显示N"形式的新 Key
+    /// - 若 DisplayName为空则用 Key 填充
+    /// - **重要**：保留用户已修改的 DisplayName，不要覆盖
+    /// 此方法不会修改行列配置，只调整 Items 内容顺序与键值，便于持久化和 UI 一致性。
     /// </summary>
+    private static void NormalizeDisplayConfig(DisplayConfig cfg)
+    {
+    if (cfg == null) return;
+        int rows = Math.Max(1, cfg.Rows);
+  int cols = Math.Max(1, cfg.Cols);
+        int total = rows * cols;
+   cfg.Items ??= new List<DisplayItem>();
+
+ // 保留原有项（Key -> DisplayItem）
+        var existingByKey = new Dictionary<string, DisplayItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var it in cfg.Items)
+        {
+      if (it != null && !string.IsNullOrWhiteSpace(it.Key))
+      {
+         if (!existingByKey.ContainsKey(it.Key))
+     {
+     existingByKey[it.Key] = it;
+         }
+       }
+       }
+
+     var result = new List<DisplayItem>(total);
+     var usedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    // 首先，按原有顺序保留存在的项（保留DisplayName）
+    for (int i = 0; i < Math.Min(cfg.Items.Count, total); i++)
+   {
+  var item = cfg.Items[i];
+       if (item != null && !string.IsNullOrWhiteSpace(item.Key) && !usedKeys.Contains(item.Key))
+        {
+     usedKeys.Add(item.Key);
+        // 确保DisplayName不为空，但不覆盖已有的
+          if (string.IsNullOrWhiteSpace(item.DisplayName))
+   {
+  item.DisplayName = item.Key;
+  }
+        result.Add(new DisplayItem { Key = item.Key, DisplayName = item.DisplayName });
+        continue;
+       }
+
+            // 如果Key无效或重复，生成新Key但保留DisplayName
+   string newKey = $"显示{i + 1}";
+          int suffix = i + 1;
+          while (usedKeys.Contains(newKey))
+     {
+    suffix++;
+            newKey = $"显示{suffix}";
+    }
+        usedKeys.Add(newKey);
+     
+     // 保留原DisplayName（如果有的话）
+    string displayName = item?.DisplayName;
+       if (string.IsNullOrWhiteSpace(displayName))
+  {
+   displayName = newKey;
+      }
+       result.Add(new DisplayItem { Key = newKey, DisplayName = displayName });
+ }
+
+     // 如果Items不足，补充新项
+        while (result.Count < total)
+      {
+ int next = result.Count + 1;
+         string key = $"显示{next}";
+ while (usedKeys.Contains(key))
+     {
+     next++;
+   key = $"显示{next}";
+        }
+           usedKeys.Add(key);
+     result.Add(new DisplayItem { Key = key, DisplayName = key });
+     }
+
+        cfg.Items = result;
+    }
+
     public void RebuildDisplayControls(DisplayConfig cfg)
     {
         if (Current == null || cfg == null) return;
-        // 清理旧控件（交给主界面从父容器移除，这里仅释放引用）
+        
+     // 归一化配置，但保留用户已修改的 DisplayName
+        try
+ {
+        if (cfg != null)
+  {
+        int rows = Math.Max(1, cfg.Rows);
+        int cols = Math.Max(1, cfg.Cols);
+   int total = rows * cols;
+     cfg.Items ??= new List<DisplayItem>();
+
+// 确保Items数量正确，但不修改已存在的DisplayName
+       while (cfg.Items.Count < total)
+   {
+           int index = cfg.Items.Count + 1;
+           var key = $"显示{index}";
+              cfg.Items.Add(new DisplayItem { Key = key, DisplayName = key });
+         }
+
+         // 移除多余的项
+      if (cfg.Items.Count > total)
+    {
+        cfg.Items = cfg.Items.Take(total).ToList();
+    }
+
+            // 确保每个项都有Key和DisplayName（但不覆盖已存在的DisplayName）
+       for (int i = 0; i < cfg.Items.Count; i++)
+              {
+           if (string.IsNullOrWhiteSpace(cfg.Items[i].Key))
+                    {
+           cfg.Items[i].Key = $"显示{i + 1}";
+            }
+         if (string.IsNullOrWhiteSpace(cfg.Items[i].DisplayName))
+         {
+     cfg.Items[i].DisplayName = cfg.Items[i].Key;
+          }
+    }
+         }
+        }
+        catch { }
+
+        // 清理旧控件引用（交给主界面从父容器移除，这里仅释放引用）
         Current.DisplayControls.Clear();
         var items = cfg.Items ?? new List<DisplayItem>();
         foreach (var di in items)
         {
-            var name = string.IsNullOrWhiteSpace(di.DisplayName) ? di.Key : di.DisplayName;
-            var img = new ImageDisplay(name) { Dock = DockStyle.Fill, Margin = new Padding(2) };
-            if (!string.IsNullOrWhiteSpace(di.Key)) Current.DisplayControls[di.Key] = img;
-        }
+   var name = string.IsNullOrWhiteSpace(di.DisplayName) ? di.Key : di.DisplayName;
+ var img = new ImageDisplay(name) { Dock = DockStyle.Fill, Margin = new Padding(2) };
+        if (!string.IsNullOrWhiteSpace(di.Key)) Current.DisplayControls[di.Key] = img;
+ }
+
+        // 把规范化后的配置写回 Current，确保保存时一致
+        Current.Display = cfg;
 
         CurrentChanged?.Invoke();
     }
 
-    /// <summary>
-    /// 保存方案到指定 .uv，同时序列化 ToolBlock 数据。
-    /// 序列化失败不阻止写入一个最小有效 .uv，以保证文件存在。
-    /// 采用原子写入策略：先写临时文件，成功后替换原文件
-    /// </summary>
     public void Save(Solution sol, string file)
     {
         string tempFile = null;
@@ -428,6 +579,9 @@ public sealed class SolutionManager
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(file) ?? string.Empty);
+
+            // 在保存前归一化显示配置以保证持久化一致性
+            try { if (sol?.Display != null) NormalizeDisplayConfig(sol.Display); } catch { }
 
             // === 第1步：先保存到临时文件 ===
             tempFile = file + ".tmp";
@@ -439,12 +593,12 @@ public sealed class SolutionManager
                     ser.Serialize(fs, sol);
                 }
 
-                LogHelper.Info($"? 方案序列化成功: {Path.GetFileName(file)}");
+                LogHelper.Info($"?方案序列化成功: {Path.GetFileName(file)}");
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, $"? 方案序列化失败: {Path.GetFileName(file)}");
-                LogHelper.Warn($"  → 方案保存中止，原文件保持不变");
+                LogHelper.Error(ex, $"?方案序列化失败: {Path.GetFileName(file)}");
+                LogHelper.Warn($" →方案保存中止，原文件保持不变");
 
                 // 清理临时文件
                 try
@@ -563,36 +717,31 @@ public sealed class SolutionManager
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, $"方案文件加载失败: {Path.GetFileName(file)}");
-
-                // 备份损坏的文件
+                LogHelper.Error(ex, $"方案文件反序列化失败: {Path.GetFileName(file)}");
+                //备份损坏的文件，以便人工恢复
                 try
                 {
                     var bakFile = file + $".bak.{DateTime.Now:yyyyMMddHHmmss}";
                     File.Copy(file, bakFile, true);
+                    LogHelper.Info($"已备份损坏方案为: {Path.GetFileName(bakFile)}");
                 }
-                catch
-                {
-                }
+                catch { }
 
-                // 返回默认方案
-                var defaultSol = CreateDefaultInMemory(Path.GetFileNameWithoutExtension(file) ?? "默认方案");
-                defaultSol.FilePath = file;
-                return defaultSol;
+                // 抛出异常，不在此处用默认对象替换磁盘文件或 Current
+                throw new InvalidDataException($"方案文件反序列化失败: {file}", ex);
             }
 
             // === 第2步：初始化配置结构 ===
             try
             {
                 sol.Display ??= new DisplayConfig();
-                sol.Display.Items ??= [];
+                sol.Display.Items ??= new List<DisplayItem>();
 
                 // 去重：按 Key（忽略大小写）保留第一个
-                if (sol.Display.Items.Count > 1)
+                if (sol.Display.Items.Count >1)
                 {
                     sol.Display.Items = sol.Display.Items
-                        .Where(i => i != null &&
-                                    (!string.IsNullOrWhiteSpace(i.Key) || !string.IsNullOrWhiteSpace(i.DisplayName)))
+                        .Where(i => i != null && (!string.IsNullOrWhiteSpace(i.Key) || !string.IsNullOrWhiteSpace(i.DisplayName)))
                         .GroupBy(i => string.IsNullOrWhiteSpace(i.Key) ? (i.DisplayName ?? "") : i.Key,
                             StringComparer.OrdinalIgnoreCase)
                         .Select(g => g.First())
@@ -614,7 +763,7 @@ public sealed class SolutionManager
             catch (Exception ex)
             {
                 LogHelper.Error(ex, "方案配置初始化异常");
-                // 不中断，继续执行
+                //不中断，继续执行
             }
 
             // === 第3步：加载工具和模型（容错加载） ===
@@ -625,8 +774,8 @@ public sealed class SolutionManager
             catch (Exception ex)
             {
                 LogHelper.Error(ex, $"? 加载VPP文件时发生异常");
-                LogHelper.Warn($"  → 部分工具可能未正确加载");
-                // 不中断，继续执行
+                LogHelper.Warn($" → 部分工具可能未正确加载");
+                //不中断，继续执行
             }
 
             // === 第4步：重建显示控件 ===
@@ -638,7 +787,7 @@ public sealed class SolutionManager
             catch (Exception ex)
             {
                 LogHelper.Warn($"? 重建显示控件异常: {ex.Message}");
-                LogHelper.Warn($"  → 显示功能可能受影响");
+                LogHelper.Warn($" → 显示功能可能受影响");
                 // 不中断，继续执行
             }
 
@@ -646,14 +795,9 @@ public sealed class SolutionManager
         }
         catch (Exception ex)
         {
-            // 最外层异常兜底
-            LogHelper.Error(ex, $"??? 方案加载严重异常: {Path.GetFileName(file)}");
-            LogHelper.Warn($"  → 将返回默认方案以保证程序可用");
-
-            // 返回内存默认方案，保证程序不崩溃
-            var fallbackSol = CreateDefaultInMemory("紧急默认方案");
-            fallbackSol.FilePath = file;
-            return fallbackSol;
+            LogHelper.Error(ex, $"???方案加载严重异常: {Path.GetFileName(file)}");
+            // 不在这里返回默认方案，改为抛出异常给调用方处理
+            throw;
         }
     }
 
@@ -899,7 +1043,7 @@ public sealed class SolutionManager
             }
         }
 
-// === 加载总结 ===
+        // === 加载总结 ===
         if (successCount > 0 || failCount > 0)
         {
             if (failCount > 0)
@@ -1027,7 +1171,7 @@ public sealed class SolutionManager
     /// <summary>
     /// 根据 StationEnum 枚举同步工位列表
     /// - 枚举中存在但方案中不存在的工位：新增
-    /// - 方案中存在但枚举中不存在的工位：跳过（保留本地文件）
+    /// - 方案中存在但枚举中不存在的工位：跳过（保留本地文件））
     /// - 从本地加载同名工位的配置文件（VPP）
     /// </summary>
     public static void SyncStationsFromEnum(Solution sol)
@@ -1036,116 +1180,59 @@ public sealed class SolutionManager
 
         sol.Stations ??= new List<ProcessStation>();
 
-        // 获取所有枚举项的名称
-        var enumNames = Enum.GetNames(typeof(StationEnum)).ToList();
+        // 获取所有枚举项的名称（以枚举为准）
+        var enumNames = Enum.GetNames(typeof(EnumStation)).ToList();
+
+        //先移除方案中不在枚举里的工位（不加载旧目录）
+        var removed = sol.Stations.Where(st => !enumNames.Contains(st.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (removed.Count >0)
+        {
+            foreach (var st in removed) { /* 可选：记录日志 */ }
+            sol.Stations = sol.Stations.Where(st => enumNames.Contains(st.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        }
 
         // 遍历枚举，确保方案中有对应的工位
         foreach (var name in enumNames)
         {
-            // 检查是否已存在
-            if (sol.Stations.Any(st => string.Equals(st.Name, name, StringComparison.OrdinalIgnoreCase)))
-                continue;
-
-            // 不存在则新增
-            var newStation = new ProcessStation
+            var existed = sol.Stations.FirstOrDefault(st => string.Equals(st.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (existed == null)
             {
-                Name = name,
-                Enable = true,
-                SN = string.Empty,
-                CameraType = string.Empty,
-                bShow = false,
-                DisplayName = string.Empty,
-                RecoredIndex = 0
-            };
-
-            sol.Stations.Add(newStation);
-            LogHelper.Info($"✓ 新增工位: {name}");
-
-            // 尝试从本地加载该工位的配置（VPP文件）
-            try
-            {
-                var stationDir = GetStationFolder(sol, newStation);
-                if (Directory.Exists(stationDir))
+                // 不存在则新增（空配置）
+                var newStation = new ProcessStation
                 {
-                    LogHelper.Info($"  → 发现本地工位文件夹: {name}");
+                    Name = name,
+                    Enable = true,
+                    SN = string.Empty,
+                    CameraType = string.Empty,
+                    bShow = false,
+                    DisplayName = string.Empty,
+                    RecoredIndex =0
+                };
+                sol.Stations.Add(newStation);
 
-                    // 加载检测工具
-                    if (newStation.DetectionTool != null)
+                try
+                {
+                    // 枚举项存在但文件夹缺失则创建目录
+                    var stationDir = GetStationFolder(sol, newStation);
+                    if (!string.IsNullOrEmpty(stationDir) && !Directory.Exists(stationDir))
                     {
-                        var path = GetToolVppPath(sol, newStation, newStation.DetectionTool);
-                        if (File.Exists(path))
-                        {
-                            try
-                            {
-                                newStation.DetectionTool.ToolBlock =
-                                    CogSerializer.LoadObjectFromFile(path) as CogToolBlock;
-                                LogHelper.Info($"  → 加载检测工具配置成功");
-                            }
-                            catch (Exception ex)
-                            {
-                                LogHelper.Warn($"  → 加载检测工具配置失败: {ex.Message}");
-                            }
-                        }
-                    }
-
-                    // 加载棋盘格工具
-                    if (newStation.CheckerboardTool != null)
-                    {
-                        var path = GetToolVppPath(sol, newStation, newStation.CheckerboardTool);
-                        if (File.Exists(path))
-                        {
-                            try
-                            {
-                                newStation.CheckerboardTool.ToolBlock =
-                                    CogSerializer.LoadObjectFromFile(path) as CogToolBlock;
-                                LogHelper.Info($"  → 加载棋盘格工具配置成功");
-                            }
-                            catch
-                            {
-                            }
-                        }
-                    }
-
-                    // 加载九点标定工具
-                    if (newStation.NPointTool != null)
-                    {
-                        var path = GetToolVppPath(sol, newStation, newStation.NPointTool);
-                        if (File.Exists(path))
-                        {
-                            try
-                            {
-                                newStation.NPointTool.ToolBlock =
-                                    CogSerializer.LoadObjectFromFile(path) as CogToolBlock;
-                                LogHelper.Info($"  → 加载九点标定工具配置成功");
-                            }
-                            catch
-                            {
-                            }
-                        }
+                        Directory.CreateDirectory(stationDir);
                     }
                 }
-                else
+                catch { }
+            }
+            else
+            {
+                // 已存在同名工位：也确保其目录存在
+                try
                 {
-                    // 创建新的工位文件夹
-                    Directory.CreateDirectory(stationDir);
-                    LogHelper.Info($"  → 创建工位文件夹: {name}");
+                    var stationDir = GetStationFolder(sol, existed);
+                    if (!string.IsNullOrEmpty(stationDir) && !Directory.Exists(stationDir))
+                    {
+                        Directory.CreateDirectory(stationDir);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.Warn($"⚠ 工位[{name}]同步异常: {ex.Message}");
-            }
-        }
-
-        // 记录方案中存在但枚举中不存在的工位（跳过，不删除）
-        var extraStations = sol.Stations.Where(st => !enumNames.Contains(st.Name, StringComparer.OrdinalIgnoreCase))
-            .ToList();
-        if (extraStations.Any())
-        {
-            LogHelper.Warn($"⚠ 发现 {extraStations.Count} 个枚举外的工位（已保留）:");
-            foreach (var st in extraStations)
-            {
-                LogHelper.Warn($"  • {st.Name}");
+                catch { }
             }
         }
     }
