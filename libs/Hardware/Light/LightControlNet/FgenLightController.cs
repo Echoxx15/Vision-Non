@@ -2,6 +2,7 @@ using System;
 using System.IO.Ports;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace LightControlNet;
 
@@ -17,13 +18,14 @@ public class FgenLightController : ILightController
     public LightControllerType Type => LightControllerType.Fgen;
     public bool IsConnected => _serialPort?.IsOpen ?? false;
     public int ChannelCount => _config.ChannelCount;
+    public Form TestForm { get { return CreateTestForm(); } }
 
     public FgenLightController(LightConfig config)
     {
       _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
-    #region ´®¿Ú²Ù×÷
+    #region ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½
 
     public bool Open()
     {
@@ -73,7 +75,7 @@ _serialPort = new SerialPort
 
     #endregion
 
-    #region ¹âÔ´Ö¸Áî
+    #region ï¿½ï¿½Ô´Ö¸ï¿½ï¿½
 
     public bool TurnOn(int channel)
     {
@@ -142,21 +144,21 @@ _serialPort = new SerialPort
                 var resp = SendAndRead(command, 100);
        if (string.IsNullOrEmpty(resp)) return -1;
 
-      // ³É¹¦Ê±£¬·µ»Ø¸ú·¢ËÍÏàÍ¬¸ñÊ½£º# + ÃüÁî + Í¨µÀ + Êý¾Ý(0XX) + Ð£Ñé(2 ASCII)
-         // Ê§°Ü·µ»Ø &
+      // ï¿½É¹ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½Ê½ï¿½ï¿½# + ï¿½ï¿½ï¿½ï¿½ + Í¨ï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½(0XX) + Ð£ï¿½ï¿½(2 ASCII)
+         // Ê§ï¿½Ü·ï¿½ï¿½ï¿½ &
     if (resp.Contains("&")) return -1;
 
-         // ÕÒµ½µÚ¸ö¿ªÊ¼·û
+         // ï¿½Òµï¿½ï¿½Ú¸ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
    int start = resp.IndexOf(START_CHAR);
       if (start < 0) return -1;
                 var frame = resp.Substring(start);
-      // ×î¶Ì³¤¶È£º# + c + ch + data(3) + checksum(2) = 7
+      // ï¿½ï¿½Ì³ï¿½ï¿½È£ï¿½# + c + ch + data(3) + checksum(2) = 7
        if (frame.Length < 7) return -1;
 
-     // È¡Êý¾ÝÓòÎ»ÖÃ0XX£©
+     // È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½0XXï¿½ï¿½
                 string dataStr = frame.Substring(3, 3);
           if (dataStr.Length != 3 || dataStr[0] != '0') return -1;
-         // Êý¾ÝÎªÊ®Áù½øÖÆµÄÁ½Î»
+         // ï¿½ï¿½ï¿½ï¿½ÎªÊ®ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½Î»
           string hex = dataStr.Substring(1, 2);
            if (int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out int val))
  return val;
@@ -188,12 +190,12 @@ _serialPort = new SerialPort
 
     #endregion
 
-    #region Ð­ÒéÓë´®¿ÚÊµÏÖ
+    #region Ð­ï¿½ï¿½ï¿½ë´®ï¿½ï¿½Êµï¿½ï¿½
 
-    // Ö¡¸ñÊ½Ð­ÒéÖ¡£º# + ÃüÁî(1-4) + Í¨µÀ(1-4) + Êý¾Ý(0XX) + Ð£Ñé(2 ASCII)
+    // Ö¡ï¿½ï¿½Ê½Ð­ï¿½ï¿½Ö¡ï¿½ï¿½# + ï¿½ï¿½ï¿½ï¿½(1-4) + Í¨ï¿½ï¿½(1-4) + ï¿½ï¿½ï¿½ï¿½(0XX) + Ð£ï¿½ï¿½(2 ASCII)
     private string BuildCommand(int command, int channel, int data)
     {
-  // Êý¾ÝÎª0XX£¨Á½Î»Ê®Áù½øÖÆ£¬¸ßÎ»²¹Áã£©
+  // ï¿½ï¿½ï¿½ï¿½Îª0XXï¿½ï¿½ï¿½ï¿½Î»Ê®ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ã£©
    string dataField = $"0{data:X2}";
         var sb = new StringBuilder();
         sb.Append(START_CHAR);
@@ -207,12 +209,12 @@ _serialPort = new SerialPort
         return sb.ToString();
     }
 
-  // Ð£Ñé£º¶Ô³ýÐ£ÑéÎ»ÒÔÍâËùÓÐ×Ö½Ú£¨¾ùÎªASCII×Ö½Ú£©Òì»ò£¬½á¹ûÈ¡8Î»£©
-    // È»ºó½«¸ß°ë×Ö½ÚºÍµÍ°ë×Ö½Ú×ª»»ÎªASCII£¨0-9,A-F£©£¬Á½¸ö×Ö·ûÇ°¸ßºóµÍ
+  // Ð£ï¿½é£ºï¿½Ô³ï¿½Ð£ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½Ú£ï¿½ï¿½ï¿½ÎªASCIIï¿½Ö½Ú£ï¿½ï¿½ï¿½ò£¬½ï¿½ï¿½È¡8Î»ï¿½ï¿½
+    // È»ï¿½ó½«¸ß°ï¿½ï¿½Ö½ÚºÍµÍ°ï¿½ï¿½Ö½ï¿½×ªï¿½ï¿½ÎªASCIIï¿½ï¿½0-9,A-Fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½Ç°ï¿½ßºï¿½ï¿½
     private string CalculateChecksumAscii(string frameWithoutChecksum)
     {
   int xor = 0;
-        // ´Ó¿ªÊ¼·û¿ªÊ¼±éÀúµ½Ä©Î²£¨²»º¬Ð£Ñé±¾Éí£©
+        // ï¿½Ó¿ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä©Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½é±¾ï¿½ï¿½ï¿½ï¿½
         foreach (char ch in frameWithoutChecksum)
         {
  xor ^= (byte)ch;
@@ -234,7 +236,7 @@ _serialPort = new SerialPort
     {
     var resp = SendAndRead(command, 80);
         if (string.IsNullOrEmpty(resp)) return false;
-        // ³É¹¦·µ»Ø '#', Ê§°Ü·µ»Ø '&'£¨¿ÉÄÜ°üº¬ÆäËü×Ö·û£©
+        // ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ '#', Ê§ï¿½Ü·ï¿½ï¿½ï¿½ '&'ï¿½ï¿½ï¿½ï¿½ï¿½Ü°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
       return resp.Contains("#") && !resp.Contains("&");
     }
 
@@ -283,7 +285,7 @@ _serialPort = new SerialPort
 
     #endregion
 
-    #region ²ÎÊýÐ£Ñé
+    #region ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½
 
     private bool ValidateChannel(int channel)
     {
@@ -320,7 +322,7 @@ _serialPort = new SerialPort
     {
      return value?.ToLower() switch
         {
- "odd" or "Ææ" => Parity.Odd,
+ "odd" or "ï¿½ï¿½" => Parity.Odd,
             "even" or "Å¼" => Parity.Even,
             "mark" => Parity.Mark,
      "space" => Parity.Space,
@@ -333,5 +335,24 @@ _serialPort = new SerialPort
     public void Dispose()
     {
         Close();
+    }
+
+    private Form CreateTestForm()
+    {
+        var f = new Form();
+        f.Text = Name + " æµ‹è¯•";
+        f.StartPosition = FormStartPosition.CenterParent;
+        var btnOn = new Button { Text = "é€šé“1å¼€", Left = 20, Top = 20, Width = 100 };
+        var btnOff = new Button { Text = "é€šé“1å…³", Left = 140, Top = 20, Width = 100 };
+        var track = new TrackBar { Left = 20, Top = 60, Width = 220, Minimum = 0, Maximum = 255, TickFrequency = 5 };
+        var lbl = new Label { Left = 260, Top = 60, Width = 100, Text = "äº®åº¦:0" };
+        btnOn.Click += (s, e) => TurnOn(1);
+        btnOff.Click += (s, e) => TurnOff(1);
+        track.Scroll += (s, e) => { SetBrightness(1, track.Value); lbl.Text = "äº®åº¦:" + track.Value; };
+        f.Controls.Add(btnOn);
+        f.Controls.Add(btnOff);
+        f.Controls.Add(track);
+        f.Controls.Add(lbl);
+        return f;
     }
 }

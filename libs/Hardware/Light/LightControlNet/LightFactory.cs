@@ -10,8 +10,8 @@ using Logger;
 namespace LightControlNet;
 
 /// <summary>
-/// ¹âÔ´¹ÜÀíÆ÷£¨µ¥ÀıÄ£Ê½£©
-///Í³Ò»¹ÜÀíËùÓĞ¹âÔ´¿ØÖÆÆ÷¡¢ÅäÖÃµÄ¼ÓÔØÓë±£´æ
+/// ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½
+///Í³Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¹ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½ï¿½ï¿½ë±£ï¿½ï¿½
 /// </summary>
 public sealed class LightFactory : IDisposable
 {
@@ -28,20 +28,20 @@ public sealed class LightFactory : IDisposable
 
     private LightFactory()
     {
-        // ³¢ÊÔ¼ÓÔØ±¾µØÅäÖÃ
+        // ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         try
         {
             LoadConfigs();
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, "³õÊ¼»¯¼ÓÔØ¹âÔ´ÅäÖÃÊ§°Ü");
+            LogHelper.Error(ex, "ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ø¹ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½");
             _configs = new LightConfigCollection();
         }
     }
 
     /// <summary>
-    /// ÅäÖÃÎÄ¼şÂ·¾¶
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½
     /// </summary>
     private static string ConfigFilePath
     {
@@ -60,7 +60,7 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°ÅäÖÃ¼¯ºÏ£¨ÒıÓÃ£©¡£µ÷ÓÃ·½½÷É÷ĞŞ¸ÄºóÇëµ÷ÓÃ SaveConfigs¡£
+    /// ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ş¸Äºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SaveConfigsï¿½ï¿½
     /// </summary>
     public LightConfigCollection Configs
     {
@@ -74,13 +74,13 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    ///ÖØĞÂ¸ù¾İÅäÖÃ¼¯ºÏ´´½¨¿ØÖÆÆ÷
+    ///ï¿½ï¿½ï¿½Â¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     private void InitializeFromConfigs(LightConfigCollection configCollection)
     {
         try
         {
-            //ÊÍ·ÅËùÓĞ¿ØÖÆÆ÷
+            //ï¿½Í·ï¿½ï¿½ï¿½ï¿½Ğ¿ï¿½ï¿½ï¿½ï¿½ï¿½
             DisposeAllControllers();
 
             if (configCollection?.Configs == null)
@@ -92,41 +92,38 @@ public sealed class LightFactory : IDisposable
             {
                 try
                 {
-                    ILightController controller = config.Type switch
-                    {
-                        LightControllerType.Fgen => new FgenLightController(config),
-                        _ => throw new NotSupportedException($"²»Ö§³ÖµÄ¹âÔ´ÀàĞÍ: {config.Type}")
-                    };
+                    var controller = LightManager.Instance.CreateController(config);
+                    if (controller == null) throw new NotSupportedException($"ä¸æ”¯æŒçš„å…‰æºæ§åˆ¶å™¨: {config.Type}");
 
                     if (controller.Open())
                     {
                         _controllers[config.Name] = controller;
-                        LogHelper.Info($"¹âÔ´¿ØÖÆÆ÷[{config.Name}]³õÊ¼»¯³É¹¦");
+                        LogHelper.Info($"ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config.Name}]ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½É¹ï¿½");
                     }
                     else
                     {
-                        LogHelper.Warn($"¹âÔ´¿ØÖÆÆ÷[{config.Name}]´ò¿ªÊ§°Ü");
+                        LogHelper.Warn($"ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config.Name}]ï¿½ï¿½Ê§ï¿½ï¿½");
                         controller.Dispose();
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.Error(ex, $"³õÊ¼»¯¹âÔ´¿ØÖÆÆ÷[{config.Name}]Ê§°Ü");
+                    LogHelper.Error(ex, $"ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config.Name}]Ê§ï¿½ï¿½");
                 }
             }
 
-            LogHelper.Info($"¹âÔ´¿ØÖÆÆ÷³õÊ¼»¯Íê³É£¬³É¹¦Æô¶¯{_controllers.Count}¸ö¿ØÖÆÆ÷");
+            LogHelper.Info($"ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½{_controllers.Count}ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, "´ÓÅäÖÃ³õÊ¼»¯¹âÔ´¿ØÖÆÆ÷Ê§°Ü");
+            LogHelper.Error(ex, "ï¿½ï¿½ï¿½ï¿½ï¿½Ã³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½");
         }
     }
 
-    #region ¼ÓÔØ±£´æ
+    #region ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½
 
     /// <summary>
-    /// ¼ÓÔØ±¾µØÅäÖÃ²¢´´½¨¿ØÖÆÉè±¸
+    /// ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è±¸
     /// </summary>
     private void LoadConfigs()
     {
@@ -148,17 +145,17 @@ public sealed class LightFactory : IDisposable
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, "¼ÓÔØ¹âÔ´ÅäÖÃÎÄ¼şÊ§°Ü");
+                LogHelper.Error(ex, "ï¿½ï¿½ï¿½Ø¹ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Ê§ï¿½ï¿½");
                 _configs = new LightConfigCollection();
             }
         }
 
-        // ¸ù¾İ×îĞÂÅäÖÃÖØ½¨¿ØÖÆÆ÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         InitializeFromConfigs(_configs);
     }
 
     /// <summary>
-    /// ±£´æµ±Ç°ÅäÖÃµ½±¾µØ
+    /// ï¿½ï¿½ï¿½æµ±Ç°ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     private void SaveConfigs()
     {
@@ -178,17 +175,17 @@ public sealed class LightFactory : IDisposable
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, "±£´æ¹âÔ´ÅäÖÃÎÄ¼şÊ§°Ü");
+                LogHelper.Error(ex, "ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Ê§ï¿½ï¿½");
             }
         }
     }
 
     #endregion
 
-    #region Íâ²¿·ÃÎÊ£¨ÅäÖÃÓë¿ØÖÆÆ÷£©
+    #region ï¿½â²¿ï¿½ï¿½ï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     /// <summary>
-    /// Ìí¼ÓÒ»¸öÅäÖÃ²¢°´Ğè´´½¨¿ØÖÆÆ÷
+    /// ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½è´´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public LightConfig AddConfig(LightConfig config)
     {
@@ -198,16 +195,16 @@ public sealed class LightFactory : IDisposable
             _configs.Add(config);
         }
 
-        //Á¢¼´±£´æ
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         SaveConfigs();
 
-        // °´Ğè´´½¨¿ØÖÆÆ÷
+        // ï¿½ï¿½ï¿½è´´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         TryCreateController(config);
         return config;
     }
 
     /// <summary>
-    /// É¾³ıÃû³Æ¶ÔÓ¦µÄÅäÖÃ²¢¹Ø±Õ¿ØÖÆÆ÷
+    /// É¾ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½Ø±Õ¿ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public bool RemoveConfig(string name)
     {
@@ -220,10 +217,10 @@ public sealed class LightFactory : IDisposable
             _configs.Remove(toRemove);
         }
 
-        //¹Ø±Õ²¢ÒÆ³ı¿ØÖÆÆ÷
+        //ï¿½Ø±Õ²ï¿½ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (_controllers.TryRemove(name, out var controller))
         {
-            try { controller.Dispose(); } catch (Exception ex) { LogHelper.Error(ex, $"ÊÍ·Å¿ØÖÆÆ÷[{name}]Ê§°Ü"); }
+            try { controller.Dispose(); } catch (Exception ex) { LogHelper.Error(ex, $"ï¿½Í·Å¿ï¿½ï¿½ï¿½ï¿½ï¿½[{name}]Ê§ï¿½ï¿½"); }
         }
 
         SaveConfigs();
@@ -231,7 +228,7 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    /// ¸üĞÂÅäÖÃ£¨¸ù¾İÃû³ÆÆ¥Åä£©£¬²¢ÖØ½¨¶ÔÓ¦¿ØÖÆÆ÷
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¥ï¿½ä£©ï¿½ï¿½ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public bool UpdateConfig(LightConfig updated)
     {
@@ -242,7 +239,7 @@ public sealed class LightFactory : IDisposable
             var existing = _configs.FindByName(updated.Name);
             if (existing == null) return false;
 
-            // ¼òµ¥¸²¸ÇÊôĞÔ
+            // ï¿½òµ¥¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             existing.Type = updated.Type;
             existing.Enabled = updated.Enabled;
             existing.PortName = updated.PortName;
@@ -256,13 +253,13 @@ public sealed class LightFactory : IDisposable
 
         SaveConfigs();
 
-        // ÖØ½¨¶ÔÓ¦¿ØÖÆÆ÷
+        // ï¿½Ø½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         RebuildControllerFor(updated.Name);
         return true;
     }
 
     /// <summary>
-    ///Í¨¹ıÉè±¸Ãû³Æ»ñÈ¡¹âÔ´¿ØÖÆÆ÷ÊµÀı
+    ///Í¨ï¿½ï¿½ï¿½è±¸ï¿½ï¿½ï¿½Æ»ï¿½È¡ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
     /// </summary>
     public ILightController GetController(string name)
     {
@@ -274,7 +271,7 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    /// »ñÈ¡Ãû³Æ¶ÔÓ¦µÄÅäÖÃ
+    /// ï¿½ï¿½È¡ï¿½ï¿½ï¿½Æ¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public LightConfig GetConfig(string name)
     {
@@ -285,7 +282,7 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    ///Ê¹µ±Ç°ÅäÖÃÉúĞ§£¨ÖØ½¨ËùÓĞ¿ØÖÆÆ÷£©
+    ///Ê¹ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ§ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½Ğ¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public void ApplyConfigs()
     {
@@ -296,7 +293,7 @@ public sealed class LightFactory : IDisposable
 
 
     /// <summary>
-    ///ÊÍ·ÅËùÓĞ¿ØÖÆÆ÷
+    ///ï¿½Í·ï¿½ï¿½ï¿½ï¿½Ğ¿ï¿½ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     private void DisposeAllControllers()
     {
@@ -308,7 +305,7 @@ public sealed class LightFactory : IDisposable
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, $"ÊÍ·Å¹âÔ´¿ØÖÆÆ÷[{kvp.Key}]Ê§°Ü");
+                LogHelper.Error(ex, $"ï¿½Í·Å¹ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{kvp.Key}]Ê§ï¿½ï¿½");
             }
         }
 
@@ -324,32 +321,24 @@ public sealed class LightFactory : IDisposable
                 return;
             }
 
-            ILightController controller = config.Type switch
-            {
-                LightControllerType.Fgen => new FgenLightController(config),
-                _ => null
-            };
+            var controller = LightManager.Instance.CreateController(config);
 
-            if (controller == null)
-            {
-                LogHelper.Warn($"²»Ö§³ÖµÄ¹âÔ´ÀàĞÍ: {config?.Type}");
-                return;
-            }
+            if (controller == null) { LogHelper.Warn($"ä¸æ”¯æŒçš„å…‰æºæ§åˆ¶å™¨: {config?.Type}"); return; }
 
             if (controller.Open())
             {
                 _controllers[config.Name] = controller;
-                LogHelper.Info($"¹âÔ´¿ØÖÆÆ÷[{config.Name}]³õÊ¼»¯³É¹¦");
+                LogHelper.Info($"ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config.Name}]ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½É¹ï¿½");
             }
             else
             {
-                LogHelper.Warn($"¹âÔ´¿ØÖÆÆ÷[{config.Name}]´ò¿ªÊ§°Ü");
+                LogHelper.Warn($"ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config.Name}]ï¿½ï¿½Ê§ï¿½ï¿½");
                 controller.Dispose();
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"´´½¨¹âÔ´¿ØÖÆÆ÷[{config?.Name}]Ê§°Ü");
+            LogHelper.Error(ex, $"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{config?.Name}]Ê§ï¿½ï¿½");
         }
     }
 
@@ -357,13 +346,13 @@ public sealed class LightFactory : IDisposable
     {
         try
         {
-            //ÏÈÊÍ·Å¾ÉµÄ
+            //ï¿½ï¿½ï¿½Í·Å¾Éµï¿½
             if (_controllers.TryRemove(name, out var old))
             {
-                try { old.Dispose(); } catch (Exception ex) { LogHelper.Error(ex, $"ÊÍ·Å¾É¿ØÖÆÆ÷[{name}]Ê§°Ü"); }
+                try { old.Dispose(); } catch (Exception ex) { LogHelper.Error(ex, $"ï¿½Í·Å¾É¿ï¿½ï¿½ï¿½ï¿½ï¿½[{name}]Ê§ï¿½ï¿½"); }
             }
 
-            // ÔÙ°´µ±Ç°ÅäÖÃ´´½¨
+            // ï¿½Ù°ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã´ï¿½ï¿½ï¿½
             var cfg = GetConfig(name);
             if (cfg != null)
             {
@@ -372,7 +361,7 @@ public sealed class LightFactory : IDisposable
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"ÖØ½¨¿ØÖÆÆ÷[{name}]Ê§°Ü");
+            LogHelper.Error(ex, $"ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[{name}]Ê§ï¿½ï¿½");
         }
     }
 

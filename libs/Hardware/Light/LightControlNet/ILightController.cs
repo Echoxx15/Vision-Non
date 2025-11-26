@@ -1,9 +1,10 @@
 using System;
+using System.Windows.Forms;
 
 namespace LightControlNet
 {
     /// <summary>
-    /// ¹âÔ´¿ØÖÆÆ÷½Ó¿Ú
+    /// ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
     /// </summary>
     public interface ILightController : IDisposable
     {
@@ -11,6 +12,7 @@ namespace LightControlNet
         LightControllerType Type { get; }
         bool IsConnected { get; }
         int ChannelCount { get; }
+        Form TestForm { get; }
 
         bool Open();
         void Close();
@@ -21,8 +23,8 @@ namespace LightControlNet
         bool SetMultiChannelBrightness(int[] channels, int brightness);
 
         /// <summary>
-        /// ·¢ËÍÔ­Ê¼ÃüÁî×Ö·û´®£¬²»¾­¹ýÈÎºÎ×ª»»¡£
-        /// ·µ»Ø¿ØÖÆÆ÷µÄÔ­Ê¼ÏìÓ¦×Ö·û´®£¨Èç¹ûÎª¿Õ£¬Ôò£©
+        /// ï¿½ï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½×ªï¿½ï¿½ï¿½ï¿½
+        /// ï¿½ï¿½ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½Ó¦ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Õ£ï¿½ï¿½ï¿½
         /// </summary>
         string SendRawCommand(string command);
     }
