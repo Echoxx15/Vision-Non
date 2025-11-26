@@ -1,8 +1,8 @@
 ﻿using Logger;
 using System;
-using System.IO.Ports;
 using System.Windows.Forms;
 using System.Reflection;
+using static System.IO.Ports.SerialPort;
 
 namespace LightControlNet.UI;
 
@@ -44,7 +44,7 @@ public partial class Frm_LightConfig : Form
     private void InitializeComboBoxes()
     {
         cmb_PortName.Items.Clear();
-        cmb_PortName.Items.AddRange(SerialPort.GetPortNames());
+        cmb_PortName.Items.AddRange(GetPortNames());
         if (cmb_PortName.Items.Count > 0) cmb_PortName.SelectedIndex = 0;
 
         cmb_BaudRate.Items.Clear();

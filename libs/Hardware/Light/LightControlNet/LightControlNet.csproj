@@ -72,9 +72,6 @@
     <Compile Include="UI\Frm_LightConfig.Designer.cs">
       <DependentUpon>Frm_LightConfig.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\Frm_LightTester.cs">
-      <SubType>Form</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="UI\Frm_LightConfig.resx">

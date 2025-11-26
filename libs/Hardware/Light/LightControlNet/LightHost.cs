@@ -12,6 +12,5 @@ namespace LightControlNet
         }
 
         public static Form ConfigForm => LightFactory.Instance.GetConfigForm;
-        public static Form TestForm => new UI.Frm_LightTester();
     }
 }
