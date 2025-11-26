@@ -4,7 +4,7 @@ using System.Windows.Forms;
 namespace LightControlNet
 {
     /// <summary>
-    /// ��Դ�������ӿ�
+    /// 光源控制器接口
     /// </summary>
     public interface ILightController : IDisposable
     {
@@ -23,8 +23,8 @@ namespace LightControlNet
         bool SetMultiChannelBrightness(int[] channels, int brightness);
 
         /// <summary>
-        /// ����ԭʼ�����ַ������������κ�ת����
-        /// ���ؿ�������ԭʼ��Ӧ�ַ��������Ϊ�գ���
+        /// 发送原始命令字符串，不做任何转换
+        /// 返回控制器原始响应字符串；为空表示失败
         /// </summary>
         string SendRawCommand(string command);
     }

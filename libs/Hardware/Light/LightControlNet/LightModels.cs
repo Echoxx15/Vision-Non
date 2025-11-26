@@ -5,66 +5,66 @@ using System.Linq;
 
 namespace LightControlNet;
 
-#region Ã¶¾Ù¶¨Òå
+#region æšä¸¾å®šä¹‰
 
 /// <summary>
-/// ¹âÔ´¿ØÖÆÆ÷ÀàĞÍ£¨Æ·ÅÆ£©
+/// å…‰æºæ§åˆ¶å™¨ç±»å‹ï¼ˆå“ç‰Œï¼‰
 /// </summary>
 public enum LightControllerType
 {
-    [Description("æÚ¸ù")] Fgen = 0,
+    [Description("å­šæ ¹")] Fgen = 0,
 
-    [Description("°ÂÆÕÌØ")] Opt = 1
+    [Description("å¥¥æ™®ç‰¹")] Opt = 1
 }
 
 #endregion
 
-#region ¹âÔ´ÅäÖÃ
+#region å…‰æºé…ç½®
 
 /// <summary>
-/// ¹âÔ´ÅäÖÃ,±£´æµ½±¾µØxmlÎÄ¼ş
+/// å…‰æºé…ç½®ï¼ŒæŒä¹…åŒ–ä¸º xml æ–‡ä»¶
 /// </summary>
 [Serializable]
 public class LightConfig
 {
-  [Category("»ù±¾ĞÅÏ¢"), DisplayName("ÅäÖÃÃû³Æ")]
-    [Description("¹âÔ´ÅäÖÃµÄÎ¨Ò»±êÊ¶Ãû³Æ")]
+    [Category("åŸºæœ¬ä¿¡æ¯"), DisplayName("é…ç½®åç§°")]
+    [Description("å…‰æºé…ç½®çš„å”¯ä¸€æ ‡è¯†å")]
     public string Name { get; set; }
 
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("¿ØÖÆÆ÷ÀàĞÍ")]
-    [Description("¹âÔ´¿ØÖÆÆ÷Æ·ÅÆ£ºæÚ¸ù¡¢°ÂÆÕÌØµÈ")]
+    [Category("åŸºæœ¬ä¿¡æ¯"), DisplayName("æ§åˆ¶å™¨å“ç‰Œ")]
+    [Description("å…‰æºæ§åˆ¶å™¨çš„å“ç‰Œç±»å‹ï¼Œä¾‹å¦‚å­šæ ¹ã€å¥¥æ™®ç‰¹")]
     public LightControllerType Type { get; set; } = LightControllerType.Fgen;
 
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("ÊÇ·ñÆôÓÃ")]
-    [Description("ÊÇ·ñÆôÓÃ´Ë¹âÔ´¿ØÖÆ")]
+    [Category("åŸºæœ¬ä¿¡æ¯"), DisplayName("æ˜¯å¦å¯ç”¨")]
+    [Description("æ˜¯å¦å¯ç”¨è¯¥å…‰æºæ§åˆ¶å™¨")]
     public bool Enabled { get; set; } = true;
 
-    [Category("´®¿Ú²ÎÊı"), DisplayName("¶Ë¿ÚºÅ")]
-    [Description("´®¿ÚºÅ£¬ÈçCOM1¡¢COM3µÈ")]
+    [Category("ä¸²å£å‚æ•°"), DisplayName("ç«¯å£å·")]
+    [Description("ä¸²å£å·ï¼Œä¾‹å¦‚ COM1ã€COM3")]
     public string PortName { get; set; } = "COM1";
 
-  [Category("´®¿Ú²ÎÊı"), DisplayName("²¨ÌØÂÊ")]
-    [Description("Í¨Ñ¶²¨ÌØÂÊ£¬Í¨³£Îª9600")]
+    [Category("ä¸²å£å‚æ•°"), DisplayName("æ³¢ç‰¹ç‡")]
+    [Description("é€šä¿¡æ³¢ç‰¹ç‡ï¼Œå¸¸ç”¨ä¸º 9600")]
     public int BaudRate { get; set; } = 9600;
 
-    [Category("´®¿Ú²ÎÊı"), DisplayName("Êı¾İÎ»")]
- [Description("Êı¾İÎ»Êı£¬Í¨³£Îª8")]
+    [Category("ä¸²å£å‚æ•°"), DisplayName("æ•°æ®ä½")]
+    [Description("æ•°æ®ä½ï¼Œå¸¸ç”¨ä¸º 8")]
     public int DataBits { get; set; } = 8;
 
-    [Category("´®¿Ú²ÎÊı"), DisplayName("Í£Ö¹Î»")]
-    [Description("Í£Ö¹Î»£º1, 1.5, 2")]
+    [Category("ä¸²å£å‚æ•°"), DisplayName("åœæ­¢ä½")]
+    [Description("åœæ­¢ä½ï¼Œå¯é€‰ 1ã€1.5ã€2")]
     public double StopBits { get; set; } = 1;
 
-    [Category("´®¿Ú²ÎÊı"), DisplayName("Ğ£ÑéÎ»")]
-    [Description("Ğ£ÑéÎ»£ºNone, Odd, Even")]
+    [Category("ä¸²å£å‚æ•°"), DisplayName("æ ¡éªŒä½")]
+    [Description("æ ¡éªŒä½ï¼šNoneã€Oddã€Even")]
     public string Parity { get; set; } = "None";
 
-    [Category("Ó²¼ş²ÎÊı"), DisplayName("Í¨µÀÊıÁ¿")]
-    [Description("¹âÔ´¿ØÖÆÆ÷µÄÍ¨µÀÊıÁ¿£º2/4/8")]
+    [Category("ç¡¬ä»¶å‚æ•°"), DisplayName("é€šé“æ•°")]
+    [Description("å…‰æºæ§åˆ¶å™¨çš„é€šé“æ•°é‡ï¼š2/4/8")]
     public int ChannelCount { get; set; } = 4;
 
-    [Category("±¸×¢"), DisplayName("±¸×¢")]
-    [Description("±¸×¢ĞÅÏ¢")]
+    [Category("å¤‡æ³¨"), DisplayName("å¤‡æ³¨")]
+    [Description("å¤‡æ³¨ä¿¡æ¯")]
     public string Remark { get; set; } = string.Empty;
 
     public override string ToString()
@@ -74,7 +74,7 @@ public class LightConfig
 }
 
 /// <summary>
-/// ¹âÔ´ÅäÖÃ¼¯ºÏ
+/// å…‰æºé…ç½®é›†åˆ
 /// </summary>
 [Serializable]
 public class LightConfigCollection
@@ -82,13 +82,13 @@ public class LightConfigCollection
     public List<LightConfig> Configs { get; set; } = new List<LightConfig>();
 
     /// <summary>
-    /// Éú³ÉÎ¨Ò»ÅäÖÃÃû³Æ
+    /// ç”Ÿæˆå”¯ä¸€é…ç½®åç§°
     /// </summary>
-    /// <param name="type">¿ØÖÆÆ÷ÀàĞÍ</param>
-    /// <returns>Î¨Ò»Ãû³Æ</returns>
+    /// <param name="type">æ§åˆ¶å™¨ç±»å‹</param>
+    /// <returns>å”¯ä¸€åç§°</returns>
     public string GenerateUniqueName(LightControllerType type)
     {
-        var prefix = type == LightControllerType.Fgen ? "·É¸ñ¹âÔ´" : "°ÂÆÕÌØ¹âÔ´";
+        var prefix = type == LightControllerType.Fgen ? "å­šæ ¹å…‰æº" : "å¥¥æ™®ç‰¹å…‰æº";
         int index = 1;
 
         while (true)
@@ -107,7 +107,7 @@ public class LightConfigCollection
     {
         if (config == null) return;
 
-        // È·±£Ãû³ÆÎ¨Ò»
+        // ç¡®ä¿åç§°å”¯ä¸€
         if (string.IsNullOrWhiteSpace(config.Name))
         {
             config.Name = GenerateUniqueName(config.Type);

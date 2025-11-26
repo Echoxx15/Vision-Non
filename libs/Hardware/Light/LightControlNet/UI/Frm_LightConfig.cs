@@ -130,6 +130,8 @@ public partial class Frm_LightConfig : Form
 
         _currentConfig = list[idx];
         LoadConfigToPanel(_currentConfig);
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        ShowTestForm(controller?.TestForm);
     }
 
     private void LoadConfigToPanel(LightConfig config)
@@ -180,6 +182,9 @@ public partial class Frm_LightConfig : Form
         LogHelper.Info($"已保存光源配置[{_currentConfig.Name}]");
 
         RefreshConfigList();
+
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        ShowTestForm(controller?.TestForm);
     }
 
     private void PopulateAddMenuItems()
@@ -240,5 +245,25 @@ public partial class Frm_LightConfig : Form
         PopulateAddMenuItems();
         var pt = btn_AddFgen.PointToScreen(new System.Drawing.Point(0, btn_AddFgen.Height));
         contextMenuStrip1.Show(pt);
+    }
+
+    private Control _currentTestHost;
+
+    private void ShowTestForm(Form form)
+    {
+        if (_currentTestHost != null)
+        {
+            panel_TestHost.Controls.Remove(_currentTestHost);
+            _currentTestHost.Dispose();
+            _currentTestHost = null;
+        }
+
+        if (form == null) return;
+        form.TopLevel = false;
+        form.FormBorderStyle = FormBorderStyle.None;
+        form.Dock = DockStyle.Fill;
+        panel_TestHost.Controls.Add(form);
+        _currentTestHost = form;
+        form.Show();
     }
 }

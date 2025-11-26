@@ -15,6 +15,7 @@ namespace LightControlNet.UI
         private System.Windows.Forms.Button btn_Delete;
         private System.Windows.Forms.Button btn_Save;
         private System.Windows.Forms.GroupBox grp_Config;
+        private System.Windows.Forms.Panel panel_TestHost;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -69,7 +70,7 @@ namespace LightControlNet.UI
             this.btn_AddFgen.Name = "btn_AddFgen";
             this.btn_AddFgen.Size = new System.Drawing.Size(121, 34);
             this.btn_AddFgen.TabIndex = 1;
-            this.btn_AddFgen.Text = "���ӿ�����";
+            this.btn_AddFgen.Text = "添加";
             this.btn_AddFgen.UseVisualStyleBackColor = true;
             this.btn_AddFgen.Click += new System.EventHandler(this.btn_AddFgen_Click);
             // 
@@ -110,6 +111,7 @@ namespace LightControlNet.UI
             // 
             // grp_Config
             // 
+            this.grp_Config.Controls.Add(this.panel_TestHost);
             this.grp_Config.Controls.Add(this.btn_Connet);
             this.grp_Config.Controls.Add(this.listBox_Configs);
             this.grp_Config.Controls.Add(this.cmb_ChannelCount);
@@ -137,7 +139,12 @@ namespace LightControlNet.UI
             this.grp_Config.Size = new System.Drawing.Size(1020, 318);
             this.grp_Config.TabIndex = 8;
             this.grp_Config.TabStop = false;
-            this.grp_Config.Text = "��������";
+            this.grp_Config.Text = "光源配置";
+            this.panel_TestHost = new System.Windows.Forms.Panel();
+            this.panel_TestHost.Location = new System.Drawing.Point(810, 20);
+            this.panel_TestHost.Name = "panel_TestHost";
+            this.panel_TestHost.Size = new System.Drawing.Size(200, 274);
+            this.panel_TestHost.TabIndex = 48;
             // 
             // btn_Connet
             // 
@@ -145,7 +152,7 @@ namespace LightControlNet.UI
             this.btn_Connet.Name = "btn_Connet";
             this.btn_Connet.Size = new System.Drawing.Size(111, 29);
             this.btn_Connet.TabIndex = 47;
-            this.btn_Connet.Text = "����";
+            this.btn_Connet.Text = "连接";
             this.btn_Connet.UseVisualStyleBackColor = true;
             // 
             // listBox_Configs
@@ -174,7 +181,7 @@ namespace LightControlNet.UI
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(98, 18);
             this.label11.TabIndex = 44;
-            this.label11.Text = "ͨ��������";
+            this.label11.Text = "通道数";
             // 
             // cmb_Parity
             // 
@@ -192,7 +199,7 @@ namespace LightControlNet.UI
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(80, 18);
             this.label10.TabIndex = 42;
-            this.label10.Text = "У��λ��";
+            this.label10.Text = "校验位";
             // 
             // cmb_StopBits
             // 
@@ -210,7 +217,7 @@ namespace LightControlNet.UI
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(80, 18);
             this.label9.TabIndex = 40;
-            this.label9.Text = "ֹͣλ��";
+            this.label9.Text = "停止位";
             // 
             // cmb_DataBits
             // 
@@ -228,7 +235,7 @@ namespace LightControlNet.UI
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(80, 18);
             this.label8.TabIndex = 38;
-            this.label8.Text = "����λ��";
+            this.label8.Text = "数据位";
             // 
             // cmb_BaudRate
             // 
@@ -246,7 +253,7 @@ namespace LightControlNet.UI
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(80, 18);
             this.label7.TabIndex = 36;
-            this.label7.Text = "�����ʣ�";
+            this.label7.Text = "波特率";
             // 
             // cmb_PortName
             // 
@@ -264,7 +271,7 @@ namespace LightControlNet.UI
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(80, 18);
             this.label6.TabIndex = 34;
-            this.label6.Text = "���ںţ�";
+            this.label6.Text = "端口号";
             // 
             // chk_Enabled
             // 
@@ -275,7 +282,7 @@ namespace LightControlNet.UI
             this.chk_Enabled.Name = "chk_Enabled";
             this.chk_Enabled.Size = new System.Drawing.Size(70, 22);
             this.chk_Enabled.TabIndex = 33;
-            this.chk_Enabled.Text = "����";
+            this.chk_Enabled.Text = "启用";
             this.chk_Enabled.UseVisualStyleBackColor = true;
             // 
             // lbl_Type
@@ -286,7 +293,7 @@ namespace LightControlNet.UI
             this.lbl_Type.Name = "lbl_Type";
             this.lbl_Type.Size = new System.Drawing.Size(102, 25);
             this.lbl_Type.TabIndex = 28;
-            this.lbl_Type.Text = "�ڸ�������";
+            this.lbl_Type.Text = "类型";
             // 
             // label2
             // 
@@ -295,7 +302,7 @@ namespace LightControlNet.UI
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(62, 18);
             this.label2.TabIndex = 27;
-            this.label2.Text = "���ͣ�";
+            this.label2.Text = "类型";
             // 
             // Frm_LightConfig
             // 
@@ -309,7 +316,7 @@ namespace LightControlNet.UI
             this.MinimizeBox = false;
             this.Name = "Frm_LightConfig";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "��Դ����";
+            this.Text = "光源配置";
             this.contextMenuStrip1.ResumeLayout(false);
             this.grp_Config.ResumeLayout(false);
             this.grp_Config.PerformLayout();
@@ -321,9 +328,9 @@ namespace LightControlNet.UI
 
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem tsm_Fugen;
-    private ComboBox cmb_ChannelCount;
-    private Label label11;
-    private ComboBox cmb_Parity;
+        private ComboBox cmb_ChannelCount;
+        private Label label11;
+        private ComboBox cmb_Parity;
     private Label label10;
     private ComboBox cmb_StopBits;
     private Label label9;
@@ -335,8 +342,8 @@ namespace LightControlNet.UI
     private Label label6;
     private CheckBox chk_Enabled;
     private Label lbl_Type;
-    private Label label2;
-    private ListBox listBox_Configs;
+        private Label label2;
+        private ListBox listBox_Configs;
         private Button btn_Connet;
     }
 }
