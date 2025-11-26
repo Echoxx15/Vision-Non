@@ -190,7 +190,7 @@ public partial class Frm_LightConfig : Form
             var attr = t.GetCustomAttribute<LightManufacturerAttribute>();
             if (attr == null) continue;
             var lt = attr.Type;
-            var item = new ToolStripMenuItem(attr.ManufacturerName);
+            var item = new ToolStripMenuItem($"{lt} - {attr.ManufacturerName}");
             item.Click += (s, e) => AddByType(lt);
             contextMenuStrip1.Items.Add(item);
         }
@@ -210,6 +210,18 @@ public partial class Frm_LightConfig : Form
             Parity = "None",
             ChannelCount = 4
         };
+
+        try
+        {
+            var ports = LightManager.Instance.EnumerateDevices(type);
+            if (ports != null && ports.Count > 0)
+            {
+                cfg.PortName = ports[0];
+            }
+        }
+        catch
+        {
+        }
 
         LightFactory.Instance.AddConfig(cfg);
         RefreshConfigList();
