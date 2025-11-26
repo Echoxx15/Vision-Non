@@ -26,6 +26,8 @@ public partial class Frm_LightConfig : Form
         btn_Delete.Click += Btn_Delete_Click;
         btn_Save.Click += btn_Save_Click;
         btn_AddFgen.Click += btn_AddFgen_Click;
+        btn_Connet.Click += btn_Connet_Click;
+        cmb_PortName.SelectedIndexChanged += cmb_PortName_SelectedIndexChanged;
 
         btn_AddFgen.Text = "添加";
         PopulateAddMenuItems();
@@ -219,6 +221,7 @@ public partial class Frm_LightConfig : Form
 
         var controller = LightFactory.Instance.GetController(_currentConfig.Name);
         ShowTestForm(controller?.TestForm);
+        UpdateTestPanelEnabled(controller);
     }
 
     private void PopulateAddMenuItems()
@@ -299,5 +302,39 @@ public partial class Frm_LightConfig : Form
         panel_TestHost.Controls.Add(form);
         _currentTestHost = form;
         form.Show();
+    }
+
+    private void UpdateTestPanelEnabled(ILightController controller)
+    {
+        panel_TestHost.Enabled = controller?.IsConnected ?? false;
+    }
+
+    private void btn_Connet_Click(object sender, EventArgs e)
+    {
+        if (_currentConfig == null)
+        {
+            MessageBox.Show("请先选择配置", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var ok = LightFactory.Instance.ConnectController(_currentConfig.Name);
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        ShowTestForm(controller?.TestForm);
+        UpdateTestPanelEnabled(controller);
+        if (!ok)
+        {
+            MessageBox.Show("打开失败，请检查串口参数与硬件连接", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private void cmb_PortName_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_currentConfig == null) return;
+        // 断开当前连接
+        LightFactory.Instance.DisconnectController(_currentConfig.Name);
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        UpdateTestPanelEnabled(controller);
+        // 更新界面上的端口号，并提示需要点击“打开”
+        _currentConfig.PortName = cmb_PortName.Text;
     }
 }

@@ -271,6 +271,38 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
+    /// 打开指定名称的控制器（若未创建则按当前配置创建并打开）
+    /// </summary>
+    public bool ConnectController(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        var ctrl = GetController(name);
+        if (ctrl != null)
+        {
+            return ctrl.IsConnected || ctrl.Open();
+        }
+
+        var cfg = GetConfig(name);
+        if (cfg == null || !cfg.Enabled) return false;
+        TryCreateController(cfg);
+        ctrl = GetController(name);
+        return ctrl?.IsConnected ?? false;
+    }
+
+    /// <summary>
+    /// 关闭并移除指定名称的控制器
+    /// </summary>
+    public void DisconnectController(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+        if (_controllers.TryRemove(name, out var controller))
+        {
+            try { controller.Close(); controller.Dispose(); }
+            catch (Exception ex) { LogHelper.Error(ex, $"释放控制器[{name}]失败"); }
+        }
+    }
+
+    /// <summary>
     /// 获取名称对应的配置
     /// </summary>
     public LightConfig GetConfig(string name)
