@@ -85,7 +85,7 @@ namespace LightControlNet.UI
             // 
             this.tsm_Fugen.Name = "tsm_Fugen";
             this.tsm_Fugen.Size = new System.Drawing.Size(170, 30);
-            this.tsm_Fugen.Text = "�ڸ�������";
+            this.tsm_Fugen.Text = "孚根控制器";
             
             // 
             // btn_Delete
@@ -95,7 +95,7 @@ namespace LightControlNet.UI
             this.btn_Delete.Name = "btn_Delete";
             this.btn_Delete.Size = new System.Drawing.Size(108, 34);
             this.btn_Delete.TabIndex = 3;
-            this.btn_Delete.Text = "ɾ��";
+            this.btn_Delete.Text = "删除";
             this.btn_Delete.UseVisualStyleBackColor = true;
             // 
             // btn_Save
@@ -105,7 +105,7 @@ namespace LightControlNet.UI
             this.btn_Save.Name = "btn_Save";
             this.btn_Save.Size = new System.Drawing.Size(108, 37);
             this.btn_Save.TabIndex = 4;
-            this.btn_Save.Text = "��������";
+            this.btn_Save.Text = "保存配置";
             this.btn_Save.UseVisualStyleBackColor = true;
             this.btn_Save.Click += new System.EventHandler(this.btn_Save_Click);
             // 
@@ -140,10 +140,13 @@ namespace LightControlNet.UI
             this.grp_Config.TabIndex = 8;
             this.grp_Config.TabStop = false;
             this.grp_Config.Text = "光源配置";
+            this.grp_Config.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel_TestHost = new System.Windows.Forms.Panel();
             this.panel_TestHost.Location = new System.Drawing.Point(810, 20);
             this.panel_TestHost.Name = "panel_TestHost";
             this.panel_TestHost.Size = new System.Drawing.Size(200, 274);
+            this.panel_TestHost.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right) 
+            | System.Windows.Forms.AnchorStyles.Bottom)));
             this.panel_TestHost.TabIndex = 48;
             // 
             // btn_Connet
@@ -308,7 +311,7 @@ namespace LightControlNet.UI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(827, 329);
+            this.ClientSize = new System.Drawing.Size(1060, 380);
             this.Controls.Add(this.grp_Config);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(4);

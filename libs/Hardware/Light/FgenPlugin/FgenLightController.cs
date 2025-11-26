@@ -244,17 +244,60 @@ namespace Fgen.LightPlugin
             var f = new Form();
             f.Text = Name + " 测试";
             f.StartPosition = FormStartPosition.CenterParent;
-            var btnOn = new Button { Text = "通道1开", Left = 20, Top = 20, Width = 100 };
-            var btnOff = new Button { Text = "通道1关", Left = 140, Top = 20, Width = 100 };
-            var track = new TrackBar { Left = 20, Top = 60, Width = 220, Minimum = 0, Maximum = 255, TickFrequency = 5 };
-            var lbl = new Label { Left = 260, Top = 60, Width = 100, Text = "亮度:0" };
-            btnOn.Click += (s, e) => TurnOn(1);
-            btnOff.Click += (s, e) => TurnOff(1);
-            track.Scroll += (s, e) => { SetBrightness(1, track.Value); lbl.Text = "亮度:" + track.Value; };
-            f.Controls.Add(btnOn);
-            f.Controls.Add(btnOff);
-            f.Controls.Add(track);
-            f.Controls.Add(lbl);
+            f.AutoScaleMode = AutoScaleMode.Font;
+            f.Width = 640;
+            f.Height = 420;
+
+            var panel = new Panel { Dock = DockStyle.Fill };
+            f.Controls.Add(panel);
+
+            var gbBrightness = new GroupBox { Text = "亮度设置", Dock = DockStyle.Top, Height = ChannelCount * 60 + 60 };
+            var tlp = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = ChannelCount };
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60));
+
+            var tracks = new TrackBar[ChannelCount];
+            var nums = new NumericUpDown[ChannelCount];
+
+            for (int i = 0; i < ChannelCount; i++)
+            {
+                var lbl = new Label { Text = "CH" + (i + 1) + ":", AutoSize = true, Anchor = AnchorStyles.Left };
+                var track = new TrackBar { Minimum = 0, Maximum = 255, TickFrequency = 5, Dock = DockStyle.Fill };
+                var num = new NumericUpDown { Minimum = 0, Maximum = 255, Width = 60, Anchor = AnchorStyles.Right };
+
+                int ch = i + 1;
+                track.Scroll += (s, e) => { num.Value = track.Value; SetBrightness(ch, track.Value); };
+                num.ValueChanged += (s, e) => { track.Value = (int)num.Value; SetBrightness(ch, (int)num.Value); };
+
+                try
+                {
+                    int cur = GetBrightness(ch);
+                    if (cur >= 0) { track.Value = cur; num.Value = cur; }
+                }
+                catch { }
+
+                tlp.Controls.Add(lbl, 0, i);
+                tlp.Controls.Add(track, 1, i);
+                tlp.Controls.Add(num, 2, i);
+
+                tracks[i] = track;
+                nums[i] = num;
+            }
+
+            gbBrightness.Controls.Add(tlp);
+            panel.Controls.Add(gbBrightness);
+
+            var gbMode = new GroupBox { Text = "常亮/常灭设置", Dock = DockStyle.Fill };
+            var rbOn = new RadioButton { Text = "常亮", Left = 30, Top = 30, AutoSize = true };
+            var rbOff = new RadioButton { Text = "常灭", Left = 120, Top = 30, AutoSize = true };
+            rbOn.Checked = true;
+            rbOn.CheckedChanged += (s, e) => { if (rbOn.Checked) { for (int ch = 1; ch <= ChannelCount; ch++) TurnOn(ch); } };
+            rbOff.CheckedChanged += (s, e) => { if (rbOff.Checked) { for (int ch = 1; ch <= ChannelCount; ch++) TurnOff(ch); } };
+            gbMode.Controls.Add(rbOn);
+            gbMode.Controls.Add(rbOff);
+            panel.Controls.Add(gbMode);
+
             return f;
         }
 

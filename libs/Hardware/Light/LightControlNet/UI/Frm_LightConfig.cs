@@ -33,6 +33,10 @@ public partial class Frm_LightConfig : Form
         InitializeComboBoxes();
 
         RefreshConfigList();
+
+        ConfigureAnchors();
+        ApplyResponsiveLayout();
+        grp_Config.Resize += (_, _) => ApplyResponsiveLayout();
     }
 
     private void InitializeComboBoxes()
@@ -60,6 +64,36 @@ public partial class Frm_LightConfig : Form
         cmb_ChannelCount.Items.Clear();
         cmb_ChannelCount.Items.AddRange([2, 4, 8]);
         cmb_ChannelCount.SelectedItem = 4;
+    }
+
+    private void ConfigureAnchors()
+    {
+        listBox_Configs.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+        panel_TestHost.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
+        cmb_PortName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmb_BaudRate.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmb_StopBits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmb_DataBits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmb_Parity.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmb_ChannelCount.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+    }
+
+    private void ApplyResponsiveLayout()
+    {
+        var g = grp_Config.ClientSize;
+        int margin = 10;
+        int leftWidth = Math.Max(200, (int)(g.Width * 0.25));
+        int rightWidth = Math.Max(260, (int)(g.Width * 0.42));
+
+        listBox_Configs.Width = leftWidth - margin * 2;
+        listBox_Configs.Left = margin;
+        listBox_Configs.Top = margin;
+        listBox_Configs.Height = g.Height - margin * 2;
+
+        panel_TestHost.Width = rightWidth;
+        panel_TestHost.Left = g.Width - rightWidth - margin;
+        panel_TestHost.Top = margin;
+        panel_TestHost.Height = g.Height - margin * 2;
     }
 
     private void RefreshConfigList()
