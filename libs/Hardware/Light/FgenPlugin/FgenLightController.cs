@@ -288,9 +288,9 @@ namespace Fgen.LightPlugin
             gbBrightness.Controls.Add(tlp);
             panel.Controls.Add(gbBrightness);
 
-            var gbMode = new GroupBox { Text = "常亮/常灭设置", Dock = DockStyle.Fill };
-            var rbOn = new RadioButton { Text = "常亮", Left = 30, Top = 30, AutoSize = true };
-            var rbOff = new RadioButton { Text = "常灭", Left = 120, Top = 30, AutoSize = true };
+            var gbMode = new GroupBox { Text = "常开/常关设置", Dock = DockStyle.Fill };
+            var rbOn = new RadioButton { Text = "常开", Left = 30, Top = 30, AutoSize = true };
+            var rbOff = new RadioButton { Text = "常关", Left = 120, Top = 30, AutoSize = true };
             rbOn.Checked = true;
             rbOn.CheckedChanged += (s, e) => { if (rbOn.Checked) { for (int ch = 1; ch <= ChannelCount; ch++) TurnOn(ch); } };
             rbOff.CheckedChanged += (s, e) => { if (rbOff.Checked) { for (int ch = 1; ch <= ChannelCount; ch++) TurnOff(ch); } };

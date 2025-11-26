@@ -323,6 +323,7 @@ namespace LightControlNet.UI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1225, 380);
             this.Controls.Add(this.grp_Config);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;

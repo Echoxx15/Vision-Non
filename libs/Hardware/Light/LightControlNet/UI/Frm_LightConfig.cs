@@ -84,13 +84,20 @@ public partial class Frm_LightConfig : Form
     {
         var g = grp_Config.ClientSize;
         int margin = 10;
-        int leftWidth = Math.Max(200, (int)(g.Width * 0.25));
-        int rightWidth = Math.Max(260, (int)(g.Width * 0.42));
+        int leftWidth = (int)(g.Width * 0.25);
+        int rightWidth = (int)(g.Width * 0.40);
+        int centerWidth = g.Width - leftWidth - rightWidth - margin * 4;
+        if (centerWidth < 300) centerWidth = 300;
 
         listBox_Configs.Width = leftWidth - margin * 2;
         listBox_Configs.Left = margin;
         listBox_Configs.Top = margin;
         listBox_Configs.Height = g.Height - margin * 2;
+
+        panel_Params.Width = centerWidth;
+        panel_Params.Left = listBox_Configs.Right + margin;
+        panel_Params.Top = margin;
+        panel_Params.Height = g.Height - margin * 2;
 
         panel_TestHost.Width = rightWidth;
         panel_TestHost.Left = g.Width - rightWidth - margin;
