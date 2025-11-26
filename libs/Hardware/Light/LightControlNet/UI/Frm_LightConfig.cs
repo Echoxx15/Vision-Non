@@ -87,7 +87,6 @@ public partial class Frm_LightConfig : Form
         int leftWidth = (int)(g.Width * 0.25);
         int rightWidth = (int)(g.Width * 0.40);
         int centerWidth = g.Width - leftWidth - rightWidth - margin * 4;
-        if (centerWidth < 300) centerWidth = 300;
 
         listBox_Configs.Width = leftWidth - margin * 2;
         listBox_Configs.Left = margin;

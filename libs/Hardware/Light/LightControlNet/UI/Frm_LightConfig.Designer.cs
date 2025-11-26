@@ -11,6 +11,7 @@ namespace LightControlNet.UI
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
+
         private System.Windows.Forms.Button btn_AddFgen;
         private System.Windows.Forms.Button btn_Delete;
         private System.Windows.Forms.Button btn_Save;
@@ -127,8 +128,10 @@ namespace LightControlNet.UI
             // 
             // panel_TestHost
             // 
-            this.panel_TestHost.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_TestHost.Anchor =
+                ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top |
+                                                       System.Windows.Forms.AnchorStyles.Bottom)
+                                                      | System.Windows.Forms.AnchorStyles.Right)));
             this.panel_TestHost.Location = new System.Drawing.Point(792, 20);
             this.panel_TestHost.Name = "panel_TestHost";
             this.panel_TestHost.Size = new System.Drawing.Size(423, 336);
@@ -136,9 +139,11 @@ namespace LightControlNet.UI
             // 
             // panel_Params
             // 
-            this.panel_Params.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel_Params.Anchor =
+                ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top |
+                                                        System.Windows.Forms.AnchorStyles.Bottom)
+                                                       | System.Windows.Forms.AnchorStyles.Left)
+                                                      | System.Windows.Forms.AnchorStyles.Right)));
             this.panel_Params.Controls.Add(this.btn_Connet);
             this.panel_Params.Controls.Add(this.btn_Save);
             this.panel_Params.Controls.Add(this.btn_Delete);
@@ -257,7 +262,8 @@ namespace LightControlNet.UI
             // lbl_Type
             // 
             this.lbl_Type.AutoSize = true;
-            this.lbl_Type.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lbl_Type.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F, System.Drawing.FontStyle.Bold,
+                System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.lbl_Type.Location = new System.Drawing.Point(80, 10);
             this.lbl_Type.Name = "lbl_Type";
             this.lbl_Type.Size = new System.Drawing.Size(48, 25);
@@ -347,17 +353,17 @@ namespace LightControlNet.UI
         private ComboBox cmb_ChannelCount;
         private Label label11;
         private ComboBox cmb_Parity;
-    private Label label10;
-    private ComboBox cmb_StopBits;
-    private Label label9;
-    private ComboBox cmb_DataBits;
-    private Label label8;
-    private ComboBox cmb_BaudRate;
-    private Label label7;
-    private ComboBox cmb_PortName;
-    private Label label6;
-    private CheckBox chk_Enabled;
-    private Label lbl_Type;
+        private Label label10;
+        private ComboBox cmb_StopBits;
+        private Label label9;
+        private ComboBox cmb_DataBits;
+        private Label label8;
+        private ComboBox cmb_BaudRate;
+        private Label label7;
+        private ComboBox cmb_PortName;
+        private Label label6;
+        private CheckBox chk_Enabled;
+        private Label lbl_Type;
         private Label label2;
         private ListBox listBox_Configs;
         private Button btn_Connet;

@@ -46,6 +46,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FgenLightController.cs" />
+    <Compile Include="UI\Frm_FgenTest.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Frm_FgenTest.Designer.cs">
+      <DependentUpon>Frm_FgenTest.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
