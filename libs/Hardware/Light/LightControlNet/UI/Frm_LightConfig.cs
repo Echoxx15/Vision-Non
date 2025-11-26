@@ -35,10 +35,6 @@ public partial class Frm_LightConfig : Form
         InitializeComboBoxes();
 
         RefreshConfigList();
-
-        ConfigureAnchors();
-        ApplyResponsiveLayout();
-        grp_Config.Resize += (_, _) => ApplyResponsiveLayout();
     }
 
     private void InitializeComboBoxes()
@@ -173,7 +169,7 @@ public partial class Frm_LightConfig : Form
         _currentConfig = list[idx];
         LoadConfigToPanel(_currentConfig);
         var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        ShowTestForm(controller?.TestForm);
+        UpdateTestPanelEnabled(controller);
     }
 
     private void LoadConfigToPanel(LightConfig config)
@@ -226,7 +222,6 @@ public partial class Frm_LightConfig : Form
         RefreshConfigList();
 
         var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        ShowTestForm(controller?.TestForm);
         UpdateTestPanelEnabled(controller);
     }
 
@@ -292,24 +287,6 @@ public partial class Frm_LightConfig : Form
 
     private Control _currentTestHost;
 
-    private void ShowTestForm(Form form)
-    {
-        if (_currentTestHost != null)
-        {
-            panel_TestHost.Controls.Remove(_currentTestHost);
-            _currentTestHost.Dispose();
-            _currentTestHost = null;
-        }
-
-        if (form == null) return;
-        form.TopLevel = false;
-        form.FormBorderStyle = FormBorderStyle.None;
-        form.Dock = DockStyle.Fill;
-        panel_TestHost.Controls.Add(form);
-        _currentTestHost = form;
-        form.Show();
-    }
-
     private void UpdateTestPanelEnabled(ILightController controller)
     {
         panel_TestHost.Enabled = controller?.IsConnected ?? false;
@@ -325,7 +302,6 @@ public partial class Frm_LightConfig : Form
 
         var ok = LightFactory.Instance.ConnectController(_currentConfig.Name);
         var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        ShowTestForm(controller?.TestForm);
         UpdateTestPanelEnabled(controller);
         if (!ok)
         {
@@ -342,5 +318,22 @@ public partial class Frm_LightConfig : Form
         UpdateTestPanelEnabled(controller);
         // 更新界面上的端口号，并提示需要点击“打开”
         _currentConfig.PortName = cmb_PortName.Text;
+    }
+
+    private void btn_Test_Click(object sender, EventArgs e)
+    {
+        if (_currentConfig == null)
+        {
+            MessageBox.Show("请先选择配置", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        if (controller == null || !controller.IsConnected)
+        {
+            MessageBox.Show("请先打开连接后再测试", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        using var frm = controller.TestForm;
+        frm.ShowDialog(this);
     }
 }
