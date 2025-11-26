@@ -18,7 +18,7 @@ public class ModbusTcp : CommAdapterBase
     /// <summary>
     /// Modbus 客户端实例
     /// </summary>
-    public ModbusTcpNet ModbusClient { get; private set; }
+    private ModbusTcpNet ModbusClient { get; set; }
 
     // 配置参数
     private string IpAddress { get; set; } = "127.0.0.1";
