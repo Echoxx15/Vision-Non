@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{36061D54-D489-4474-97DE-703DE4FEA48F}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Vision</RootNamespace>
+    <AssemblyName>Vision</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+    <LangVersion>preview</LangVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>YZZN.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'remote|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>\\Desktop-s5706fe\soft\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>preview</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'remote|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\remote\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>preview</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AntdUI, Version=2.1.8.0, Culture=neutral, PublicKeyToken=0e24e5118ea3d6af, processorArchitecture=MSIL">
+      <HintPath>..\packages\AntdUI.2.1.8\lib\net48\AntdUI.dll</HintPath>
+    </Reference>
+    <Reference Include="Cognex.VisionPro, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.Controls, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.Core, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.Display.Controls, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.ImageFile, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Cognex\VisionPro\ReferencedAssemblies\Cognex.VisionPro.ImageFile.dll</HintPath>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.ToolGroup, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Cognex\VisionPro\ReferencedAssemblies\Cognex.VisionPro.ToolGroup.dll</HintPath>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.ToolGroup.Controls, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64" />
+    <Reference Include="HslCommunication, Version=12.5.1.0, Culture=neutral, PublicKeyToken=3d72ad3b6b5ec0e3, processorArchitecture=MSIL">
+      <HintPath>..\packages\HslCommunication.12.5.1\lib\net451\HslCommunication.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Logger, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\libs\Logger\bin\Debug\Logger.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Auth\PermissionManager.cs" />
+    <Compile Include="Auth\RoleHelper.cs" />
+    <Compile Include="Auth\Storage\SqliteDb.cs" />
+    <Compile Include="Auth\UserManager.cs" />
+    <Compile Include="Common\TypeValueUtil.cs" />
+    <Compile Include="Frm\FormComm\CommDeviceModel.cs" />
+    <Compile Include="Frm\FrmHardwareState\Frm_HardwareState.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Frm\FrmHardwareState\Frm_HardwareState.Designer.cs">
+      <DependentUpon>Frm_HardwareState.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\FrmHardwareState\StateItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Frm\FrmHardwareState\StateItem.Designer.cs">
+      <DependentUpon>StateItem.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\Link\Frm_GlobalVal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Link\Frm_GlobalVal.Designer.cs">
+      <DependentUpon>Frm_GlobalVal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Camera2D.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Camera2D.Designer.cs">
+      <DependentUpon>Frm_Camera2D.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_DisplaySet.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_DisplaySet.Designer.cs">
+      <DependentUpon>Frm_DisplaySet.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_File.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_File.Designer.cs">
+      <DependentUpon>Frm_File.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Main.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Main.Designer.cs">
+      <DependentUpon>Frm_Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Splash.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\MainForm\Frm_Splash.Designer.cs">
+      <DependentUpon>Frm_Splash.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\FormComm\Frm_Comm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\FormComm\Frm_Comm.Designer.cs">
+      <DependentUpon>Frm_Comm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_OutputMapping.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_OutputMapping.Designer.cs">
+      <DependentUpon>Frm_OutputMapping.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_StationConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_StationConfig.Designer.cs">
+      <DependentUpon>Frm_StationConfig.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Solutions\Models\StationIOTableInputVarConverter.cs" />
+    <Compile Include="Solutions\Models\StationTriggerValueConverter.cs" />
+    <Compile Include="Frm\Solution\Frm_SolutionList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Solution\Frm_SolutionList.Designer.cs">
+      <DependentUpon>Frm_SolutionList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_Tool.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Station\Frm_Tool.Designer.cs">
+      <DependentUpon>Frm_Tool.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Login.Designer.cs">
+      <DependentUpon>Frm_Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Register.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Register.Designer.cs">
+      <DependentUpon>Frm_Register.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Permission.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\User\Frm_Permission.Designer.cs">
+      <DependentUpon>Frm_Permission.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Infrastructure\AssemblyResolver.cs" />
+    <Compile Include="LightSource\FgenLightController.cs" />
+    <Compile Include="LightSource\ILightController.cs" />
+    <Compile Include="LightSource\LightModels.cs" />
+    <Compile Include="LightSource\LightSourceManager.cs" />
+    <Compile Include="Localization\LocalizationManager.cs" />
+    <Compile Include="Manager\CameraManager\CameraConfig.cs" />
+    <Compile Include="Manager\CameraManager\CameraManager.cs" />
+    <Compile Include="Manager\PluginServer\CameraPluginServer.cs" />
+    <Compile Include="Manager\PluginServer\PluginInfo.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SaveImage\ImageSaver.cs" />
+    <Compile Include="Settings\FileSettings.cs" />
+    <Compile Include="Solutions\Models\CameraModels.cs" />
+    <Compile Include="Solutions\Models\DisplayModels.cs" />
+    <Compile Include="Solutions\Models\DLModelLoader.cs" />
+    <Compile Include="Solutions\Models\DLRuntime.cs" />
+    <Compile Include="Solutions\Models\StationConfig.cs" />
+    <Compile Include="Solutions\Models\SolutionModels.cs" />
+    <Compile Include="Solutions\TaskFlow\TaskFlowManager.cs" />
+    <Compile Include="Solutions\TaskFlow\TaskFlow.cs" />
+    <Compile Include="Solutions\WorkFlow\SystemStateManager.cs" />
+    <Compile Include="UserUI\ImageDisplay.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserUI\ImageDisplay.Designer.cs">
+      <DependentUpon>ImageDisplay.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserUI\MaxDisplay.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UserUI\MaxDisplay.Designer.cs">
+      <DependentUpon>MaxDisplay.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserUI\uAddValueCollection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserUI\uAddValueCollection.Designer.cs">
+      <DependentUpon>uAddValueCollection.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Frm\FrmHardwareState\Frm_HardwareState.resx">
+      <DependentUpon>Frm_HardwareState.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\FrmHardwareState\StateItem.resx">
+      <DependentUpon>StateItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\Link\Frm_GlobalVal.resx">
+      <DependentUpon>Frm_GlobalVal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_Camera2D.resx">
+      <DependentUpon>Frm_Camera2D.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_DisplaySet.resx">
+      <DependentUpon>Frm_DisplaySet.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_File.resx">
+      <DependentUpon>Frm_File.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_Main.en-US.resx">
+      <DependentUpon>Frm_Main.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_Main.resx">
+      <DependentUpon>Frm_Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\MainForm\Frm_Splash.resx">
+      <DependentUpon>Frm_Splash.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\FormComm\Frm_Comm.resx">
+      <DependentUpon>Frm_Comm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\Station\Frm_StationConfig.resx">
+      <DependentUpon>Frm_StationConfig.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\Solution\Frm_SolutionList.resx">
+      <DependentUpon>Frm_SolutionList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\Station\Frm_Tool.resx">
+      <DependentUpon>Frm_Tool.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\User\Frm_Permission.resx">
+      <DependentUpon>Frm_Permission.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\User\Frm_Login.resx">
+      <DependentUpon>Frm_Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Frm\User\Frm_Register.resx">
+      <DependentUpon>Frm_Register.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\licenses.licx" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserUI\ImageDisplay.resx">
+      <DependentUpon>ImageDisplay.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserUI\MaxDisplay.resx">
+      <DependentUpon>MaxDisplay.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserUI\uAddValueCollection.resx">
+      <DependentUpon>uAddValueCollection.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="NLog.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 �� x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="YZZN.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="Solutions\Models\Converters\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\libs\Hardware\Camera\HardwareCameraNet\HardwareCameraNet.csproj">
+      <Project>{02d11c38-cc51-4ba5-ac42-c5091b86abbb}</Project>
+      <Name>HardwareCameraNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libs\Hardware\Communication\HardwareCommNet\HardwareCommNet.csproj">
+      <Project>{0eae8ed3-2b63-46ca-b4ca-c8c94a7ec6a4}</Project>
+      <Name>HardwareCommNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libs\Hardware\Light\LightControlNet\LightControlNet.csproj">
+      <Project>{575aa0d3-08f5-44df-ade1-6ed39ada9e1e}</Project>
+      <Name>LightControlNet</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

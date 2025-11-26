@@ -1,0 +1,17 @@
+<Project>
+  <!-- Global WinForms references (for all projects) to satisfy System.Drawing/System.Windows.Forms types -->
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <!-- Vision app references LightControlNet project (path relative to Vision project dir) -->
+  <ItemGroup Condition="'$(MSBuildProjectName)'=='Vision'">
+    <ProjectReference Include="..\..\项目依赖\LightControlNet\LightControlNet\LightControlNet.csproj" />
+  </ItemGroup>
+
+  <!-- Make ModbusControlNet able to use FormModbus from HslCommunicationDemo -->
+  <ItemGroup Condition="'$(MSBuildProjectName)'=='ModbusControlNet'">
+    <ProjectReference Include="..\..\..\连接测试工具\HslCommunication-master\HslCommunicationDemo\HslCommunicationDemo.csproj" />
+  </ItemGroup>
+</Project>
