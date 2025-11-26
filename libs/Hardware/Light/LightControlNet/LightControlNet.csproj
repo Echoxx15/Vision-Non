@@ -52,7 +52,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FgenLightController.cs" />
     <Compile Include="LightManufacturerAttribute.cs" />
     <Compile Include="LightPluginServer.cs" />
     <Compile Include="LightManager.cs" />
