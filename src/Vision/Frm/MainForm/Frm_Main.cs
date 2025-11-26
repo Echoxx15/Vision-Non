@@ -20,6 +20,7 @@ using Vision.Solutions.Models;
 using Vision.Solutions.TaskFlow;
 using Vision.Solutions.WorkFlow;
 using Vision.UI; // 添加 ImageDisplay 的命名空间
+using LightControlNet;
 
 // 界面工厂
 
@@ -176,6 +177,10 @@ public partial class Frm_Main : Form
     splash.SetProgress(20, "正在加载通讯插件...");
     HardwareCommNet.CommPluginServer.Instance.LoadPlugins();
     HardwareCommNet.CommunicationFactory.Instance.Initialize();
+
+    // 2.8 加载光源插件（支持多品牌光源控制器）
+    splash.SetProgress(25, "正在加载光源插件...");
+    LightHost.Initialize();
 
     // 3. 加载所有解决方案（从配置文件读取）
     splash.SetProgress(40, "正在加载解决方案列表...");
@@ -1210,6 +1215,8 @@ public partial class Frm_Main : Form
 
   private void tsm_LightControl_Click(object sender, EventArgs e)
   {
+    using var frm = LightHost.ConfigForm;
+    frm.ShowDialog(this);
   }
 
 }
