@@ -2,6 +2,7 @@
 using System;
 using System.IO.Ports;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace LightControlNet.UI;
 
@@ -25,7 +26,9 @@ public partial class Frm_LightConfig : Form
         btn_Delete.Click += Btn_Delete_Click;
         btn_Save.Click += btn_Save_Click;
         btn_AddFgen.Click += btn_AddFgen_Click;
-        tsm_Fugen.Click += tsm_Fugen_Click;
+
+        btn_AddFgen.Text = "添加";
+        PopulateAddMenuItems();
 
         InitializeComboBoxes();
 
@@ -179,13 +182,26 @@ public partial class Frm_LightConfig : Form
         RefreshConfigList();
     }
 
-    private void tsm_Fugen_Click(object sender, EventArgs e)
+    private void PopulateAddMenuItems()
     {
-        // 新建一个孚根配置并交给工厂管理
+        contextMenuStrip1.Items.Clear();
+        foreach (var t in LightPluginServer.Instance.GetLoadedPluginTypes())
+        {
+            var attr = t.GetCustomAttribute<LightManufacturerAttribute>();
+            if (attr == null) continue;
+            var lt = attr.Type;
+            var item = new ToolStripMenuItem(attr.ManufacturerName);
+            item.Click += (s, e) => AddByType(lt);
+            contextMenuStrip1.Items.Add(item);
+        }
+    }
+
+    private void AddByType(LightControllerType type)
+    {
         var cfg = new LightConfig
         {
-            Name = LightFactory.Instance.Configs.GenerateUniqueName(LightControllerType.Fgen),
-            Type = LightControllerType.Fgen,
+            Name = LightFactory.Instance.Configs.GenerateUniqueName(type),
+            Type = type,
             Enabled = true,
             PortName = "COM1",
             BaudRate = 9600,
@@ -198,7 +214,6 @@ public partial class Frm_LightConfig : Form
         LightFactory.Instance.AddConfig(cfg);
         RefreshConfigList();
 
-        //选中新添加项
         var idx = LightFactory.Instance.Configs.Configs.FindIndex(c => c.Name == cfg.Name);
         if (idx >= 0) listBox_Configs.SelectedIndex = idx;
     }
@@ -210,7 +225,8 @@ public partial class Frm_LightConfig : Form
 
     private void btn_AddFgen_Click(object sender, EventArgs e)
     {
-        // 与右键菜单相同：添加一个孚根控制器配置
-        tsm_Fugen_Click(sender, e);
+        PopulateAddMenuItems();
+        var pt = btn_AddFgen.PointToScreen(new System.Drawing.Point(0, btn_AddFgen.Height));
+        contextMenuStrip1.Show(pt);
     }
 }

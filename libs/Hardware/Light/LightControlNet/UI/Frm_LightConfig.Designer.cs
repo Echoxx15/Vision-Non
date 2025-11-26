@@ -69,15 +69,14 @@ namespace LightControlNet.UI
             this.btn_AddFgen.Name = "btn_AddFgen";
             this.btn_AddFgen.Size = new System.Drawing.Size(121, 34);
             this.btn_AddFgen.TabIndex = 1;
-            this.btn_AddFgen.Text = "Ìí¼Ó¿ØÖÆÆ÷";
+            this.btn_AddFgen.Text = "ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ï¿½ï¿½";
             this.btn_AddFgen.UseVisualStyleBackColor = true;
             this.btn_AddFgen.Click += new System.EventHandler(this.btn_AddFgen_Click);
             // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsm_Fugen});
+            this.contextMenuStrip1.Items.Clear();
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(171, 34);
             // 
@@ -85,8 +84,8 @@ namespace LightControlNet.UI
             // 
             this.tsm_Fugen.Name = "tsm_Fugen";
             this.tsm_Fugen.Size = new System.Drawing.Size(170, 30);
-            this.tsm_Fugen.Text = "æÚ¸ù¿ØÖÆÆ÷";
-            this.tsm_Fugen.Click += new System.EventHandler(this.tsm_Fugen_Click);
+            this.tsm_Fugen.Text = "ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
+            
             // 
             // btn_Delete
             // 
@@ -95,7 +94,7 @@ namespace LightControlNet.UI
             this.btn_Delete.Name = "btn_Delete";
             this.btn_Delete.Size = new System.Drawing.Size(108, 34);
             this.btn_Delete.TabIndex = 3;
-            this.btn_Delete.Text = "É¾³ý";
+            this.btn_Delete.Text = "É¾ï¿½ï¿½";
             this.btn_Delete.UseVisualStyleBackColor = true;
             // 
             // btn_Save
@@ -105,7 +104,7 @@ namespace LightControlNet.UI
             this.btn_Save.Name = "btn_Save";
             this.btn_Save.Size = new System.Drawing.Size(108, 37);
             this.btn_Save.TabIndex = 4;
-            this.btn_Save.Text = "±£´æÅäÖÃ";
+            this.btn_Save.Text = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
             this.btn_Save.UseVisualStyleBackColor = true;
             this.btn_Save.Click += new System.EventHandler(this.btn_Save_Click);
             // 
@@ -138,7 +137,7 @@ namespace LightControlNet.UI
             this.grp_Config.Size = new System.Drawing.Size(1020, 318);
             this.grp_Config.TabIndex = 8;
             this.grp_Config.TabStop = false;
-            this.grp_Config.Text = "ÅäÖÃÏêÇé";
+            this.grp_Config.Text = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
             // 
             // btn_Connet
             // 
@@ -146,7 +145,7 @@ namespace LightControlNet.UI
             this.btn_Connet.Name = "btn_Connet";
             this.btn_Connet.Size = new System.Drawing.Size(111, 29);
             this.btn_Connet.TabIndex = 47;
-            this.btn_Connet.Text = "Á¬½Ó";
+            this.btn_Connet.Text = "ï¿½ï¿½ï¿½ï¿½";
             this.btn_Connet.UseVisualStyleBackColor = true;
             // 
             // listBox_Configs
@@ -175,7 +174,7 @@ namespace LightControlNet.UI
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(98, 18);
             this.label11.TabIndex = 44;
-            this.label11.Text = "Í¨µÀÊýÁ¿£º";
+            this.label11.Text = "Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
             // 
             // cmb_Parity
             // 
@@ -193,7 +192,7 @@ namespace LightControlNet.UI
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(80, 18);
             this.label10.TabIndex = 42;
-            this.label10.Text = "Ð£ÑéÎ»£º";
+            this.label10.Text = "Ð£ï¿½ï¿½Î»ï¿½ï¿½";
             // 
             // cmb_StopBits
             // 
@@ -211,7 +210,7 @@ namespace LightControlNet.UI
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(80, 18);
             this.label9.TabIndex = 40;
-            this.label9.Text = "Í£Ö¹Î»£º";
+            this.label9.Text = "Í£Ö¹Î»ï¿½ï¿½";
             // 
             // cmb_DataBits
             // 
@@ -229,7 +228,7 @@ namespace LightControlNet.UI
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(80, 18);
             this.label8.TabIndex = 38;
-            this.label8.Text = "Êý¾ÝÎ»£º";
+            this.label8.Text = "ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½";
             // 
             // cmb_BaudRate
             // 
@@ -247,7 +246,7 @@ namespace LightControlNet.UI
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(80, 18);
             this.label7.TabIndex = 36;
-            this.label7.Text = "²¨ÌØÂÊ£º";
+            this.label7.Text = "ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½";
             // 
             // cmb_PortName
             // 
@@ -265,7 +264,7 @@ namespace LightControlNet.UI
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(80, 18);
             this.label6.TabIndex = 34;
-            this.label6.Text = "´®¿ÚºÅ£º";
+            this.label6.Text = "ï¿½ï¿½ï¿½ÚºÅ£ï¿½";
             // 
             // chk_Enabled
             // 
@@ -276,7 +275,7 @@ namespace LightControlNet.UI
             this.chk_Enabled.Name = "chk_Enabled";
             this.chk_Enabled.Size = new System.Drawing.Size(70, 22);
             this.chk_Enabled.TabIndex = 33;
-            this.chk_Enabled.Text = "ÆôÓÃ";
+            this.chk_Enabled.Text = "ï¿½ï¿½ï¿½ï¿½";
             this.chk_Enabled.UseVisualStyleBackColor = true;
             // 
             // lbl_Type
@@ -287,7 +286,7 @@ namespace LightControlNet.UI
             this.lbl_Type.Name = "lbl_Type";
             this.lbl_Type.Size = new System.Drawing.Size(102, 25);
             this.lbl_Type.TabIndex = 28;
-            this.lbl_Type.Text = "æÚ¸ù¿ØÖÆÆ÷";
+            this.lbl_Type.Text = "ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½";
             // 
             // label2
             // 
@@ -296,7 +295,7 @@ namespace LightControlNet.UI
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(62, 18);
             this.label2.TabIndex = 27;
-            this.label2.Text = "ÀàÐÍ£º";
+            this.label2.Text = "ï¿½ï¿½ï¿½Í£ï¿½";
             // 
             // Frm_LightConfig
             // 
@@ -310,7 +309,7 @@ namespace LightControlNet.UI
             this.MinimizeBox = false;
             this.Name = "Frm_LightConfig";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "¹âÔ´ÅäÖÃ";
+            this.Text = "ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½";
             this.contextMenuStrip1.ResumeLayout(false);
             this.grp_Config.ResumeLayout(false);
             this.grp_Config.PerformLayout();
