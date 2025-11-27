@@ -158,6 +158,25 @@ public partial class Frm_StationConfig : Form
     LogHelper.Error(ex, $"[工位配置] 重新绑定工位[{st.Name}]通讯触发失败");
    }
   }
+  // ✅ 监听光源亮度与通道配置变化，立即写入亮度
+  else if (label == "Brightness1" || label == "亮度1" || label == "Brightness2" || label == "亮度2" || label == "Channel1" || label == "通道1" || label == "Channel2" || label == "通道2" || label == "LightConfigName" || label == "光源配置")
+  {
+   try
+   {
+    var lc = st.LightControl;
+    if (lc != null && lc.EnableLightControl && !string.IsNullOrWhiteSpace(lc.LightConfigName))
+    {
+     Vision.LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel1, lc.Brightness1);
+     if (lc.IsMultiChannel)
+      Vision.LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel2, lc.Brightness2);
+     LogHelper.Info($"[工位配置] 工位[{st.Name}]亮度已写入: {lc.LightConfigName}");
+    }
+   }
+   catch (Exception ex)
+   {
+    LogHelper.Error(ex, $"[工位配置] 工位[{st.Name}]写入亮度失败");
+   }
+  }
  }
 
  private void HandleModelConfigChanged(StationConfig st, string changedProperty)

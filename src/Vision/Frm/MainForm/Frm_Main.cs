@@ -21,6 +21,7 @@ using Vision.Solutions.TaskFlow;
 using Vision.Solutions.WorkFlow;
 using Vision.UI; // 添加 ImageDisplay 的命名空间
 using LightControlNet;
+using Vision.LightSource;
 
 // 界面工厂
 
@@ -181,6 +182,11 @@ public partial class Frm_Main : Form
     // 2.8 加载光源插件（支持多品牌光源控制器）
     splash.SetProgress(25, "正在加载光源插件...");
     LightHost.Initialize();
+    try { LightSourceManager.Instance.InitializeFromSolution(SolutionManager.Instance.Current); }
+    catch
+    {
+      // ignored
+    }
 
     // 3. 加载所有解决方案（从配置文件读取）
     splash.SetProgress(40, "正在加载解决方案列表...");
@@ -1004,15 +1010,27 @@ public partial class Frm_Main : Form
   /// 
   /// 功能：
   /// 1. 释放相机资源
-  /// 2. 释放定时器资源
-  /// 3. 释放性能计数器资源
+  /// 2. 释放光源控制器资源
+  /// 3. 释放定时器资源
+  /// 4. 释放性能计数器资源
   /// </summary>
   private void Frm_Main_FormClosed(object sender, FormClosedEventArgs e)
   {
     // 1. 释放所有相机
     CameraManager.Instance.UnInitialize();
 
-    // 2. 释放状态栏定时器
+    // 2. 释放所有光源控制器（先关闭所有通道）
+    try
+    {
+      LightFactory.Instance.Dispose();
+      LogHelper.Info("光源控制器资源已释放");
+    }
+    catch (Exception ex)
+    {
+      LogHelper.Error(ex, "释放光源控制器失败");
+    }
+
+    // 3. 释放状态栏定时器
     try
     {
       _statusTimer?.Stop();
@@ -1022,7 +1040,7 @@ public partial class Frm_Main : Form
     {
     }
 
-    // 3. 释放CPU计数器
+    // 4. 释放CPU计数器
     try
     {
       _cpuCounter?.Dispose();
@@ -1031,7 +1049,7 @@ public partial class Frm_Main : Form
     {
     }
 
-    // 4. 释放空闲检测定时器
+    // 5. 释放空闲检测定时器
     try
     {
       _idleTimer?.Stop();

@@ -2,6 +2,7 @@
 using System;
 using System.Windows.Forms;
 using System.Reflection;
+using System.Drawing;
 using static System.IO.Ports.SerialPort;
 
 namespace LightControlNet.UI;
@@ -23,18 +24,30 @@ public partial class Frm_LightConfig : Form
     private void InitializeForm()
     {
         listBox_Configs.SelectedIndexChanged += ListBox_Configs_SelectedIndexChanged;
-        btn_Delete.Click += Btn_Delete_Click;
         btn_Save.Click += btn_Save_Click;
-        btn_AddFgen.Click += btn_AddFgen_Click;
         btn_Connet.Click += btn_Connet_Click;
         cmb_PortName.SelectedIndexChanged += cmb_PortName_SelectedIndexChanged;
 
-        btn_AddFgen.Text = "添加";
+        // ✅ 窗体显示时刷新连接状态
+        this.Shown += Frm_LightConfig_Shown;
+
         PopulateAddMenuItems();
 
         InitializeComboBoxes();
 
         RefreshConfigList();
+    }
+
+    /// <summary>
+    /// 窗体显示时更新所有配置的连接状态
+    /// </summary>
+    private void Frm_LightConfig_Shown(object sender, EventArgs e)
+    {
+        // 刷新当前选中配置的连接状态
+        if (_currentConfig != null)
+        {
+            UpdateConnectButtonState();
+        }
     }
 
     private void InitializeComboBoxes()
@@ -62,42 +75,6 @@ public partial class Frm_LightConfig : Form
         cmb_ChannelCount.Items.Clear();
         cmb_ChannelCount.Items.AddRange([2, 4, 8]);
         cmb_ChannelCount.SelectedItem = 4;
-    }
-
-    private void ConfigureAnchors()
-    {
-        listBox_Configs.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-        panel_TestHost.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-        cmb_PortName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        cmb_BaudRate.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        cmb_StopBits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        cmb_DataBits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        cmb_Parity.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        cmb_ChannelCount.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-    }
-
-    private void ApplyResponsiveLayout()
-    {
-        var g = grp_Config.ClientSize;
-        int margin = 10;
-        int leftWidth = (int)(g.Width * 0.25);
-        int rightWidth = (int)(g.Width * 0.40);
-        int centerWidth = g.Width - leftWidth - rightWidth - margin * 4;
-
-        listBox_Configs.Width = leftWidth - margin * 2;
-        listBox_Configs.Left = margin;
-        listBox_Configs.Top = margin;
-        listBox_Configs.Height = g.Height - margin * 2;
-
-        panel_Params.Width = centerWidth;
-        panel_Params.Left = listBox_Configs.Right + margin;
-        panel_Params.Top = margin;
-        panel_Params.Height = g.Height - margin * 2;
-
-        panel_TestHost.Width = rightWidth;
-        panel_TestHost.Left = g.Width - rightWidth - margin;
-        panel_TestHost.Top = margin;
-        panel_TestHost.Height = g.Height - margin * 2;
     }
 
     private void RefreshConfigList()
@@ -133,27 +110,6 @@ public partial class Frm_LightConfig : Form
         }
     }
 
-    private void Btn_Delete_Click(object sender, EventArgs e)
-    {
-        if (_currentConfig == null)
-        {
-            MessageBox.Show("请先选择要删除的配置", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return;
-        }
-
-        var result = MessageBox.Show($"确认删除配置 [{_currentConfig.Name}] ?",
-            "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (result == DialogResult.Yes)
-        {
-            if (LightFactory.Instance.RemoveConfig(_currentConfig.Name))
-            {
-                LogHelper.Info($"已删除光源配置[{_currentConfig.Name}]");
-            }
-            _currentConfig = null;
-            RefreshConfigList();
-        }
-    }
-
     private void ListBox_Configs_SelectedIndexChanged(object sender, EventArgs e)
     {
         var idx = listBox_Configs.SelectedIndex;
@@ -168,8 +124,6 @@ public partial class Frm_LightConfig : Form
 
         _currentConfig = list[idx];
         LoadConfigToPanel(_currentConfig);
-        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        UpdateTestPanelEnabled(controller);
     }
 
     private void LoadConfigToPanel(LightConfig config)
@@ -188,6 +142,9 @@ public partial class Frm_LightConfig : Form
         cmb_Parity.SelectedItem = config.Parity;
         cmb_ChannelCount.SelectedItem = config.ChannelCount;
         lbl_Type.Text = config.Type.ToString();
+
+        // ✅ 更新连接按钮状态
+        UpdateConnectButtonState();
     }
 
     private void ClearConfigPanel()
@@ -200,6 +157,44 @@ public partial class Frm_LightConfig : Form
         cmb_Parity.SelectedItem = "None";
         cmb_ChannelCount.SelectedItem = 4;
         lbl_Type.Text = "-";
+
+        // ✅ 重置连接按钮状态
+        UpdateConnectButtonState();
+    }
+
+    /// <summary>
+    /// 更新连接按钮的显示状态
+    /// 未连接：红色背景，显示"打开串口"
+    /// 已连接：绿色背景，显示"断开串口"
+    /// </summary>
+    private void UpdateConnectButtonState()
+    {
+        if (_currentConfig == null)
+        {
+            btn_Connet.Text = "打开串口";
+            btn_Connet.BackColor = Color.LightCoral;
+            btn_Connet.ForeColor = Color.White;
+            btn_Connet.Enabled = false;
+            return;
+        }
+
+        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
+        var isConnected = controller != null && controller.IsConnected;
+
+        if (isConnected)
+        {
+            btn_Connet.Text = "断开串口";
+            btn_Connet.BackColor = Color.LimeGreen;
+            btn_Connet.ForeColor = Color.White;
+        }
+        else
+        {
+            btn_Connet.Text = "打开串口";
+            btn_Connet.BackColor = Color.LightCoral;
+            btn_Connet.ForeColor = Color.White;
+        }
+
+        btn_Connet.Enabled = true;
     }
 
     private void SavePanelToConfig()
@@ -215,14 +210,15 @@ public partial class Frm_LightConfig : Form
         _currentConfig.Parity = cmb_Parity.SelectedItem?.ToString() ?? "None";
         _currentConfig.ChannelCount = (int)cmb_ChannelCount.SelectedItem;
 
-        //通过工厂更新与保存，并重建对应控制器
+        // 通过工厂更新与保存（只保存配置文件，不影响连接状态）
         LightFactory.Instance.UpdateConfig(_currentConfig);
         LogHelper.Info($"已保存光源配置[{_currentConfig.Name}]");
 
+        // ✅ 刷新配置列表（更新显示状态）
         RefreshConfigList();
-
-        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        UpdateTestPanelEnabled(controller);
+        
+        // ✅ 保存后确认按钮状态仍然正确（虽然连接状态不变，但确保UI同步）
+        UpdateConnectButtonState();
     }
 
     private void PopulateAddMenuItems()
@@ -278,20 +274,10 @@ public partial class Frm_LightConfig : Form
         SavePanelToConfig();
     }
 
-    private void btn_AddFgen_Click(object sender, EventArgs e)
-    {
-        PopulateAddMenuItems();
-        var pt = btn_AddFgen.PointToScreen(new System.Drawing.Point(0, btn_AddFgen.Height));
-        contextMenuStrip1.Show(pt);
-    }
-
-    private Control _currentTestHost;
-
-    private void UpdateTestPanelEnabled(ILightController controller)
-    {
-        panel_TestHost.Enabled = controller?.IsConnected ?? false;
-    }
-
+    /// <summary>
+    /// 打开/断开按钮点击事件
+    /// 功能：根据当前连接状态切换连接或断开
+    /// </summary>
     private void btn_Connet_Click(object sender, EventArgs e)
     {
         if (_currentConfig == null)
@@ -300,12 +286,42 @@ public partial class Frm_LightConfig : Form
             return;
         }
 
-        var ok = LightFactory.Instance.ConnectController(_currentConfig.Name);
         var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        UpdateTestPanelEnabled(controller);
-        if (!ok)
+        var isConnected = controller != null && controller.IsConnected;
+
+        try
         {
-            MessageBox.Show("打开失败，请检查串口参数与硬件连接", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (isConnected)
+            {
+                // ✅ 当前已连接，执行断开操作
+                LightFactory.Instance.DisconnectController(_currentConfig.Name);
+                LogHelper.Info($"光源控制器[{_currentConfig.Name}]已断开");
+                MessageBox.Show("断开成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                // ✅ 当前未连接，执行打开操作
+                var ok = LightFactory.Instance.ConnectController(_currentConfig.Name);
+                if (ok)
+                {
+                    LogHelper.Info($"光源控制器[{_currentConfig.Name}]已连接");
+                    MessageBox.Show("打开成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("打开失败，请检查串口参数与硬件连接", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"光源控制器[{_currentConfig.Name}]连接操作失败");
+            MessageBox.Show($"操作失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            // ✅ 更新按钮状态
+            UpdateConnectButtonState();
         }
     }
 
@@ -314,10 +330,11 @@ public partial class Frm_LightConfig : Form
         if (_currentConfig == null) return;
         // 断开当前连接
         LightFactory.Instance.DisconnectController(_currentConfig.Name);
-        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        UpdateTestPanelEnabled(controller);
-        // 更新界面上的端口号，并提示需要点击“打开”
+        // 更新界面上的端口号，并提示需要点击"打开"
         _currentConfig.PortName = cmb_PortName.Text;
+
+        // ✅ 更新按钮状态（断开后应显示为"打开"）
+        UpdateConnectButtonState();
     }
 
     private void btn_Test_Click(object sender, EventArgs e)
@@ -335,5 +352,33 @@ public partial class Frm_LightConfig : Form
         }
         using var frm = controller.TestForm;
         frm.ShowDialog(this);
+    }
+
+    private void btn_Add_Click(object sender, EventArgs e)
+    {
+        PopulateAddMenuItems();
+        var pt = btn_Add.PointToScreen(new System.Drawing.Point(0, btn_Add.Height));
+        contextMenuStrip1.Show(pt);
+    }
+
+    private void btn_Remove_Click(object sender, EventArgs e)
+    {
+        if (_currentConfig == null)
+        {
+            MessageBox.Show("请先选择要删除的配置", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var result = MessageBox.Show($"确认删除配置 [{_currentConfig.Name}] ?",
+            "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        if (result == DialogResult.Yes)
+        {
+            if (LightFactory.Instance.RemoveConfig(_currentConfig.Name))
+            {
+                LogHelper.Info($"已删除光源配置[{_currentConfig.Name}]");
+            }
+            _currentConfig = null;
+            RefreshConfigList();
+        }
     }
 }

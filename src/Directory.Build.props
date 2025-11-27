@@ -7,11 +7,11 @@
 
   <!-- Vision app references LightControlNet project (path relative to Vision project dir) -->
   <ItemGroup Condition="'$(MSBuildProjectName)'=='Vision'">
-    <ProjectReference Include="..\..\ÏîÄ¿ÒÀÀµ\LightControlNet\LightControlNet\LightControlNet.csproj" />
+    <ProjectReference Include="..\..\libs\Hardware\Light\LightControlNet\LightControlNet.csproj" />
   </ItemGroup>
 
   <!-- Make ModbusControlNet able to use FormModbus from HslCommunicationDemo -->
   <ItemGroup Condition="'$(MSBuildProjectName)'=='ModbusControlNet'">
-    <ProjectReference Include="..\..\..\Á¬½Ó²âÊÔ¹¤¾ß\HslCommunication-master\HslCommunicationDemo\HslCommunicationDemo.csproj" />
+    <ProjectReference Include="..\..\..\ï¿½ï¿½ï¿½Ó²ï¿½ï¿½Ô¹ï¿½ï¿½ï¿½\HslCommunication-master\HslCommunicationDemo\HslCommunicationDemo.csproj" />
   </ItemGroup>
 </Project>

@@ -11,12 +11,8 @@ namespace LightControlNet.UI
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-
-        private System.Windows.Forms.Button btn_AddFgen;
-        private System.Windows.Forms.Button btn_Delete;
         private System.Windows.Forms.Button btn_Save;
         private System.Windows.Forms.GroupBox grp_Config;
-        private System.Windows.Forms.Panel panel_TestHost;
         private System.Windows.Forms.Panel panel_Params;
         private System.Windows.Forms.Button btn_Test;
 
@@ -38,14 +34,14 @@ namespace LightControlNet.UI
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.btn_AddFgen = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsm_Fugen = new System.Windows.Forms.ToolStripMenuItem();
-            this.btn_Delete = new System.Windows.Forms.Button();
             this.btn_Save = new System.Windows.Forms.Button();
             this.grp_Config = new System.Windows.Forms.GroupBox();
-            this.panel_TestHost = new System.Windows.Forms.Panel();
+            this.btn_Remove = new AntdUI.Button();
+            this.btn_Add = new AntdUI.Button();
             this.panel_Params = new System.Windows.Forms.Panel();
+            this.btn_Test = new System.Windows.Forms.Button();
             this.btn_Connet = new System.Windows.Forms.Button();
             this.cmb_StopBits = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -67,18 +63,6 @@ namespace LightControlNet.UI
             this.panel_Params.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btn_AddFgen
-            // 
-            this.btn_AddFgen.ContextMenuStrip = this.contextMenuStrip1;
-            this.btn_AddFgen.Location = new System.Drawing.Point(440, 92);
-            this.btn_AddFgen.Margin = new System.Windows.Forms.Padding(4);
-            this.btn_AddFgen.Name = "btn_AddFgen";
-            this.btn_AddFgen.Size = new System.Drawing.Size(100, 34);
-            this.btn_AddFgen.TabIndex = 1;
-            this.btn_AddFgen.Text = "添加";
-            this.btn_AddFgen.UseVisualStyleBackColor = true;
-            this.btn_AddFgen.Click += new System.EventHandler(this.btn_AddFgen_Click);
-            // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
@@ -91,19 +75,9 @@ namespace LightControlNet.UI
             this.tsm_Fugen.Size = new System.Drawing.Size(170, 30);
             this.tsm_Fugen.Text = "孚根控制器";
             // 
-            // btn_Delete
-            // 
-            this.btn_Delete.Location = new System.Drawing.Point(440, 134);
-            this.btn_Delete.Margin = new System.Windows.Forms.Padding(4);
-            this.btn_Delete.Name = "btn_Delete";
-            this.btn_Delete.Size = new System.Drawing.Size(100, 34);
-            this.btn_Delete.TabIndex = 3;
-            this.btn_Delete.Text = "删除";
-            this.btn_Delete.UseVisualStyleBackColor = true;
-            // 
             // btn_Save
             // 
-            this.btn_Save.Location = new System.Drawing.Point(440, 176);
+            this.btn_Save.Location = new System.Drawing.Point(440, 172);
             this.btn_Save.Margin = new System.Windows.Forms.Padding(4);
             this.btn_Save.Name = "btn_Save";
             this.btn_Save.Size = new System.Drawing.Size(108, 37);
@@ -114,7 +88,8 @@ namespace LightControlNet.UI
             // 
             // grp_Config
             // 
-            this.grp_Config.Controls.Add(this.panel_TestHost);
+            this.grp_Config.Controls.Add(this.btn_Remove);
+            this.grp_Config.Controls.Add(this.btn_Add);
             this.grp_Config.Controls.Add(this.panel_Params);
             this.grp_Config.Controls.Add(this.listBox_Configs);
             this.grp_Config.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -122,37 +97,47 @@ namespace LightControlNet.UI
             this.grp_Config.Margin = new System.Windows.Forms.Padding(4);
             this.grp_Config.Name = "grp_Config";
             this.grp_Config.Padding = new System.Windows.Forms.Padding(4);
-            this.grp_Config.Size = new System.Drawing.Size(1225, 380);
+            this.grp_Config.Size = new System.Drawing.Size(796, 380);
             this.grp_Config.TabIndex = 8;
             this.grp_Config.TabStop = false;
             this.grp_Config.Text = "光源配置";
             // 
-            // panel_TestHost
+            // btn_Remove
             // 
-            this.panel_TestHost.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel_TestHost.Location = new System.Drawing.Point(792, 20);
-            this.panel_TestHost.Name = "panel_TestHost";
-            this.panel_TestHost.Size = new System.Drawing.Size(423, 336);
-            this.panel_TestHost.TabIndex = 48;
+            this.btn_Remove.ContextMenuStrip = this.contextMenuStrip1;
+            this.btn_Remove.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btn_Remove.Location = new System.Drawing.Point(124, 301);
+            this.btn_Remove.Name = "btn_Remove";
+            this.btn_Remove.RespondRealAreas = true;
+            this.btn_Remove.Shape = AntdUI.TShape.Circle;
+            this.btn_Remove.Size = new System.Drawing.Size(75, 55);
+            this.btn_Remove.TabIndex = 51;
+            this.btn_Remove.Text = "-";
+            this.btn_Remove.Type = AntdUI.TTypeMini.Error;
+            this.btn_Remove.Click += new System.EventHandler(this.btn_Remove_Click);
+            // 
+            // btn_Add
+            // 
+            this.btn_Add.ContextMenuStrip = this.contextMenuStrip1;
+            this.btn_Add.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btn_Add.Location = new System.Drawing.Point(17, 301);
+            this.btn_Add.Name = "btn_Add";
+            this.btn_Add.RespondRealAreas = true;
+            this.btn_Add.Shape = AntdUI.TShape.Circle;
+            this.btn_Add.Size = new System.Drawing.Size(75, 55);
+            this.btn_Add.TabIndex = 50;
+            this.btn_Add.Text = "+";
+            this.btn_Add.Type = AntdUI.TTypeMini.Info;
+            this.btn_Add.Click += new System.EventHandler(this.btn_Add_Click);
             // 
             // panel_Params
             // 
             this.panel_Params.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_Test = new System.Windows.Forms.Button();
-            this.btn_Test.Location = new System.Drawing.Point(440, 87);
-            this.btn_Test.Name = "btn_Test";
-            this.btn_Test.Size = new System.Drawing.Size(100, 29);
-            this.btn_Test.TabIndex = 50;
-            this.btn_Test.Text = "测试";
-            this.btn_Test.UseVisualStyleBackColor = true;
             this.panel_Params.Controls.Add(this.btn_Test);
             this.panel_Params.Controls.Add(this.btn_Connet);
             this.panel_Params.Controls.Add(this.btn_Save);
-            this.panel_Params.Controls.Add(this.btn_Delete);
-            this.panel_Params.Controls.Add(this.btn_AddFgen);
             this.panel_Params.Controls.Add(this.cmb_StopBits);
             this.panel_Params.Controls.Add(this.label9);
             this.panel_Params.Controls.Add(this.cmb_DataBits);
@@ -168,8 +153,18 @@ namespace LightControlNet.UI
             this.panel_Params.Controls.Add(this.label11);
             this.panel_Params.Location = new System.Drawing.Point(220, 20);
             this.panel_Params.Name = "panel_Params";
-            this.panel_Params.Size = new System.Drawing.Size(566, 336);
+            this.panel_Params.Size = new System.Drawing.Size(564, 336);
             this.panel_Params.TabIndex = 49;
+            // 
+            // btn_Test
+            // 
+            this.btn_Test.Location = new System.Drawing.Point(440, 92);
+            this.btn_Test.Name = "btn_Test";
+            this.btn_Test.Size = new System.Drawing.Size(100, 29);
+            this.btn_Test.TabIndex = 50;
+            this.btn_Test.Text = "测试";
+            this.btn_Test.UseVisualStyleBackColor = true;
+            this.btn_Test.Click += new System.EventHandler(this.btn_Test_Click);
             // 
             // btn_Connet
             // 
@@ -177,7 +172,7 @@ namespace LightControlNet.UI
             this.btn_Connet.Name = "btn_Connet";
             this.btn_Connet.Size = new System.Drawing.Size(100, 29);
             this.btn_Connet.TabIndex = 47;
-            this.btn_Connet.Text = "打开";
+            this.btn_Connet.Text = "打开串口";
             this.btn_Connet.UseVisualStyleBackColor = true;
             // 
             // cmb_StopBits
@@ -334,7 +329,7 @@ namespace LightControlNet.UI
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(1225, 380);
+            this.ClientSize = new System.Drawing.Size(796, 380);
             this.Controls.Add(this.grp_Config);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -371,5 +366,7 @@ namespace LightControlNet.UI
         private Label label2;
         private ListBox listBox_Configs;
         private Button btn_Connet;
+        private AntdUI.Button btn_Add;
+        private AntdUI.Button btn_Remove;
     }
 }

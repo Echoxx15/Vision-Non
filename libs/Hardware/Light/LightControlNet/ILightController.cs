@@ -21,6 +21,7 @@ namespace LightControlNet
         bool SetBrightness(int channel, int brightness);
         int GetBrightness(int channel);
         bool SetMultiChannelBrightness(int[] channels, int brightness);
+        void TurnOffAllChannels();
 
         /// <summary>
         /// 发送原始命令字符串，不做任何转换

@@ -6,204 +6,60 @@ using Vision.Solutions.Models;
 
 namespace Vision.LightSource;
 
-#region Ã¶¾Ù¶¨Òå
+// ä¿ç•™å·¥ä½å…‰æºæ§åˆ¶æ¨¡å‹ï¼Œå…¶ä½™å…‰æºæšä¸¾ä¸é…ç½®è¿ç§»åˆ° LightControlNet DLL
+
+#region å·¥ä½å…‰æºé…ç½®
 
 /// <summary>
-/// ¹âÔ´¿ØÖÆÆ÷ÀàĞÍ£¨Æ·ÅÆ£©
-/// </summary>
-public enum LightControllerType 
-{ 
-    [Description("æÚ¸ù")]
-    Fgen = 0, 
-    
-    [Description("°ÂÆÕÌØ")]
-    Opt = 1 
-}
-
-/// <summary>
-/// ¹âÔ´¿ØÖÆÆ÷Ä£Ê½
-/// </summary>
-public enum LightControllerMode 
-{ 
-    [Description("Êı×Ö¿ØÖÆÆ÷")]
-    Digital = 0, 
-    
-    [Description("ÆµÉÁ¿ØÖÆÆ÷")]
-    Strobe = 1 
-}
-
-#endregion
-
-#region ¹âÔ´ÅäÖÃ
-
-/// <summary>
-/// ¹âÔ´ÅäÖÃ£¨±£´æÔÚ·½°¸ÖĞ£©
-/// </summary>
-[Serializable]
-public class LightConfig
-{
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("ÅäÖÃÃû³Æ")]
-    [Description("¹âÔ´ÅäÖÃµÄÎ¨Ò»±êÊ¶Ãû³Æ")]
-    public string Name { get; set; }
-    
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("¿ØÖÆÆ÷ÀàĞÍ")]
-    [Description("¹âÔ´¿ØÖÆÆ÷Æ·ÅÆ£ºæÚ¸ù¡¢°ÂÆÕÌØµÈ")]
- public LightControllerType Type { get; set; } = LightControllerType.Fgen;
-    
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("¿ØÖÆÆ÷Ä£Ê½")]
-    [Description("Êı×Ö¿ØÖÆÆ÷£º³ÌĞò¿ØÖÆ£»ÆµÉÁ¿ØÖÆÆ÷£ºÍâ²¿ĞÅºÅ¿ØÖÆ")]
- public LightControllerMode Mode { get; set; } = LightControllerMode.Digital;
-    
-    [Category("»ù±¾ĞÅÏ¢"), DisplayName("ÊÇ·ñÆôÓÃ")]
-    [Description("ÊÇ·ñÆôÓÃ´Ë¹âÔ´ÅäÖÃ")]
-public bool Enabled { get; set; } = true;
-    
-    [Category("´®¿ÚÅäÖÃ"), DisplayName("´®¿ÚºÅ")]
-    [Description("´®¿ÚºÅ£¬ÈçCOM1¡¢COM3µÈ")]
-    public string PortName { get; set; } = "COM1";
- 
-    [Category("´®¿ÚÅäÖÃ"), DisplayName("²¨ÌØÂÊ")]
-    [Description("Í¨Ñ¶²¨ÌØÂÊ£¬Í¨³£Îª9600")]
-    public int BaudRate { get; set; } = 9600;
-    
-    [Category("´®¿ÚÅäÖÃ"), DisplayName("Êı¾İÎ»")]
-    [Description("Êı¾İÎ»Êı£¬Í¨³£Îª8")]
- public int DataBits { get; set; } = 8;
-    
-    [Category("´®¿ÚÅäÖÃ"), DisplayName("Í£Ö¹Î»")]
-    [Description("Í£Ö¹Î»£º1, 1.5, 2")]
-    public double StopBits { get; set; } = 1;
-    
-    [Category("´®¿ÚÅäÖÃ"), DisplayName("Ğ£ÑéÎ»")]
-    [Description("Ğ£ÑéÎ»£ºNone, Odd, Even")]
-    public string Parity { get; set; } = "None";
-    
-    [Category("Ó²¼şÅäÖÃ"), DisplayName("Í¨µÀÊıÁ¿")]
-    [Description("¹âÔ´¿ØÖÆÆ÷µÄÍ¨µÀÊıÁ¿£º2/4/8")]
-    public int ChannelCount { get; set; } = 4;
-    
-    [Category("ÆäËû"), DisplayName("±¸×¢")]
-    [Description("±¸×¢ĞÅÏ¢")]
-    public string Remark { get; set; } = string.Empty;
-    
-    public override string ToString()
-    {
-        return $"{Name} ({Type}, {PortName})";
-    }
-}
-
-/// <summary>
-/// ¹âÔ´ÅäÖÃ¼¯ºÏ
-/// </summary>
-[Serializable]
-public class LightConfigCollection
-{
-    public List<LightConfig> Configs { get; set; } = new List<LightConfig>();
-    
-    /// <summary>
-  /// Éú³ÉÎ¨Ò»µÄÅäÖÃÃû³Æ
-    /// </summary>
-    /// <param name="type">¿ØÖÆÆ÷ÀàĞÍ</param>
-    /// <returns>Î¨Ò»Ãû³Æ</returns>
-    public string GenerateUniqueName(LightControllerType type)
-    {
-        var prefix = type == LightControllerType.Fgen ? "æÚ¸ù¹âÔ´" : "°ÂÆÕÌØ¹âÔ´";
-        int index = 1;
-
-        while (true)
-        {
-          var name = $"{prefix}{index}";
-            if (!Configs.Exists(c => c.Name == name))
-      {
-         return name;
-            }
-    index++;
-        }
-    }
-    
-    public void Add(LightConfig config)
-    {
-        if (config == null) return;
-        
-        // È·±£Ãû³ÆÎ¨Ò»
-        if (string.IsNullOrWhiteSpace(config.Name))
-        {
-      config.Name = GenerateUniqueName(config.Type);
-        }
-        else if (Configs.Exists(c => c.Name == config.Name))
-     {
-      config.Name = GenerateUniqueName(config.Type);
-        }
-        
-   Configs.Add(config);
- }
-  
-    public bool Remove(LightConfig config)
-    {
-        return config != null && Configs.Remove(config);
-}
-    
-    public LightConfig FindByName(string name)
-  {
- return Configs.FirstOrDefault(c => 
-            string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
-    }
-}
-
-#endregion
-
-#region ¹¤Î»¹âÔ´¿ØÖÆ
-
-/// <summary>
-/// ¹¤Î»¹âÔ´¿ØÖÆÅäÖÃ
+/// å·¥ä½å…‰æºæ§åˆ¶é…ç½®
 /// </summary>
 [Serializable]
 [TypeConverter(typeof(ExpandableObjectConverter))]
 public class StationLightControl
 {
-    [Category("¹âÔ´¿ØÖÆ"), DisplayName("ÆôÓÃ¹âÔ´¿ØÖÆ")]
-    [Description("ÊÇ·ñÆôÓÃ¹âÔ´¿ØÖÆ")]
+    [Category("å…‰æºæ§åˆ¶"), DisplayName("å¯ç”¨å…‰æºæ§åˆ¶")]
+    [Description("æ˜¯å¦å¯ç”¨å…‰æºæ§åˆ¶")]
     public bool EnableLightControl { get; set; } = false;
 
-    [Category("¹âÔ´¿ØÖÆ"), DisplayName("¹âÔ´ÅäÖÃ")]
-    [Description("Ñ¡Ôñ¹âÔ´ÅäÖÃ£¨´Ó·½°¸µÄ¹âÔ´ÅäÖÃÖĞÑ¡Ôñ£©")]
+    [Category("å…‰æºæ§åˆ¶"), DisplayName("å…‰æºé…ç½®")]
+    [Description("é€‰æ‹©å…‰æºé…ç½®ï¼Œæ¥è‡ªæ–¹æ¡ˆçš„å…‰æºé…ç½®é›†åˆ")]
     [TypeConverter(typeof(LightConfigNameConverter))]
     public string LightConfigName { get; set; }
 
-    [Category("Í¨µÀÅäÖÃ"), DisplayName("Ö÷Í¨µÀ")]
-    [Description("Ö÷Í¨µÀºÅ£¨1-8£©")]
+    [Category("é€šé“è®¾ç½®"), DisplayName("é€šé“1")]
+    [Description("é€šé“ç¼–å·ï¼Œ1-8")]
     public int Channel1 { get; set; } = 1;
 
-    [Category("Í¨µÀÅäÖÃ"), DisplayName("Ö÷Í¨µÀÁÁ¶È")]
-    [Description("Ö÷Í¨µÀÁÁ¶ÈÖµ£¨0-255£©")]
+    [Category("é€šé“è®¾ç½®"), DisplayName("äº®åº¦1")]
+    [Description("äº®åº¦å€¼ 0-255")]
     public int Brightness1 { get; set; } = 255;
 
-    [Category("Í¨µÀÅäÖÃ"), DisplayName("¶àÍ¨µÀÄ£Ê½")]
-    [Description("ÊÇ·ñÆôÓÃ¶àÍ¨µÀÄ£Ê½£¨Í¬Ê±¿ØÖÆÁ½¸öÍ¨µÀ£©")]
+    [Category("é€šé“è®¾ç½®"), DisplayName("å¤šé€šé“æ¨¡å¼")]
+    [Description("æ˜¯å¦å¯ç”¨å¤šé€šé“æ¨¡å¼ï¼ŒåŒæ—¶æ§åˆ¶ä¸¤ä¸ªé€šé“")]
     public bool IsMultiChannel { get; set; } = false;
 
-    [Category("Í¨µÀÅäÖÃ"), DisplayName("¸±Í¨µÀ")]
-    [Description("¸±Í¨µÀºÅ£¨1-8£©£¬½öÔÚ¶àÍ¨µÀÄ£Ê½ÏÂÓĞĞ§")]
+    [Category("é€šé“è®¾ç½®"), DisplayName("é€šé“2")]
+    [Description("é€šé“ç¼–å·ï¼Œ1-8ï¼›ä»…åœ¨å¤šé€šé“æ¨¡å¼ä¸‹æœ‰æ•ˆ")]
     public int Channel2 { get; set; } = 2;
 
-    [Category("Í¨µÀÅäÖÃ"), DisplayName("¸±Í¨µÀÁÁ¶È")]
-    [Description("¸±Í¨µÀÁÁ¶ÈÖµ£¨0-255£©£¬½öÔÚ¶àÍ¨µÀÄ£Ê½ÏÂÓĞĞ§")]
+    [Category("é€šé“è®¾ç½®"), DisplayName("äº®åº¦2")]
+    [Description("äº®åº¦å€¼ 0-255ï¼›ä»…åœ¨å¤šé€šé“æ¨¡å¼ä¸‹æœ‰æ•ˆ")]
     public int Brightness2 { get; set; } = 255;
 
-    [Category("Ê±ĞòÅäÖÃ"), DisplayName("´ò¿ªÑÓÊ±(ms)")]
-    [Description("Ö´ĞĞ´ò¿ª¹âÔ´ºóÑÓÊ±Õâ¸öÊ±¼äÔÙÍùÏÂÖ´ĞĞ£¬·ÀÖ¹²»Í¬²½")]
+    [Category("æ—¶åº"), DisplayName("å¼€ç¯å»¶æ—¶(ms)")]
+    [Description("æ‰§è¡Œæ‰“å¼€å…‰æºåç­‰å¾…çš„æ—¶é—´ï¼Œå†è¿›è¡Œè§¦å‘ï¼Œé¿å…ä¸åŒæ­¥")]
     public int OpenDelayMs { get; set; } = 50;
 
     public override string ToString()
     {
-        if (!EnableLightControl) return "Î´ÆôÓÃ";
-      if (IsMultiChannel) return $"{LightConfigName} - CH{Channel1}+CH{Channel2}, ÑÓÊ±{OpenDelayMs}ms";
-        return $"{LightConfigName} - CH{Channel1}, ÑÓÊ±{OpenDelayMs}ms";
+        if (!EnableLightControl) return "æœªå¯ç”¨";
+        if (IsMultiChannel) return $"{LightConfigName} - CH{Channel1}+CH{Channel2}, å»¶æ—¶{OpenDelayMs}ms";
+        return $"{LightConfigName} - CH{Channel1}, å»¶æ—¶{OpenDelayMs}ms";
     }
 }
 
 /// <summary>
-/// ¹âÔ´ÅäÖÃÃû³ÆÏÂÀ­×ª»»Æ÷£¨ÓÃÓÚPropertyGrid£©
+/// å…‰æºé…ç½®åç§°è½¬æ¢å™¨ï¼ˆç”¨äº PropertyGridï¼‰
 /// </summary>
 internal sealed class LightConfigNameConverter : StringConverter
 {

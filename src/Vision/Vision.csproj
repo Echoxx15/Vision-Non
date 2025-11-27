@@ -98,8 +98,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AntdUI, Version=2.1.8.0, Culture=neutral, PublicKeyToken=0e24e5118ea3d6af, processorArchitecture=MSIL">
-      <HintPath>..\packages\AntdUI.2.1.8\lib\net48\AntdUI.dll</HintPath>
+    <Reference Include="AntdUI, Version=2.2.1.0, Culture=neutral, PublicKeyToken=0e24e5118ea3d6af, processorArchitecture=MSIL">
+      <HintPath>..\packages\AntdUI.2.2.1\lib\net48\AntdUI.dll</HintPath>
     </Reference>
     <Reference Include="Cognex.VisionPro, Version=59.2.0.0, Culture=neutral, PublicKeyToken=ef0f902af9dee505, processorArchitecture=AMD64">
       <Private>False</Private>
@@ -138,6 +138,7 @@
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
@@ -250,8 +251,6 @@
       <DependentUpon>Frm_Permission.cs</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\AssemblyResolver.cs" />
-    <Compile Include="LightSource\FgenLightController.cs" />
-    <Compile Include="LightSource\ILightController.cs" />
     <Compile Include="LightSource\LightModels.cs" />
     <Compile Include="LightSource\LightSourceManager.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
@@ -391,7 +390,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
-    <Folder Include="Solutions\Models\Converters\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Hardware\Camera\HardwareCameraNet\HardwareCameraNet.csproj">

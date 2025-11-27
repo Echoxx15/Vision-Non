@@ -28,7 +28,7 @@ public sealed class LightFactory : IDisposable
 
     private LightFactory()
     {
-        // ���Լ��ر�������
+        // 尝试加载并恢复配置
         try
         {
             LoadConfigs();
@@ -80,7 +80,7 @@ public sealed class LightFactory : IDisposable
     {
         try
         {
-            //�ͷ����п�����
+            // 释放所有已有控制器
             DisposeAllControllers();
 
             if (configCollection?.Configs == null)
@@ -228,7 +228,9 @@ public sealed class LightFactory : IDisposable
     }
 
     /// <summary>
-    /// 更新配置（名称匹配）并重建对应控制器
+    /// 更新配置（名称匹配）
+    /// ⚠️ 注意：仅更新配置文件，不影响当前运行中的控制器
+    /// 如果需要应用新配置，请手动断开并重新连接控制器
     /// </summary>
     public bool UpdateConfig(LightConfig updated)
     {
@@ -251,10 +253,11 @@ public sealed class LightFactory : IDisposable
             existing.Remark = updated.Remark;
         }
 
+        // ✅ 只保存配置文件，不重建控制器
+        // 原因：重建会关闭所有通道，影响正在运行的光源
         SaveConfigs();
-
-        // 重建对应控制器
-        RebuildControllerFor(updated.Name);
+        
+        LogHelper.Info($"光源配置[{updated.Name}]已保存到文件，当前连接状态保持不变");
         return true;
     }
 
@@ -325,15 +328,36 @@ public sealed class LightFactory : IDisposable
 
 
     /// <summary>
-    /// 释放所有控制器
+    /// 释放所有控制器（程序退出时调用）
     /// </summary>
     private void DisposeAllControllers()
     {
+        LogHelper.Info("开始释放所有光源控制器...");
+        
         foreach (var kvp in _controllers)
         {
             try
             {
-                kvp.Value?.Dispose();
+                if (kvp.Value != null)
+                {
+                    // ✅ 释放前先关闭所有通道
+                    try
+                    {
+                        if (kvp.Value.IsConnected)
+                        {
+                            LogHelper.Info($"正在关闭光源控制器[{kvp.Key}]的所有通道...");
+                            kvp.Value.TurnOffAllChannels();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.Error(ex, $"关闭光源控制器[{kvp.Key}]通道失败");
+                    }
+                    
+                    // 释放资源
+                    kvp.Value.Dispose();
+                    LogHelper.Info($"光源控制器[{kvp.Key}]已释放");
+                }
             }
             catch (Exception ex)
             {
@@ -342,6 +366,7 @@ public sealed class LightFactory : IDisposable
         }
 
         _controllers.Clear();
+        LogHelper.Info("所有光源控制器释放完成");
     }
 
     private void TryCreateController(LightConfig config)
@@ -360,17 +385,17 @@ public sealed class LightFactory : IDisposable
             if (controller.Open())
             {
                 _controllers[config.Name] = controller;
-                LogHelper.Info($"��Դ������[{config.Name}]��ʼ���ɹ�");
+                LogHelper.Info($"光源控制器[{config.Name}]初始化成功");
             }
             else
             {
-                LogHelper.Warn($"��Դ������[{config.Name}]��ʧ��");
+                LogHelper.Warn($"光源控制器[{config.Name}]初始化失败");
                 controller.Dispose();
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"������Դ������[{config?.Name}]ʧ��");
+            LogHelper.Error(ex, $"创建光源控制器[{config?.Name}]失败");
         }
     }
 
@@ -378,13 +403,13 @@ public sealed class LightFactory : IDisposable
     {
         try
         {
-            //���ͷžɵ�
+            // 先释放旧实例
             if (_controllers.TryRemove(name, out var old))
             {
                 try { old.Dispose(); } catch (Exception ex) { LogHelper.Error(ex, $"释放旧控制器[{name}]失败"); }
             }
 
-            // �ٰ���ǰ���ô���
+            // 再按当前配置重建
             var cfg = GetConfig(name);
             if (cfg != null)
             {

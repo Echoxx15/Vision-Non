@@ -30,6 +30,16 @@ public sealed class TaskFlowManager : IDisposable
         {
             DisposeAll();
 
+            // ✅ 初始化光源管理器：读取所有工位光源配置并写入亮度值
+            try
+            {
+                LightSource.LightSourceManager.Instance.InitializeFromSolution(solution);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(ex, "[TaskFlowManager] 初始化光源管理器失败");
+            }
+
             foreach (var station in solution.Stations ?? new System.Collections.Generic.List<StationConfig>())
             {
                 if (station == null || string.IsNullOrWhiteSpace(station.Name)) continue;

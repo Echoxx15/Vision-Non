@@ -240,7 +240,39 @@ namespace Fgen.LightPlugin
             }
         }
 
+        /// <summary>
+        /// 关闭所有通道（程序退出前调用）
+        /// </summary>
+        public void TurnOffAllChannels()
+        {
+            if (!IsConnected) return;
 
-        public void Dispose() { Close(); }
+            try
+            {
+                for (int ch = 1; ch <= ChannelCount; ch++)
+                {
+                    try
+                    {
+                        TurnOff(ch);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 记录但不中断循环
+                        Console.WriteLine($"[{Name}] 关闭通道{ch}失败: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{Name}] 关闭所有通道时发生错误: {ex.Message}");
+            }
+        }
+
+        public void Dispose() 
+        { 
+            // 释放前先关闭所有通道
+            TurnOffAllChannels();
+            Close(); 
+        }
     }
 }

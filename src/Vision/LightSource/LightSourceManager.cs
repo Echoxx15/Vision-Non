@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Logger;
 using Vision.Solutions.Models;
+using LightControlNet;
 
 namespace Vision.LightSource;
 
@@ -17,85 +18,64 @@ public sealed class LightSourceManager : IDisposable
 
     private LightSourceManager()
     {
-        LogHelper.Info("¹âÔ´¹ÜÀíÆ÷ÒÑ³õÊ¼»¯");
+        LogHelper.Info("[LightSourceManager] åˆå§‹åŒ–å®Œæˆ");
     }
 
     /// <summary>
-    /// ´Ó·½°¸³õÊ¼»¯¹âÔ´¿ØÖÆÆ÷
+    /// ä»æ–¹æ¡ˆåˆå§‹åŒ–å…‰æºæ§åˆ¶ï¼šå»ºç«‹æ§åˆ¶å™¨å¼•ç”¨å¹¶æŒ‰å·¥ä½é…ç½®å†™å…¥äº®åº¦
     /// </summary>
     public void InitializeFromSolution(Solution solution)
     {
-        //¾ÉµÄ LightConfigs ÒÑÒÆ³ı£¬ÕâÀï±£Áô¿ÕÊµÏÖÒÔ¼æÈİµ÷ÓÃ
-        DisposeAllControllers();
-        LogHelper.Info("¹âÔ´£ºÎ´¼ÓÔØÈÎºÎ¿ØÖÆÆ÷£¨LightConfigsÒÑÒÆ³ı£©");
+        try
+        {
+            DisposeAllControllers();
+            if (solution?.Stations == null || solution.Stations.Count == 0)
+            {
+                LogHelper.Info("[LightSourceManager] æ–¹æ¡ˆæ— å·¥ä½ï¼Œè·³è¿‡å…‰æºåˆå§‹åŒ–");
+                return;
+            }
+
+            foreach (var st in solution.Stations)
+            {
+                var lc = st?.LightControl;
+                if (lc == null || !lc.EnableLightControl || string.IsNullOrWhiteSpace(lc.LightConfigName)) continue;
+                var ctrl = LightFactory.Instance.GetController(lc.LightConfigName);
+                if (ctrl == null) { LogHelper.Warn($"[LightSourceManager] æœªæ‰¾åˆ°å…‰æºæ§åˆ¶å™¨: {lc.LightConfigName}"); continue; }
+                _controllers[lc.LightConfigName] = ctrl;
+                try
+                {
+                    ctrl.SetBrightness(lc.Channel1, lc.Brightness1);
+                    if (lc.IsMultiChannel) ctrl.SetBrightness(lc.Channel2, lc.Brightness2);
+                    LogHelper.Info($"[LightSourceManager] å·²å†™å…¥å·¥ä½[{st.Name}]äº®åº¦é…ç½®: {lc.LightConfigName}");
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.Error(ex, $"[LightSourceManager] å†™å…¥äº®åº¦å¤±è´¥: å·¥ä½={st.Name}, æ§åˆ¶å™¨={lc.LightConfigName}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, "[LightSourceManager] åˆå§‹åŒ–å¤±è´¥");
+        }
     }
 
     /// <summary>
-    /// »ñÈ¡¹âÔ´¿ØÖÆÆ÷
+    /// è·å–å…‰æºæ§åˆ¶å™¨å®ä¾‹
     /// </summary>
-    public ILightController GetController(string name)
+    private ILightController GetController(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return null;
-
-        _controllers.TryGetValue(name, out var controller);
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        if (_controllers.TryGetValue(name, out var controller) && controller != null) return controller;
+        controller = LightFactory.Instance.GetController(name);
+        if (controller != null) _controllers[name] = controller;
         return controller;
     }
 
-    /// <summary>
-    /// ´ò¿ª¹âÔ´
-    /// </summary>
-    public bool TurnOn(string lightConfigName, int channel, int brightness = 255, int delayMs = 0)
-    {
-        var controller = GetController(lightConfigName);
-        if (controller == null)
-        {
-            LogHelper.Warn($"Î´ÕÒµ½¹âÔ´¿ØÖÆÆ÷: {lightConfigName}");
-            return false;
-        }
-
-        try
-        {
-            if (!controller.SetBrightness(channel, brightness))
-                return false;
-
-            if (!controller.TurnOn(channel))
-                return false;
-
-            if (delayMs > 0)
-                Thread.Sleep(delayMs);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            LogHelper.Error(ex, $"´ò¿ª¹âÔ´Ê§°Ü: {lightConfigName}, CH{channel}");
-            return false;
-        }
-    }
+    
 
     /// <summary>
-    /// ¹Ø±Õ¹âÔ´
-    /// </summary>
-    public bool TurnOff(string lightConfigName, int channel)
-    {
-        var controller = GetController(lightConfigName);
-        if (controller == null)
-            return false;
-
-        try
-        {
-            return controller.TurnOff(channel);
-        }
-        catch (Exception ex)
-        {
-            LogHelper.Error(ex, $"¹Ø±Õ¹âÔ´Ê§°Ü: {lightConfigName}, CH{channel}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// ÉèÖÃÁÁ¶È
+    /// è®¾ç½®äº®åº¦
     /// </summary>
     public bool SetBrightness(string lightConfigName, int channel, int brightness)
     {
@@ -109,69 +89,75 @@ public sealed class LightSourceManager : IDisposable
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"ÉèÖÃÁÁ¶ÈÊ§°Ü: {lightConfigName}, CH{channel}");
+            LogHelper.Error(ex, $"[LightSourceManager] è®¾ç½®äº®åº¦å¤±è´¥: {lightConfigName}, CH{channel}");
             return false;
         }
     }
 
     /// <summary>
-    /// ¿ØÖÆ¹¤Î»¹âÔ´
+    /// æŒ‰å·¥ä½é…ç½®å¼€/å…³å…‰æºï¼šæ‰“å¼€ä¸ºåŒæ­¥ï¼Œå…³é—­å¯åœ¨å¤–éƒ¨å¼‚æ­¥è°ƒç”¨
     /// </summary>
-    public async Task<bool> ControlStationLight(StationLightControl lightControl, bool turnOn)
+    public bool ControlStationLight(StationLightControl lightControl, bool turnOn)
     {
-        if (lightControl == null || !lightControl.EnableLightControl)
-            return true;
+        if (lightControl == null || !lightControl.EnableLightControl) return true;
+        if (string.IsNullOrWhiteSpace(lightControl.LightConfigName)) { LogHelper.Warn("[LightSourceManager] å·¥ä½å…‰æºé…ç½®ä¸ºç©º"); return false; }
 
-        if (string.IsNullOrWhiteSpace(lightControl.LightConfigName))
+        try
         {
-            LogHelper.Warn("¹¤Î»¹âÔ´ÅäÖÃÃûÎª¿Õ");
+            var controller = GetController(lightControl.LightConfigName);
+            if (controller == null) { LogHelper.Warn($"[LightSourceManager] æœªæ‰¾åˆ°å·¥ä½å…‰æºæ§åˆ¶å™¨: {lightControl.LightConfigName}"); return false; }
+
+            if (turnOn)
+            {
+                try { controller.TurnOn(lightControl.Channel1); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] æ‰“å¼€å…‰æºå¤±è´¥ CH{lightControl.Channel1}"); }
+                if (lightControl.IsMultiChannel)
+                {
+                    try { controller.TurnOn(lightControl.Channel2); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] æ‰“å¼€å…‰æºå¤±è´¥ CH{lightControl.Channel2}"); }
+                }
+                if (lightControl.OpenDelayMs > 0) Thread.Sleep(lightControl.OpenDelayMs);
+                return true;
+            }
+            else
+            {
+                try { controller.TurnOff(lightControl.Channel1); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] å…³é—­å…‰æºå¤±è´¥ CH{lightControl.Channel1}"); }
+                if (lightControl.IsMultiChannel)
+                {
+                    try { controller.TurnOff(lightControl.Channel2); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] å…³é—­å…‰æºå¤±è´¥ CH{lightControl.Channel2}"); }
+                }
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"[LightSourceManager] æ§åˆ¶å·¥ä½å…‰æºå¤±è´¥: {lightControl.LightConfigName}");
             return false;
         }
+    }
 
-        return await Task.Run(() =>
+    /// <summary>
+    /// å¼‚æ­¥å…³é—­å·¥ä½å…‰æºï¼Œå¼‚å¸¸ç‹¬ç«‹æ•è·
+    /// </summary>
+    public void TurnOffStationLightAsync(StationLightControl lightControl)
+    {
+        if (lightControl == null || !lightControl.EnableLightControl) return;
+        Task.Run(() =>
         {
             try
             {
                 var controller = GetController(lightControl.LightConfigName);
-                if (controller == null)
-                {
-                    LogHelper.Warn($"Î´ÕÒµ½¹¤Î»¹âÔ´¿ØÖÆÆ÷: {lightControl.LightConfigName}");
-                    return false;
-                }
-
-                if (turnOn)
-                {
-                    controller.TurnOn(lightControl.Channel1);
-
-                    if (lightControl.IsMultiChannel)
-                        controller.TurnOn(lightControl.Channel2);
-
-                    if (lightControl.OpenDelayMs > 0)
-                        Thread.Sleep(lightControl.OpenDelayMs);
-
-                    LogHelper.Info($"¹¤Î»¹âÔ´ÒÑ¿ª: {lightControl}");
-                }
-                else
-                {
-                    controller.TurnOff(lightControl.Channel1);
-                    if (lightControl.IsMultiChannel)
-                        controller.TurnOff(lightControl.Channel2);
-
-                    LogHelper.Info($"¹¤Î»¹âÔ´ÒÑ¹Ø: {lightControl.LightConfigName}");
-                }
-
-                return true;
+                if (controller == null) return;
+                try { controller.TurnOff(lightControl.Channel1); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] å…³é—­å…‰æºå¤±è´¥ CH{lightControl.Channel1}"); }
+                if (lightControl.IsMultiChannel) { try { controller.TurnOff(lightControl.Channel2); } catch (Exception ex) { LogHelper.Error(ex, $"[LightSourceManager] å…³é—­å…‰æºå¤±è´¥ CH{lightControl.Channel2}"); } }
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, $"¿ØÖÆ¹¤Î»¹âÔ´Ê§°Ü: {lightControl.LightConfigName}");
-                return false;
+                LogHelper.Error(ex, "[LightSourceManager] å¼‚æ­¥å…³é—­å…‰æºå¼‚å¸¸");
             }
         });
     }
 
     /// <summary>
-    /// ÊÍ·ÅËùÓĞ¿ØÖÆÆ÷
+    /// é‡Šæ”¾æ‰€æœ‰æ§åˆ¶å™¨
     /// </summary>
     private void DisposeAllControllers()
     {
@@ -180,11 +166,11 @@ public sealed class LightSourceManager : IDisposable
             try
             {
                 kvp.Value?.Dispose();
-                LogHelper.Info($"¹âÔ´¿ØÖÆÆ÷[{kvp.Key}]ÒÑÊÍ·Å");
+                LogHelper.Info($"[LightSourceManager] å…‰æºæ§åˆ¶å™¨[{kvp.Key}]å·²é‡Šæ”¾");
             }
             catch (Exception ex)
             {
-                LogHelper.Error(ex, $"ÊÍ·Å¹âÔ´¿ØÖÆÆ÷[{kvp.Key}]Ê§°Ü");
+                LogHelper.Error(ex, $"[LightSourceManager] é‡Šæ”¾å…‰æºæ§åˆ¶å™¨[{kvp.Key}]å¤±è´¥");
             }
         }
 
@@ -194,6 +180,6 @@ public sealed class LightSourceManager : IDisposable
     public void Dispose()
     {
         DisposeAllControllers();
-        LogHelper.Info("¹âÔ´¹ÜÀíÆ÷ÒÑÊÍ·Å");
+        LogHelper.Info("[LightSourceManager] å·²é‡Šæ”¾æ‰€æœ‰å…‰æºæ§åˆ¶å™¨");
     }
 }
