@@ -4,116 +4,97 @@ using Logger;
 namespace Vision.Solutions.WorkFlow;
 
 /// <summary>
-/// ÏµÍ³×´Ì¬¹ÜÀíÆ÷£¨µ¥Àı£©
+/// ç³»ç»ŸçŠ¶æ€ç®¡ç†å™¨ï¼ˆå•ä¾‹ï¼‰
 /// 
-/// ¹¦ÄÜ£º
-/// - ¹ÜÀíÏµÍ³ÔÚÏß/ÀëÏß×´Ì¬
-/// - Ìá¹©×´Ì¬ÇĞ»»½Ó¿Ú
-/// - ·¢²¼×´Ì¬±ä»¯ÊÂ¼ş
+/// åŠŸèƒ½ï¼š
+/// - ç®¡ç†ç³»ç»Ÿåœ¨çº¿/ç¦»çº¿çŠ¶æ€
+/// - æä¾›çŠ¶æ€åˆ‡æ¢æ¥å£
+/// - å¹¿æ’­çŠ¶æ€å˜åŒ–äº‹ä»¶
 /// 
-/// Éè¼ÆÀíÄî£º
-/// - ÔÚÏß×´Ì¬£ºÉú²úÄ£Ê½£¬ÔÊĞí½ÓÊÕÍâ²¿Í¨Ñ¶´¥·¢ĞÅºÅ£¨TCP/Modbus£©
-/// - ÀëÏß×´Ì¬£ºµ÷ÊÔÄ£Ê½£¬¾Ü¾øÍâ²¿´¥·¢£¬½öÔÊĞíÊÖ¶¯´¥·¢
+/// çº¦æŸï¼š
+/// - åœ¨çº¿çŠ¶æ€ä¸‹å…è®¸å¤–éƒ¨é€šè®¯è§¦å‘ï¼ˆTCP/Modbusï¼‰
+/// - ç¦»çº¿çŠ¶æ€ä¸‹æ‹’ç»å¤–éƒ¨è§¦å‘ï¼Œä»…å…è®¸æ‰‹åŠ¨è¿è¡Œ
 /// 
-/// Ä¬ÈÏ×´Ì¬£ºÀëÏß£¨false£©
-/// Ô­Òò£ºÏµÍ³Æô¶¯Ê±Ó¦´¦ÓÚ°²È«µÄµ÷ÊÔ×´Ì¬£¬±ÜÃâÒâÍâ´¥·¢Éú²úÁ÷³Ì
+/// é»˜è®¤çŠ¶æ€ä¸ºç¦»çº¿ï¼ˆfalseï¼‰ï¼Œå¯åŠ¨æ—¶å…ˆè¿›å…¥å®‰å…¨çŠ¶æ€ï¼Œé¿å…è¯¯è§¦å‘
 /// </summary>
 public sealed class SystemStateManager
 {
-    #region µ¥ÀıÄ£Ê½
+    #region å•ä¾‹æ¨¡å¼
 
     /// <summary>
-    /// ÑÓ³Ù³õÊ¼»¯µÄµ¥ÀıÊµÀı
-    /// Ïß³Ì°²È«ÇÒ½öÔÚÊ×´Î·ÃÎÊÊ±´´½¨ÊµÀı
+    /// å»¶è¿Ÿåˆå§‹åŒ–çš„å•ä¾‹å®ä¾‹ï¼Œçº¿ç¨‹å®‰å…¨
     /// </summary>
     private static readonly Lazy<SystemStateManager> _instance = 
         new Lazy<SystemStateManager>(() => new SystemStateManager());
 
     /// <summary>
-    /// »ñÈ¡SystemStateManagerµ¥ÀıÊµÀı
+    /// è·å– SystemStateManager å•ä¾‹
     /// </summary>
     public static SystemStateManager Instance => _instance.Value;
 
     #endregion
 
-    #region ÏµÍ³×´Ì¬
+    #region ç³»ç»ŸçŠ¶æ€
 
     /// <summary>
-    /// ÏµÍ³ÔÚÏß×´Ì¬±êÖ¾
-    /// true: ÔÚÏß£¬½ÓÊÜÍ¨Ñ¶´¥·¢ĞÅºÅ
-    /// false: ÀëÏß£¬¾Ü¾øÍ¨Ñ¶´¥·¢£¨½ö¼ÇÂ¼ÈÕÖ¾£©
-    /// 
-    /// ×¢Òâ£ºÊÖ¶¯´¥·¢£¨ManualRun£©²»ÊÜ´Ë×´Ì¬Ó°Ïì
-    /// 
-    /// Ä¬ÈÏÖµ£ºfalse£¨ÀëÏß£©£¬ÏµÍ³Æô¶¯Ê±´¦ÓÚ°²È«µÄµ÷ÊÔ×´Ì¬
+    /// ç³»ç»Ÿåœ¨çº¿çŠ¶æ€æ ‡è®°
+    /// true: åœ¨çº¿ï¼Œå…è®¸å¤–éƒ¨é€šè®¯è§¦å‘
+    /// false: ç¦»çº¿ï¼Œæ‹’ç»å¤–éƒ¨è§¦å‘ï¼ˆä½†å…è®¸æ‰‹åŠ¨ï¼‰
+    /// é»˜è®¤å€¼ä¸º falseï¼ˆç¦»çº¿ï¼‰
     /// </summary>
     public bool IsOnline { get; private set; } = false;
 
     /// <summary>
-    /// ÏµÍ³ÔÚÏß×´Ì¬±ä»¯ÊÂ¼ş
-    /// ¶©ÔÄÕß£ºÖ÷½çÃæ£¨¸üĞÂUI×´Ì¬À¸¡¢¹¤¾ßÀ¸ÆôÓÃ×´Ì¬£©
+    /// ç³»ç»Ÿåœ¨çº¿çŠ¶æ€å˜åŒ–äº‹ä»¶ï¼ˆç”¨äºåˆ·æ–°UIä¸é€šè®¯æ¨¡å—ï¼‰
     /// </summary>
     public event Action<bool> OnlineStateChanged;
 
     #endregion
 
-    #region ¹¹Ôìº¯Êı
+    #region æ„é€ å‡½æ•°
 
     /// <summary>
-    /// Ë½ÓĞ¹¹Ôìº¯Êı£¨µ¥ÀıÄ£Ê½£©
-    /// ³õÊ¼»¯ÏµÍ³×´Ì¬¹ÜÀíÆ÷£¬¼ÇÂ¼Æô¶¯ÈÕÖ¾
+    /// ç§æœ‰æ„é€ å‡½æ•°ï¼ˆå•ä¾‹ï¼‰
     /// </summary>
     private SystemStateManager()
     {
-        LogHelper.Info("[SystemStateManager] ÒÑ´´½¨£¬³õÊ¼×´Ì¬: ÀëÏß");
+        LogHelper.Info("[SystemStateManager] å·²åˆ›å»ºï¼Œåˆå§‹çŠ¶æ€: ç¦»çº¿");
     }
 
     #endregion
 
-  #region ×´Ì¬¿ØÖÆ
+  #region çŠ¶æ€ç®¡ç†
 
     /// <summary>
-    /// ÉèÖÃÏµÍ³ÔÚÏß/ÀëÏß×´Ì¬
-    /// 
-    /// ¹¦ÄÜ£º
-    /// 1. ¼ì²é×´Ì¬ÊÇ·ñ·¢Éú±ä»¯
-    /// 2. ¸üĞÂÄÚ²¿×´Ì¬±êÖ¾
-    /// 3. ¼ÇÂ¼×´Ì¬±ä»¯ÈÕÖ¾
-    /// 4. ´¥·¢×´Ì¬±ä»¯ÊÂ¼şÍ¨Öª¶©ÔÄÕß
-    /// 
-    /// Ê¹ÓÃ³¡¾°£º
-    /// - ÔÚÏß£ºÉú²úÄ£Ê½£¬ÔÊĞí´¦ÀíÍâ²¿´¥·¢£¨TCP/Modbus£©
-    /// - ÀëÏß£ºµ÷ÊÔÄ£Ê½£¬¾Ü¾øÍâ²¿´¥·¢£¬ÆôÓÃÅäÖÃ¹¤¾ßÀ¸
+    /// è®¾ç½®ç³»ç»Ÿåœ¨çº¿/ç¦»çº¿çŠ¶æ€
     /// </summary>
-    /// <param name="online">true=ÔÚÏß£¬false=ÀëÏß</param>
+    /// <param name="online">true=åœ¨çº¿; false=ç¦»çº¿</param>
     public void SetOnlineState(bool online)
     {
-   // ×´Ì¬Î´±ä»¯£¬Ö±½Ó·µ»Ø
+   // çŠ¶æ€æœªå˜åŒ–ï¼Œç›´æ¥è¿”å›
         if (IsOnline == online)
         {
-            LogHelper.Warn($"[SystemStateManager] ÏµÍ³×´Ì¬Î´±ä»¯£¬µ±Ç°ÒÑÎª: {(online ? "ÔÚÏß" : "ÀëÏß")}");
+            LogHelper.Warn($"[SystemStateManager] çŠ¶æ€æœªå˜åŒ–ï¼Œå½“å‰ä¸º: {(online ? "åœ¨çº¿" : "ç¦»çº¿")}");
    return;
         }
 
-  // ¸üĞÂ×´Ì¬
+  // æ›´æ–°çŠ¶æ€
         IsOnline = online;
-  LogHelper.Info($"[SystemStateManager] ? ÏµÍ³×´Ì¬ÇĞ»»Îª: {(online ? "ÔÚÏß" : "ÀëÏß")}");
+  LogHelper.Info($"[SystemStateManager] çŠ¶æ€åˆ‡æ¢ä¸º: {(online ? "åœ¨çº¿" : "ç¦»çº¿")}");
 
-        // ´¥·¢×´Ì¬±ä»¯ÊÂ¼ş£¨Í¨ÖªUI¡¢Í¨Ñ¶Ä£¿éµÈ£©
+        // è§¦å‘çŠ¶æ€å˜åŒ–äº‹ä»¶ï¼ˆé€šçŸ¥UIå’Œé€šè®¯æ¨¡å—ï¼‰
         try
      {
   OnlineStateChanged?.Invoke(IsOnline);
         }
         catch (Exception ex)
      {
-            LogHelper.Error(ex, "[SystemStateManager] ´¥·¢×´Ì¬±ä»¯ÊÂ¼şÒì³£");
+            LogHelper.Error(ex, "[SystemStateManager] çŠ¶æ€å˜åŒ–äº‹ä»¶å¼‚å¸¸");
    }
     }
 
     /// <summary>
-    /// ÇĞ»»ÏµÍ³ÔÚÏß/ÀëÏß×´Ì¬£¨È¡·´£©
-    /// 
-    /// ±ã½İ·½·¨£ºÔÚÏß¡úÀëÏß£¬ÀëÏß¡úÔÚÏß
+    /// åˆ‡æ¢ç³»ç»Ÿåœ¨çº¿/ç¦»çº¿çŠ¶æ€çš„ä¾¿æ·æ–¹æ³•
     /// </summary>
     public void ToggleOnlineState()
  {
@@ -122,24 +103,16 @@ public sealed class SystemStateManager
 
     #endregion
 
-    #region ×´Ì¬²éÑ¯
+    #region çŠ¶æ€æŸ¥è¯¢
 
     /// <summary>
-    /// ¼ì²éÊÇ·ñÔÊĞí´¦ÀíÍâ²¿Í¨Ñ¶´¥·¢
-    /// 
-    /// ·µ»ØÖµ£º
-    /// - true: ÏµÍ³ÔÚÏß£¬ÔÊĞí´¦ÀíÍâ²¿´¥·¢
-    /// - false: ÏµÍ³ÀëÏß£¬¾Ü¾øÍâ²¿´¥·¢
-    /// 
-    /// ÓÃÍ¾£º
-  /// - Í¨Ñ¶Ä£¿éÔÚ½ÓÊÕµ½´¥·¢ĞÅºÅÊ±µ÷ÓÃ´Ë·½·¨ÅĞ¶ÏÊÇ·ñÖ´ĞĞ
-    /// - TaskFlowManagerÔÚ´¦ÀíÉè±¸ÏûÏ¢Ê±¼ì²éÏµÍ³×´Ì¬
+    /// æ˜¯å¦å…è®¸å¤„ç†å¤–éƒ¨é€šè®¯è§¦å‘
     /// </summary>
     public bool CanProcessExternalTrigger()
     {
         if (!IsOnline)
         {
-       LogHelper.Warn("[SystemStateManager] ÏµÍ³ÀëÏß£¬¾Ü¾ø´¦ÀíÍâ²¿´¥·¢ĞÅºÅ");
+       LogHelper.Warn("[SystemStateManager] ç¦»çº¿ï¼Œæ‹’ç»å¤–éƒ¨è§¦å‘ä¿¡å·");
         }
       return IsOnline;
     }

@@ -24,6 +24,9 @@ public partial class Frm_Tool : Form
   private string _originalValueEditing;  // 进入编辑前的值，用于校验/回滚
 
   private StationConfig.ToolBase Detection { get; set; }
+  
+  // ✅ 添加：当前工位配置（用于传递给变量链接窗体）
+  private StationConfig CurrentStation { get; set; }
 
   // C# 关键字（禁止使用）
   private static readonly System.Collections.Generic.HashSet<string> CsKeywords = new([
@@ -57,10 +60,11 @@ public partial class Frm_Tool : Form
     btn_Remove.Click += (_, _) => RemoveCurrent();
   }
 
-  // 加载检测配置（包含 ToolBlock 与变量定义），并绑定到界面
-  public void LoadDetection(StationConfig.ToolBase det)
+  // ✅ 修改：LoadDetection增加工位参数，用于传递给链接窗体
+  public void LoadDetection(StationConfig.ToolBase det, StationConfig station = null)
   {
     Detection = det;
+    CurrentStation = station;
     _vars = new BindingList<StationConfig.DetectVarDef>(Detection.Vars ?? (Detection.Vars = []));
     dgv_Data.AutoGenerateColumns = false;
     dgv_Data.DataSource = _vars;
@@ -109,6 +113,17 @@ public partial class Frm_Tool : Form
     };
     dgv_Data.Columns.Add(noteCol);
 
+    // 链接列（按钮）
+    var linkCol = new DataGridViewButtonColumn
+    {
+      Name = "链接",
+      HeaderText = "链接",
+      Text = "设置",
+      UseColumnTextForButtonValue = true,
+      Width = 60
+    };
+    dgv_Data.Columns.Add(linkCol);
+
     // 列宽变化与控件大小变化时，自适应注释列
     dgv_Data.SizeChanged += (_, _) => AdjustNoteFill();
     dgv_Data.ColumnWidthChanged += (_, e) =>
@@ -129,6 +144,47 @@ public partial class Frm_Tool : Form
         case nameof(StationConfig.DetectVarDef.Value):
           _originalValueEditing = dgv_Data.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString();
           break;
+      }
+    };
+
+    // 链接按钮点击
+    dgv_Data.CellContentClick += (sender, e) =>
+    {
+      if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+      var col = dgv_Data.Columns[e.ColumnIndex];
+      if (col.Name != "链接") return;
+      if (dgv_Data.Rows[e.RowIndex].DataBoundItem is not StationConfig.DetectVarDef r) return;
+      var t = TypeValueUtil.ResolveType(r.TypeName);
+      if (t == null)
+      {
+        MessageBox.Show("变量类型无效，无法链接", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+      }
+      
+      // ✅ 修复：传递当前工位名称，排除自身输出
+      using var frm = new Vision.Frm.Link.Frm_LinkValue(t, CurrentStation?.Name);
+      
+      if (frm.ShowDialog(this) == DialogResult.OK)
+      {
+        // ✅ 清空原链接信息
+        r.LinkGlobal = null;
+        r.LinkStation = null;
+        r.LinkOutput = null;
+        
+        if (frm.SelectedKind == "Global")
+        {
+          r.LinkGlobal = frm.SelectedGlobal;
+        }
+        else if (frm.SelectedKind == "Station")
+        {
+          r.LinkStation = frm.SelectedStation; 
+          r.LinkOutput = frm.SelectedOutput;
+        }
+        var parts = new System.Collections.Generic.List<string>();
+        if (!string.IsNullOrWhiteSpace(r.LinkGlobal)) parts.Add($"全局[{r.LinkGlobal}]");
+        if (!string.IsNullOrWhiteSpace(r.LinkStation) && !string.IsNullOrWhiteSpace(r.LinkOutput)) parts.Add($"工位[{r.LinkStation}].输出[{r.LinkOutput}]");
+        if (parts.Count > 0) r.Comment = "链接: " + string.Join("; ", parts);
+        dgv_Data.Refresh();
       }
     };
   }

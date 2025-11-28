@@ -15,15 +15,15 @@ public class DisplayItem
 [Serializable]
 public class DisplayConfig
 {
- // Ä¬ÈÏÒ»ĞĞÒ»ÁĞ
+// é»˜è®¤ 1 è¡Œ 1 åˆ—
  public int Rows { get; set; } =1;
  public int Cols { get; set; } =1;
  public List<DisplayItem> Items { get; set; } = [];
 }
 
 /// <summary>
-/// ÏÔÊ¾´°¿Ú±ê×¼Öµ×ª»»Æ÷
-/// ´Óµ±Ç°·½°¸µÄ Display ÖĞ»ñÈ¡¿ÉÓÃµÄÏÔÊ¾´°¿ÚÁĞ±í
+/// æ˜¾ç¤ºçª—å£æ ‡å‡†å€¼è½¬æ¢å™¨
+/// ä»å½“å‰æ–¹æ¡ˆçš„ Display ä¸­è·å–å·²é…ç½®çš„æ˜¾ç¤ºçª—å£åˆ—è¡¨
 /// </summary>
 public sealed class DisplayWindowStandardValuesConverter : TypeConverter
 {
@@ -44,7 +44,7 @@ public sealed class DisplayWindowStandardValuesConverter : TypeConverter
      .Distinct(StringComparer.OrdinalIgnoreCase)
      .ToList();
 
-   //×·¼ÓÒ»¸ö¿ÕĞĞ×÷Îª¡°¿É²»Ñ¡¡±µÄÏî
+  // è¿½åŠ ä¸€ä¸ªç©ºå­—ç¬¦ä¸²ä½œä¸ºâ€œå¯ä¸é€‰â€çš„é¡¹
    if (list.Count > 0 && !string.IsNullOrEmpty(list[0]))
    {
     list.Insert(0, string.Empty);
@@ -60,8 +60,8 @@ public sealed class DisplayWindowStandardValuesConverter : TypeConverter
 }
 
 /// <summary>
-/// TCPÁ¬½ÓÃû³Æ±ê×¼Öµ×ª»»Æ÷
-/// ´Óµ±Ç°·½°¸µÄ TCP ÅäÖÃÖĞ»ñÈ¡¿ÉÓÃµÄÁ¬½ÓÃû³ÆÁĞ±í
+/// TCPè¿æ¥åç§°æ ‡å‡†å€¼è½¬æ¢å™¨
+/// ä»å½“å‰é€šè®¯å·¥å‚è·å–å·²è¿æ¥çš„ TCP è®¾å¤‡åˆ—è¡¨
 /// </summary>
 public sealed class TcpConnectionNameConverter : TypeConverter
 {
@@ -73,13 +73,13 @@ public sealed class TcpConnectionNameConverter : TypeConverter
  {
  try
  {
- // ´Ó CommunicationFactory »ñÈ¡ËùÓĞÍ¨Ñ¶Éè±¸
+ // ä» CommunicationFactory è·å–æ‰€æœ‰é€šè®¯è®¾å¤‡
  var devices = HardwareCommNet.CommunicationFactory.Instance.GetAllDevices();
  var list = new List<string> { string.Empty };
  
  if (devices != null)
  {
- // É¸Ñ¡ TCPÉè±¸£¨Éè±¸Ãû³Æ»òÀàĞÍ°üº¬ "Tcp"£©
+ // ç­›é€‰ TCP è®¾å¤‡ï¼šè®¾å¤‡åç§°æˆ–ç±»å‹ååŒ…å« "Tcp"
  var tcpNames = devices
  .Where(d => d != null &&
  d.IsConnected &&
@@ -102,8 +102,8 @@ public sealed class TcpConnectionNameConverter : TypeConverter
 }
 
 /// <summary>
-/// Í¨Ñ¶Éè±¸Ãû³Æ×ª»»Æ÷
-/// ´Ó CommunicationFactory »ñÈ¡ËùÓĞ¿ÉÓÃµÄÍ¨Ñ¶Éè±¸ÁĞ±í
+/// é€šè®¯è®¾å¤‡åç§°è½¬æ¢å™¨
+/// ä» CommunicationFactory è·å–å¯ç”¨çš„é€šè®¯è®¾å¤‡åˆ—è¡¨
 /// </summary>
 public sealed class CommDeviceNameConverter : TypeConverter
 {
@@ -115,13 +115,13 @@ public sealed class CommDeviceNameConverter : TypeConverter
  {
   try
   {
-   // ´Ó CommunicationFactory »ñÈ¡ËùÓĞÍ¨Ñ¶Éè±¸
+  // ä» CommunicationFactory è·å–æ‰€æœ‰é€šè®¯è®¾å¤‡
    var devices = HardwareCommNet.CommunicationFactory.Instance.GetAllDevices();
-   var list = new List<string> { string.Empty }; // ¿ÕÑ¡Ïî£¨¿ÉÑ¡£©
+  var list = new List<string> { string.Empty }; // å¯é€‰é¡¹ï¼ˆä¸é€‰æ‹©ï¼‰
 
    if (devices != null)
    {
-    // »ñÈ¡ËùÓĞÉè±¸Ãû³Æ
+   // è·å–è®¾å¤‡åç§°
     var deviceNames = devices
      .Where(d => d != null)
      .Select(d => d.Name)

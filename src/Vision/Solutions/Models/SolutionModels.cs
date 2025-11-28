@@ -54,8 +54,12 @@ public class Solution
  // Solution 只需要存储 IOTable 配置（哪个工位使用哪个设备）
 
  //运行时全局变量值（不参与序列化），按名称索引，大小写不敏感
- [XmlIgnore]
- public Dictionary<string, object> GlobalValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+  [XmlIgnore]
+  public Dictionary<string, object> GlobalValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+  // 运行时：各工位最新工具输出缓存 StationName -> (OutputName -> Value)
+  [XmlIgnore]
+  public Dictionary<string, Dictionary<string, object>> LastOutputs { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
  //运行时控件缓存：Key -> ImageDisplay（不参与序列化），由显示配置动态重建
  [XmlIgnore]
@@ -756,6 +760,7 @@ public sealed class SolutionManager
 
     sol.Globals ??= new List<GlobalVariableDef>();
     sol.GlobalValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+    sol.LastOutputs = new Dictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
     foreach (var g in sol.Globals)
     {
      if (string.IsNullOrWhiteSpace(g?.Name)) continue;

@@ -42,8 +42,8 @@ internal sealed class TaskFlow : IDisposable
     public void Start(string clientId = "")
     {
         if (_disposed) return;
-        try
-        {
+  try
+  {
             if (string.IsNullOrWhiteSpace(_station.SN))
             {
                 LogHelper.Warn($"[TaskFlow] 工位[{StationName}]未配置相机SN，直接跳过");
@@ -258,9 +258,10 @@ internal sealed class TaskFlow : IDisposable
                 cogImg = (ICogImage)t.Outputs["Image"].Value;
             }
 
-            tool.Inputs["Image"].Value = cogImg;
-            tool.Run();
-            result = (bool)tool.Outputs["Result"].Value;
+   try { _station.DetectionTool?.ApplyVarsToInputs(); } catch { }
+   tool.Inputs["Image"].Value = cogImg;
+   tool.Run();
+   result = (bool)tool.Outputs["Result"].Value;
             LogHelper.Info($"[{StationName}]检测完成，结果【{(result ? "OK" : "NG")}】");
             if (tool.RunStatus.Result != CogToolResultConstants.Accept)
             {
@@ -282,6 +283,27 @@ internal sealed class TaskFlow : IDisposable
 
             // ✅ 步骤3：工具执行完成后写入输出到通讯设备
             WriteToolOutputsToComm(tool);
+
+            // 保存工具输出到 LastOutputs
+            try
+            {
+                var sol = Vision.Solutions.Models.SolutionManager.Instance.Current;
+                if (sol != null)
+                {
+                    sol.LastOutputs ??= new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, object>>(System.StringComparer.OrdinalIgnoreCase);
+                    if (!sol.LastOutputs.TryGetValue(StationName, out var dict) || dict == null)
+                    {
+                        dict = new System.Collections.Generic.Dictionary<string, object>(System.StringComparer.OrdinalIgnoreCase);
+                        sol.LastOutputs[StationName] = dict;
+                    }
+                    for (int i = 0; i < tool.Outputs.Count; i++)
+                    {
+                        var term = tool.Outputs[i];
+                        try { dict[term.Name] = term.Value; } catch { }
+                    }
+                }
+            }
+            catch { }
         }
         catch (Exception ex)
         {

@@ -7,7 +7,7 @@ using Vision.Solutions.Models;
 namespace Vision.Frm.Process;
 
 /// <summary>
-/// ¸ù¾İËùÑ¡Í¨Ñ¶Éè±¸£¬Ìá¹©ÊäÈë±äÁ¿ÃûÏÂÀ­ºòÑ¡
+/// ä¸ºå·¥ä½é€‰æ‹©é€šè®¯è®¾å¤‡æ—¶æä¾›è¾“å…¥å˜é‡çš„ä¸‹æ‹‰é€‰æ‹©
 /// </summary>
 public class StationIOTableInputVarConverter : StringConverter
 {
@@ -18,7 +18,7 @@ public class StationIOTableInputVarConverter : StringConverter
  {
   try
   {
-   // Ö±½Ó´ÓProcessStationÊµÀı»ñÈ¡
+   // ç›´æ¥ä» StationConfig å®ä¾‹è¯»å–
    if (context?.Instance is StationConfig st && !string.IsNullOrWhiteSpace(st.CommDeviceName))
    {
     var dev = CommunicationFactory.Instance.GetDevice(st.CommDeviceName);

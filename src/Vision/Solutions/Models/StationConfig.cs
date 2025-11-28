@@ -14,98 +14,98 @@ namespace Vision.Solutions.Models;
 
 public class StationConfig
 {
-    [Category("»ù±¾"), DisplayName("¹¤Î»Ãû³Æ")] 
+    [Category("å·¥ä½"), DisplayName("å·¥ä½åç§°")] 
     public string Name { get; set; }
     
-    [Category("»ù±¾"), DisplayName("ÊÇ·ñÆôÓÃ")] 
+    [Category("å·¥ä½"), DisplayName("æ˜¯å¦å¯ç”¨")] 
     public bool Enable { get; set; } = true;
 
-    [Category("È¡ÏñÅäÖÃ"), DisplayName("Ïà»úĞòÁĞºÅ"), TypeConverter(typeof(SnStandardValuesConverter))]
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("ç›¸æœºåºåˆ—å·"), TypeConverter(typeof(SnStandardValuesConverter))]
     public string SN { get; set; }
 
-    [Category("È¡ÏñÅäÖÃ"), DisplayName("Ïà»úÀàĞÍ"), ReadOnly(true), Description("Ïà»úµÄÀàĞÍ-ÃæÕó£¬ÏßÉ¨£¬3D£¬ÓÒ¼ü´ò¿ªÅäÖÃ½çÃæ")]
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("ç›¸æœºç±»å‹"), ReadOnly(true), Description("é¢é˜µ/çº¿é˜µ/3Dç­‰ï¼Œä»…ç”¨äºæ˜¾ç¤º")]
     public string CameraType { get; set; }
 
-    [Category("È¡ÏñÅäÖÃ"), DisplayName("Ïà»ú²ÎÊı"), Description("µã»÷´ò¿ªÏà»ú²ÎÊıÅäÖÃ´°¿Ú")]
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("é‡‡é›†å‚æ•°"), Description("é‡‡é›†å‚æ•°è®¾ç½®")]
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public StationCameraParams CameraParams { get; set; }
 
-    [Category("È¡ÏñÅäÖÃ"), DisplayName("ÊÇ·ñ±£´æÔ­Í¼")]
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("æ˜¯å¦ä¿å­˜åŸå›¾")]
     public bool SaveRawImage { get; set; } = false;
 
-    [Category("È¡ÏñÅäÖÃ"), DisplayName("ÊÇ·ñ±£´æ½á¹ûÍ¼")]
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("æ˜¯å¦ä¿å­˜å¤„ç†å›¾")]
     public bool SaveDealImage { get; set; } = false;
 
-    // Í¨Ñ¶ÅäÖÃ
-    [Category("Í¨Ñ¶ÅäÖÃ"), DisplayName("Í¨Ñ¶Éè±¸")]
-    [Description("Ñ¡Ôñ¹¤Î»Ê¹ÓÃµÄÍ¨Ñ¶Éè±¸£¨´ÓÍ¨Ñ¶ÅäÖÃÖĞÑ¡Ôñ£©")]
+    // é€šè®¯é…ç½®
+    [Category("é€šè®¯é…ç½®"), DisplayName("é€šè®¯è®¾å¤‡")]
+    [Description("é€‰æ‹©å·¥ä½ä½¿ç”¨çš„é€šè®¯è®¾å¤‡ï¼ˆåœ¨é€šè®¯ç®¡ç†ä¸­é€‰æ‹©ï¼‰")]
     [TypeConverter(typeof(CommDeviceNameConverter))]
     public string CommDeviceName { get; set; }
 
-    [Category("Í¨Ñ¶ÅäÖÃ"), DisplayName("´¥·¢±äÁ¿"), Description("Ñ¡Ôñ¹¤Î»Ê¹ÓÃµÄÍ¨Ñ¶Éè±¸£¨´ÓÍ¨Ñ¶ÅäÖÃÖĞÑ¡Ôñ£©")]
+    [Category("é€šè®¯é…ç½®"), DisplayName("è§¦å‘å˜é‡"), Description("é€‰æ‹©ç”¨äºè§¦å‘çš„è¾“å…¥å˜é‡åç§°")]
     [TypeConverter(typeof(StationIOTableInputVarConverter))]
     public string TriggerVariableName { get; set; }
 
-    [Category("Í¨Ñ¶ÅäÖÃ"), DisplayName("´¥·¢Öµ"), Description("Ñ¡Ôñ¹¤Î»Ê¹ÓÃµÄÍ¨Ñ¶Éè±¸£¨´ÓÍ¨Ñ¶ÅäÖÃÖĞÑ¡Ôñ£©")]
+    [Category("é€šè®¯é…ç½®"), DisplayName("è§¦å‘å€¼"), Description("è§¦å‘åŒ¹é…çš„ç›®æ ‡å€¼")]
     [TypeConverter(typeof(StationTriggerValueConverter))]
     public string TriggerValue { get; set; }
 
-    // ¹âÔ´ÅäÖÃ
-    [Category("¹âÔ´ÅäÖÃ"), DisplayName("¹âÔ´ÅäÖÃ")]
-    [Description("ÅäÖÃ¹¤Î»µÄ¹âÔ´¿ØÖÆ²ÎÊı")]
+    // å…‰æºæ§åˆ¶
+    [Category("å…‰æºæ§åˆ¶"), DisplayName("å…‰æºæ§åˆ¶")]
+    [Description("é…ç½®å·¥ä½çš„å…‰æºæ§åˆ¶å‚æ•°")]
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public StationLightControl LightControl { get; set; } = new();
 
-    // Éî¶ÈÑ§Ï°
-    [Category("Éî¶ÈÑ§Ï°"), DisplayName("ÊÇ·ñ¼ÓÔØÄ£ĞÍ")]
+    // æ·±åº¦å­¦ä¹ 
+    [Category("æ·±åº¦å­¦ä¹ "), DisplayName("æ˜¯å¦åŠ è½½æ¨¡å‹")]
     public bool bLoadModel { get; set; } = false;
 
-    [Category("Éî¶ÈÑ§Ï°"), DisplayName("ÔËĞĞÊ±ÀàĞÍ")]
-    [Description("Ñ¡ÔñÉî¶ÈÑ§Ï°ÔËĞĞÊ±£ºGPU(¼æÈİĞÔºÃ) / OpenVINO(IntelÓÅ»¯) / TensorRT(NVIDIA¸ßĞÔÄÜ)")]
+    [Category("æ·±åº¦å­¦ä¹ "), DisplayName("è¿è¡Œæ—¶ç±»å‹")]
+    [Description("GPU / OpenVINO / TensorRT")]
     public DLRuntime RuntimeType { get; set; } = DLRuntime.GC;
 
-    [Category("Éî¶ÈÑ§Ï°"), DisplayName("Ä£ĞÍÎÄ¼ş¼ĞÂ·¾¶")]
+    [Category("æ·±åº¦å­¦ä¹ "), DisplayName("æ¨¡å‹æ–‡ä»¶å¤¹è·¯å¾„")]
     [Editor(typeof(FolderPathEditor), typeof(System.Drawing.Design.UITypeEditor))]
     [TypeConverter(typeof(FolderPathConverter))]
     public string ModelPath { get; set; } = string.Empty;
 
-    [Category("Éî¶ÈÑ§Ï°"), DisplayName("Ä£ĞÍÎÄ¼ş¼ĞÃû³Æ"), ReadOnly(true)]
+    [Category("æ·±åº¦å­¦ä¹ "), DisplayName("æ¨¡å‹æ–‡ä»¶å¤¹åç§°"), ReadOnly(true)]
     [Browsable(true)]
     public string ModelFolderName
     {
         get
         {
             if (string.IsNullOrWhiteSpace(ModelPath) || !Directory.Exists(ModelPath))
-                return "<Î´Ñ¡Ôñ>";
+                return "<æœªé€‰æ‹©>";
             return Path.GetFileName(ModelPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         }
     }
 
-    // Ëã·¨ÅäÖÃ
-    [Category("Ëã·¨"), DisplayName("ÆåÅÌ¸ñ±ê¶¨¹¤¾ß"), Description("Í¼ÏñÊÇ·ñÆôÓÃÆåÅÌ¸ñ±ê¶¨")]
+    // ç®—æ³•é…ç½®
+    [Category("ç®—æ³•"), DisplayName("æ£‹ç›˜æ ¼æ ‡å®š"), Description("æ˜¯å¦æ‰§è¡Œæ£‹ç›˜æ ¼æ ‡å®š")]
     public bool bCalibCheckboardTool { get; set; } = false;
 
-    [Category("Ëã·¨"), DisplayName("¾Åµã±ê¶¨¹¤¾ß"), Description("Í¼ÏñÊÇ·ñÆôÓÃ¾Åµã±ê¶¨")]
+    [Category("ç®—æ³•"), DisplayName("ä¹ç‚¹æ ‡å®š"), Description("æ˜¯å¦æ‰§è¡Œä¹ç‚¹æ ‡å®š")]
     public bool bCalibNPointTool { get; set; } = false;
 
-    [Category("Ëã·¨"), DisplayName("¼ì²â¹¤¾ß"), ReadOnly(true), Description("ÊÇ·ñÔËĞĞ¼ì²â¹¤¾ß£¬Ä¬ÈÏÔËĞĞ")]
+    [Category("ç®—æ³•"), DisplayName("æ£€æµ‹å·¥å…·"), ReadOnly(true), Description("æ˜¯å¦å­˜åœ¨æ£€æµ‹å·¥å…·ï¼ˆåªè¯»ï¼‰")]
     public bool bCheckTool { get; set; } = true;
 
-    // ÏÔÊ¾ÅäÖÃ
-    [Category("ÏÔÊ¾"), DisplayName("ÊÇ·ñÏÔÊ¾")]
+    // æ˜¾ç¤ºé…ç½®
+    [Category("æ˜¾ç¤º"), DisplayName("æ˜¯å¦æ˜¾ç¤º")]
     public bool bShow { get; set; }
 
-    [Category("ÏÔÊ¾"), DisplayName("ÏÔÊ¾´°¿Ú"), TypeConverter(typeof(DisplayWindowStandardValuesConverter))]
+    [Category("æ˜¾ç¤º"), DisplayName("æ˜¾ç¤ºçª—å£"), TypeConverter(typeof(DisplayWindowStandardValuesConverter))]
     public string DisplayName { get; set; }
 
-    [Category("ÏÔÊ¾"), DisplayName("ÏÔÊ¾Í¼Ïñ")]
+    [Category("æ˜¾ç¤º"), DisplayName("æ˜¾ç¤ºå›¾å±‚")]
     public int RecoredIndex { get; set; }
 
     [XmlIgnore]
     [Browsable(false)]
     public object DLModel { get; set; }
 
-    //Í³Ò»µÄ¹¤¾ß¼¯ºÏ£¨²ÎÓëĞòÁĞ»¯£©
+    // ç»Ÿä¸€çš„å·¥å…·é›†åˆï¼Œç”¨äºéš”ç¦»åºåˆ—åŒ–
     [Browsable(false)]
     private class ToolSet
     {
@@ -116,7 +116,7 @@ public class StationConfig
 
     [Browsable(false)] private ToolSet Tools { get; set; } = new();
 
-    //¼æÈİ¾É×Ö¶Î£º¸ÄÎª´úÀíµ½ Tools£¬±ÜÃâÖØ¸´ĞòÁĞ»¯
+    // å°†å·¥å…·å­—æ®µæ”¾å…¥å†…éƒ¨é›†åˆï¼Œé¿å…é‡å¤åºåˆ—åŒ–
     [XmlIgnore]
     [Browsable(false)]
     public ToolBase CheckerboardTool { get => Tools?.Checkerboard; set
@@ -137,67 +137,71 @@ public class StationConfig
         Tools.Detection = value;
     } }
 
-    // Ìí¼ÓÖ»¶Á´úÀíÊôĞÔÓÃÓÚPropertyGridÏÔÊ¾£¨ÓÒ¼ü²Ëµ¥»á¸ù¾İÕâĞ©ÊôĞÔÅĞ¶Ï£©
-    [Category("Ëã·¨"), DisplayName("¼ì²â¹¤¾ß"), ReadOnly(true), Description("ÓÒ¼ü´ò¿ª¼ì²â¹¤¾ßÅäÖÃ")]
+    // ä¸‹åˆ—åªè¯»å±•ç¤ºé¡¹ç”¨äº PropertyGrid å³é”®æ‰“å¼€é…ç½®
+    [Category("ç®—æ³•"), DisplayName("æ£€æµ‹å·¥å…·"), ReadOnly(true), Description("å³é”®æ‰“å¼€æ£€æµ‹å·¥å…·é…ç½®")]
     //[TypeConverter(typeof(ExpandableObjectConverter))]
     public ToolBase DetectionToolDisplay => DetectionTool;
 
-    [Category("Ëã·¨"), DisplayName("ÆåÅÌ¸ñ±ê¶¨¹¤¾ßÅäÖÃ"), ReadOnly(true), Description("ÓÒ¼ü´ò¿ªÆåÅÌ¸ñ±ê¶¨¹¤¾ßÅäÖÃ")]
+    [Category("ç®—æ³•"), DisplayName("æ£‹ç›˜æ ¼æ ‡å®šå·¥å…·"), ReadOnly(true), Description("å³é”®æ‰“å¼€æ£‹ç›˜æ ¼æ ‡å®šå·¥å…·é…ç½®")]
     //[TypeConverter(typeof(ExpandableObjectConverter))]
     public ToolBase CheckerboardToolDisplay => CheckerboardTool;
 
-    [Category("Ëã·¨"), DisplayName("¾Åµã±ê¶¨¹¤¾ßÅäÖÃ"), ReadOnly(true), Description("ÓÒ¼ü´ò¿ª¾Åµã±ê¶¨¹¤¾ßÅäÖÃ")]
+    [Category("ç®—æ³•"), DisplayName("ä¹ç‚¹æ ‡å®šå·¥å…·"), ReadOnly(true), Description("å³é”®æ‰“å¼€ä¹ç‚¹æ ‡å®šå·¥å…·é…ç½®")]
     //[TypeConverter(typeof(ExpandableObjectConverter))]
     public ToolBase NPointToolDisplay => NPointTool;
 
-    [Category("Í¨Ñ¶Êä³ö"), DisplayName("Êä³öÓ³Éä")]
-    [Description("ÅäÖÃ¼ì²â¹¤¾ßµÄÊä³ö¶Ë×ÓÓëÍ¨Ñ¶Êä³ö±äÁ¿µÄÓ³Éä¹ØÏµ")]
-    [Browsable(false)] // Òş²ØList±¾Éí£¬Ê¹ÓÃÏÂÃæµÄÖ»¶Á´úÀíÊôĞÔ
+    [Category("é€šè®¯æ˜ å°„"), DisplayName("è¾“å‡ºæ˜ å°„")]
+    [Description("æ£€æµ‹å·¥å…·è¾“å‡ºç«¯å­åˆ°é€šè®¯è¾“å‡ºå˜é‡çš„æ˜ å°„å…³ç³»")]
+    [Browsable(false)]
     public List<OutputMapping> OutputMappings { get; set; } = new();
 
-    [Category("Í¨Ñ¶Êä³ö"), DisplayName("Êä³öÓ³ÉäÅäÖÃ"), ReadOnly(true)]
-    [Description("ÓÒ¼ü´ò¿ªÊä³öÓ³ÉäÅäÖÃ´°¿Ú")]
+    [Category("é€šè®¯æ˜ å°„"), DisplayName("è¾“å‡ºæ˜ å°„å±•ç¤º"), ReadOnly(true)]
+    [Description("å³é”®æ‰“å¼€è¾“å‡ºæ˜ å°„é…ç½®çª—å£")]
     public string OutputMappingsDisplay
     {
         get
         {
             if (OutputMappings == null || OutputMappings.Count == 0)
-                return "<Î´ÅäÖÃ>";
-            return $"<ÒÑÅäÖÃ{OutputMappings.Count}¸öÓ³Éä>";
+                return "<æœªé…ç½®>";
+            return $"<å·²é…ç½®{OutputMappings.Count}é¡¹æ˜ å°„>";
         }
     }
 
-    public class DetectVarDef
-    {
-        public string Name { get; set; }
-        public string TypeName { get; set; }
-        public string Value { get; set; }
-        public string Comment { get; set; }
-    }
+  public class DetectVarDef
+  {
+    public string Name { get; set; }
+    public string TypeName { get; set; }
+    public string Value { get; set; }
+    public string Comment { get; set; }
+    // å˜é‡é“¾æ¥ï¼šå¯åŒæ—¶é“¾æ¥å·¥ä½è¾“å‡ºå’Œå…¨å±€å˜é‡ï¼›è¿è¡Œæ—¶æŒ‰â€œå·¥ä½ä¼˜å…ˆï¼Œå…¶æ¬¡å…¨å±€â€çš„é¡ºåºèµ‹å€¼
+    public string LinkStation { get; set; }
+    public string LinkOutput { get; set; }
+    public string LinkGlobal { get; set; }
+  }
 
     /// <summary>
-    /// ¹¤¾ßÊä³ö¶Ë×ÓÓëÍ¨Ñ¶Êä³ö±äÁ¿µÄÓ³Éä
+    /// æ£€æµ‹å·¥å…·è¾“å‡ºåˆ°é€šè®¯è¾“å‡ºçš„æ˜ å°„
     /// </summary>
     public class OutputMapping
     {
         /// <summary>
-        /// ¹¤¾ßÊä³ö¶Ë×ÓÃû³Æ£¨´Ó DetectionTool.ToolBlock.Outputs ÖĞÑ¡Ôñ£©
+        /// å·¥å…·è¾“å‡ºåç§°ï¼Œåœ¨ DetectionTool.ToolBlock.Outputs ä¸­é€‰æ‹©
         /// </summary>
         public string ToolOutputName { get; set; }
         
         /// <summary>
-        /// Í¨Ñ¶Êä³ö±äÁ¿Ãû³Æ£¨´Ó CommDevice.Table.Outputs ÖĞÑ¡Ôñ£©
+        /// é€šè®¯è¾“å‡ºå˜é‡åç§°ï¼Œåœ¨ CommDevice.Table.Outputs ä¸­é€‰æ‹©
         /// </summary>
         public string CommOutputName { get; set; }
         
         /// <summary>
-        /// ±¸×¢ËµÃ÷
+        /// å¤‡æ³¨è¯´æ˜
         /// </summary>
         public string Description { get; set; }
     }
 
-    public class ToolBase
-    {
+  public class ToolBase
+  {
         [Browsable(false)]
         public string FileName { get; }
 
@@ -236,26 +240,64 @@ public class StationConfig
             };
         }
 
-        public void ApplyVarsToInputs()
+    public void ApplyVarsToInputs()
+    {
+      if (ToolBlock == null || Vars == null) return;
+      foreach (var v in Vars)
+      {
+        if (string.IsNullOrWhiteSpace(v?.Name)) continue;
+        CogToolBlockTerminal term = null;
+        for (var t =0; t < ToolBlock.Inputs.Count; t++)
         {
-            if (ToolBlock == null || Vars == null) return;
-            foreach (var v in Vars)
-            {
-                if (string.IsNullOrWhiteSpace(v?.Name)) continue;
-                CogToolBlockTerminal term = null;
-                for (var t =0; t < ToolBlock.Inputs.Count; t++)
-                {
-                    var tt = ToolBlock.Inputs[t]; if (!string.Equals(tt.Name, v.Name, StringComparison.OrdinalIgnoreCase)) continue; term = tt; break;
-                }
-                if (term == null) continue;
-                var targetType = TypeValueUtil.ResolveType(v.TypeName); if (targetType == null) continue;
-                if (TypeValueUtil.TryParseValue(v.Value, targetType, out var obj, out var _))
-                {
-                    try { if (term.Value == null || (term.Value.GetType() == targetType || targetType.IsAssignableFrom(term.Value.GetType()))) { term.Value = obj; } }
-                    catch { }
-                }
-            }
+          var tt = ToolBlock.Inputs[t]; if (!string.Equals(tt.Name, v.Name, StringComparison.OrdinalIgnoreCase)) continue; term = tt; break;
         }
+        if (term == null) continue;
+        var targetType = TypeValueUtil.ResolveType(v.TypeName); if (targetType == null) continue;
+
+        object obj = null;
+        bool haveValue = false;
+        // å˜é‡é“¾æ¥ä¼˜å…ˆï¼šå…ˆå°è¯•å·¥ä½è¾“å‡ºï¼Œå…¶æ¬¡å…¨å±€å˜é‡
+        try
+        {
+          var sol = SolutionManager.Instance.Current;
+          if (sol != null)
+          {
+            // å·¥ä½è¾“å‡º
+            if (!string.IsNullOrWhiteSpace(v.LinkStation) && !string.IsNullOrWhiteSpace(v.LinkOutput))
+            {
+              if (sol.LastOutputs != null && sol.LastOutputs.TryGetValue(v.LinkStation, out var dict) && dict != null && dict.TryGetValue(v.LinkOutput, out var sv) && sv != null)
+              {
+                if (targetType.IsAssignableFrom(sv.GetType())) { obj = sv; haveValue = true; }
+                else { try { obj = Convert.ChangeType(sv, targetType); haveValue = true; } catch { haveValue = false; } }
+              }
+            }
+            // å…¨å±€å˜é‡ï¼ˆè‹¥å·¥ä½æœªå–åˆ°å€¼ï¼Œåˆ™å°è¯•å…¨å±€ï¼‰
+            if (!haveValue && !string.IsNullOrWhiteSpace(v.LinkGlobal))
+            {
+              if (sol.GlobalValues != null && sol.GlobalValues.TryGetValue(v.LinkGlobal, out var gv) && gv != null)
+              {
+                if (targetType.IsAssignableFrom(gv.GetType())) { obj = gv; haveValue = true; }
+                else { try { obj = Convert.ChangeType(gv, targetType); haveValue = true; } catch { haveValue = false; } }
+              }
+            }
+          }
+        }
+        catch { }
+
+        // è‹¥æ— é“¾æ¥å€¼ï¼Œåˆ™æŒ‰æ–‡æœ¬è§£æé»˜è®¤å€¼
+        if (!haveValue)
+        {
+          if (!TypeValueUtil.TryParseValue(v.Value, targetType, out obj, out var _)) continue;
+        }
+
+        // èµ‹å€¼åˆ°è¾“å…¥ç«¯å­ï¼šåªè¦ obj æœ‰å€¼å°±å°è¯•èµ‹å€¼
+        if (obj != null)
+        {
+          try { term.Value = obj; }
+          catch { }
+        }
+      }
+    }
 
         public void SyncInputsToVars()
         {
@@ -272,16 +314,16 @@ public class StationConfig
                 if (string.IsNullOrEmpty(typeName) || TypeValueUtil.ResolveType(typeName) == null) continue;
                 var existingVar = Vars?.FirstOrDefault(v => string.Equals(v?.Name, term.Name, StringComparison.OrdinalIgnoreCase));
                 if (existingVar != null) { existingVar.Value = TypeValueUtil.ValueToString(term.Value, valueType); existingVar.TypeName = typeName; }
-                else { Vars ??= new List<DetectVarDef>(); Vars.Add(new DetectVarDef { Name = term.Name, TypeName = typeName, Value = TypeValueUtil.ValueToString(term.Value, valueType), Comment = "×Ô¶¯Í¬²½×ÔÊäÈë¶Ë×Ó" }); }
-            }
+                else { Vars ??= new List<DetectVarDef>(); Vars.Add(new DetectVarDef { Name = term.Name, TypeName = typeName, Value = TypeValueUtil.ValueToString(term.Value, valueType), Comment = "è‡ªåŠ¨åŒæ­¥è¾“å…¥å˜é‡" }); }
         }
+    }
 
         public override string ToString()
         {
-            if (ToolBlock == null) return "<Î´ÅäÖÃ>";
+            if (ToolBlock == null) return "<æœªé…ç½®>";
             int toolCount = 0;
             try { toolCount = ToolBlock.Tools.Count; } catch { }
-            return $"<°üº¬{toolCount}¸ö¹¤¾ß>";
+            return $"<åŒ…å«{toolCount}ä¸ªå·¥å…·>";
         }
     }
 }

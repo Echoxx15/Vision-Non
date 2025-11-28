@@ -30,11 +30,11 @@ namespace Vision.Frm.Link
  _station = station ?? throw new ArgumentNullException(nameof(station));
  _config = station.IOTableConfig ?? new IOTableConfig { Name = station.Name + "_IOTable" };
 
- // Éî¿½±´Ò»·İµ½±à¼­¼¯ºÏ£¬±ÜÃâÊµÊ±¸ü¸Ä
+// æ·±æ‹·è´ä¸€ä»½åˆ°ç¼–è¾‘åˆ—è¡¨ï¼Œé¿å…å®æ—¶å½±å“åŸæ•°æ®
  _vars = new BindingList<IOVariableConfig>((_config.Variables ?? new List<IOVariableConfig>()).Select(CloneVar).ToList());
  _trigs = new BindingList<TriggerConfig>((_config.Triggers ?? new List<TriggerConfig>()).Select(CloneTrig).ToList());
 
- Text = "Í¨Ñ¶±í±à¼­Æ÷";
+Text = "é€šè®¯è¡¨ç¼–è¾‘å™¨";
  StartPosition = FormStartPosition.CenterParent;
  MinimumSize = new Size(900,560);
  Width =1000;
@@ -70,18 +70,18 @@ namespace Vision.Frm.Link
  {
  // Tabs
  _tabs.Dock = DockStyle.Fill;
- var pageVars = new TabPage("±äÁ¿");
- var pageTrig = new TabPage("´¥·¢Æ÷");
+var pageVars = new TabPage("å˜é‡");
+var pageTrig = new TabPage("è§¦å‘å™¨");
  _tabs.TabPages.Add(pageVars);
  _tabs.TabPages.Add(pageTrig);
 
  // Vars toolbar
- var btnAddVar = new ToolStripButton("ĞÂÔö") { DisplayStyle = ToolStripItemDisplayStyle.Text };
- var btnDelVar = new ToolStripButton("É¾³ı") { DisplayStyle = ToolStripItemDisplayStyle.Text };
- var btnSave = new ToolStripButton("±£´æ") { DisplayStyle = ToolStripItemDisplayStyle.Text, ToolTipText = "Á¢¼´±£´æÅäÖÃ£¨²»¹Ø±Õ´°¿Ú£©" };
- var btnImportCsv = new ToolStripButton("µ¼ÈëCSV") { DisplayStyle = ToolStripItemDisplayStyle.Text };
- var btnExportCsv = new ToolStripButton("µ¼³öCSV") { DisplayStyle = ToolStripItemDisplayStyle.Text };
- var btnRefreshOutputs = new ToolStripButton("Ë¢ĞÂÊä³ö") { DisplayStyle = ToolStripItemDisplayStyle.Text, ToolTipText = "´Ó¼ì²â¹¤¾ßË¢ĞÂ¿ÉÓÃµÄÊä³ö¶Ë×ÓÁĞ±í" };
+var btnAddVar = new ToolStripButton("æ–°å¢") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnDelVar = new ToolStripButton("åˆ é™¤") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnSave = new ToolStripButton("ä¿å­˜") { DisplayStyle = ToolStripItemDisplayStyle.Text, ToolTipText = "ä¿å­˜å½“å‰é…ç½®ä¸”ä¸å…³é—­çª—å£" };
+var btnImportCsv = new ToolStripButton("å¯¼å…¥CSV") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnExportCsv = new ToolStripButton("å¯¼å‡ºCSV") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnRefreshOutputs = new ToolStripButton("åˆ·æ–°è¾“å‡º") { DisplayStyle = ToolStripItemDisplayStyle.Text, ToolTipText = "ä»æ£€æµ‹å·¥å…·åˆ·æ–°å¯ç”¨çš„è¾“å‡ºåˆ—è¡¨" };
  btnAddVar.Click += (_, __) => AddVar();
  btnDelVar.Click += (_, __) => RemoveCurrentVar();
  btnSave.Click += (_, __) => SaveWithoutClosing();
@@ -100,35 +100,35 @@ namespace Vision.Frm.Link
  _dgvVars.RowHeadersVisible = false;
  _dgvVars.DataError += (_, e) => { e.ThrowException = false; };
 
- _dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Name), HeaderText = "Ãû³Æ", Width =140 });
- _dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Description), HeaderText = "ÃèÊö", Width =160 });
+_dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Name), HeaderText = "åç§°", Width =140 });
+_dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Description), HeaderText = "è¯´æ˜", Width =160 });
 
- var colType = new DataGridViewComboBoxColumn { DataPropertyName = nameof(IOVariableConfig.DataType), HeaderText = "Êı¾İÀàĞÍ", Width =90, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
+var colType = new DataGridViewComboBoxColumn { DataPropertyName = nameof(IOVariableConfig.DataType), HeaderText = "æ•°æ®ç±»å‹", Width =90, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
  colType.DataSource = Enum.GetValues(typeof(IODataType));
  _dgvVars.Columns.Add(colType);
 
- var colAcc = new DataGridViewComboBoxColumn { DataPropertyName = nameof(IOVariableConfig.AccessType), HeaderText = "·ÃÎÊ", Width =70, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
+var colAcc = new DataGridViewComboBoxColumn { DataPropertyName = nameof(IOVariableConfig.AccessType), HeaderText = "æ–¹å‘", Width =70, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
  colAcc.DataSource = Enum.GetValues(typeof(IOAccessType));
  _dgvVars.Columns.Add(colAcc);
 
- _dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.DeviceName), HeaderText = "Éè±¸Ãû", Width =120 });
- _dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Address), HeaderText = "µØÖ·", Width =100 });
+_dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.DeviceName), HeaderText = "è®¾å¤‡å", Width =120 });
+_dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.Address), HeaderText = "åœ°å€", Width =100 });
  
- // ¹ØÁªÊä³ö£º¸ÄÎªÏÂÀ­ÁĞ±í£¬´ÓToolBlock.Outputs¶¯Ì¬¶ÁÈ¡
+// è¾“å‡ºå˜é‡åä¸ºä¸‹æ‹‰åˆ—è¡¨ï¼Œä» ToolBlock.Outputs åŠ¨æ€è·å–
  var colOutput = new DataGridViewComboBoxColumn 
  { 
  DataPropertyName = nameof(IOVariableConfig.ToolBlockOutputName), 
- HeaderText = "¹ØÁªÊä³ö", 
+HeaderText = "è¾“å‡ºå˜é‡", 
  Width =120,
  DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
  };
  _dgvVars.Columns.Add(colOutput);
  
- _dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.DefaultValue), HeaderText = "Ä¬ÈÏÖµ", Width =100 });
+_dgvVars.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(IOVariableConfig.DefaultValue), HeaderText = "é»˜è®¤å€¼", Width =100 });
 
  _dgvVars.DataSource = _vars;
 
- // ¶¯Ì¬Ë¢ĞÂÊä³ö¶Ë×ÓÁĞ±í
+// åŠ¨æ€åˆ·æ–°è¾“å‡ºåˆ—è¡¨
  _dgvVars.CellEnter += DgvVars_CellEnter;
 
  var pnlVars = new Panel { Dock = DockStyle.Fill };
@@ -137,8 +137,8 @@ namespace Vision.Frm.Link
  pageVars.Controls.Add(pnlVars);
 
  // Triggers toolbar
- var btnAddTrig = new ToolStripButton("ĞÂÔö") { DisplayStyle = ToolStripItemDisplayStyle.Text };
- var btnDelTrig = new ToolStripButton("É¾³ı") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnAddTrig = new ToolStripButton("æ–°å¢") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+var btnDelTrig = new ToolStripButton("åˆ é™¤") { DisplayStyle = ToolStripItemDisplayStyle.Text };
  btnAddTrig.Click += (_, __) => AddTrig();
  btnDelTrig.Click += (_, __) => RemoveCurrentTrig();
  _tsTrig.Items.AddRange(new ToolStripItem[] { btnAddTrig, btnDelTrig });
@@ -153,26 +153,26 @@ namespace Vision.Frm.Link
  _dgvTrigs.RowHeadersVisible = false;
  _dgvTrigs.DataError += (_, e) => { e.ThrowException = false; };
 
- _dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.Name), HeaderText = "Ãû³Æ", Width =160 });
+_dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.Name), HeaderText = "åç§°", Width =160 });
 
- var colVarName = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.VariableName), HeaderText = "±äÁ¿Ãû", Width =160, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
+var colVarName = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.VariableName), HeaderText = "å˜é‡å", Width =160, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
  colVarName.FlatStyle = FlatStyle.Standard;
  colVarName.DataSource = _vars;
  colVarName.ValueMember = nameof(IOVariableConfig.Name);
  colVarName.DisplayMember = nameof(IOVariableConfig.Name);
  _dgvTrigs.Columns.Add(colVarName);
 
- var colCond = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.ConditionType), HeaderText = "Ìõ¼ş", Width =120, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
+var colCond = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.ConditionType), HeaderText = "æ¡ä»¶", Width =120, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
  colCond.DataSource = Enum.GetValues(typeof(TriggerConditionType));
  _dgvTrigs.Columns.Add(colCond);
 
- var colVt = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.ValueType), HeaderText = "ÖµÀàĞÍ", Width =100, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
+var colVt = new DataGridViewComboBoxColumn { DataPropertyName = nameof(TriggerConfig.ValueType), HeaderText = "å€¼ç±»å‹", Width =100, DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton };
  colVt.DataSource = Enum.GetValues(typeof(TriggerValueType));
  _dgvTrigs.Columns.Add(colVt);
 
- _dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.TriggerValue), HeaderText = "´¥·¢Öµ", Width =140 });
- _dgvTrigs.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(TriggerConfig.IsEnabled), HeaderText = "ÆôÓÃ", Width =60 });
- _dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.DebounceDelayMs), HeaderText = "È¥¶¶(ms)", Width =90 });
+_dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.TriggerValue), HeaderText = "è§¦å‘å€¼", Width =140 });
+_dgvTrigs.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = nameof(TriggerConfig.IsEnabled), HeaderText = "å¯ç”¨", Width =60 });
+_dgvTrigs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(TriggerConfig.DebounceDelayMs), HeaderText = "å»æŠ–(ms)", Width =90 });
 
  _dgvTrigs.DataSource = _trigs;
 
@@ -182,8 +182,8 @@ namespace Vision.Frm.Link
  pageTrig.Controls.Add(pnlTrigs);
 
  // Buttons
- _btnOk.Text = "È·¶¨";
- _btnCancel.Text = "È¡Ïû";
+_btnOk.Text = "ç¡®å®š";
+_btnCancel.Text = "å–æ¶ˆ";
  _btnOk.DialogResult = DialogResult.OK;
  _btnCancel.DialogResult = DialogResult.Cancel;
  _btnOk.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -279,7 +279,7 @@ namespace Vision.Frm.Link
 
  private void CommitAndClose()
  {
- // Ğ´»ØÕ¾Î»µÄ IOTableConfig
+// å†™å›ç«™ä½çš„ IOTableConfig
  _config ??= new IOTableConfig();
  _config.Variables = _vars.ToList();
  _config.Triggers = _trigs.ToList();
@@ -290,7 +290,7 @@ namespace Vision.Frm.Link
  bool deviceSaved = false;
  bool solutionSaved = false;
 
- // Èô°ó¶¨ÁËÉè±¸Ãû£¬±£´æµ½Éè±¸¼¶ÎÄ¼ş
+// ä¿å­˜åˆ°è®¾å¤‡æ–‡ä»¶
  try
  {
  if (!string.IsNullOrWhiteSpace(_station.CommDeviceName) && _config != null)
@@ -301,10 +301,10 @@ namespace Vision.Frm.Link
  }
  catch (Exception ex)
  {
- MessageBox.Show($"±£´æÉè±¸ÅäÖÃÎÄ¼şÊ§°Ü: {ex.Message}", "¾¯¸æ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+MessageBox.Show($"ä¿å­˜è®¾å¤‡é…ç½®æ–‡ä»¶å¤±è´¥: {ex.Message}", "è­¦å‘Š", MessageBoxButtons.OK, MessageBoxIcon.Warning);
  }
 
- // ±£´æµ±Ç°·½°¸µ½´ÅÅÌ
+// ä¿å­˜å½“å‰æ–¹æ¡ˆæ–‡ä»¶
  try
  {
  SolutionManager.Instance.SaveCurrent();
@@ -312,16 +312,16 @@ namespace Vision.Frm.Link
  }
  catch (Exception ex)
  {
- MessageBox.Show($"±£´æ·½°¸ÎÄ¼şÊ§°Ü: {ex.Message}", "¾¯¸æ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+MessageBox.Show($"ä¿å­˜æ–¹æ¡ˆæ–‡ä»¶å¤±è´¥: {ex.Message}", "è­¦å‘Š", MessageBoxButtons.OK, MessageBoxIcon.Warning);
  }
 
- // ÏÔÊ¾±£´æ½á¹û
+// æ˜¾ç¤ºç»“æœ
  if (deviceSaved || solutionSaved)
  {
- var msg = "Í¨Ñ¶±íÅäÖÃÒÑ±£´æ£º\n";
- if (deviceSaved) msg += $"? Éè±¸ÎÄ¼ş: {_station.CommDeviceName}.iot.xml\n";
- if (solutionSaved) msg += "? ·½°¸ÎÄ¼şÒÑ¸üĞÂ\n";
- MessageBox.Show(msg, "±£´æ³É¹¦", MessageBoxButtons.OK, MessageBoxIcon.Information);
+var msg = "é€šè®¯é…ç½®å·²ä¿å­˜:\n";
+if (deviceSaved) msg += $"â€¢ è®¾å¤‡æ–‡ä»¶: {_station.CommDeviceName}.iot.xml\n";
+if (solutionSaved) msg += "â€¢ æ–¹æ¡ˆæ–‡ä»¶å·²æ›´æ–°\n";
+MessageBox.Show(msg, "ä¿å­˜æˆåŠŸ", MessageBoxButtons.OK, MessageBoxIcon.Information);
  }
 
  DialogResult = DialogResult.OK;
@@ -332,8 +332,8 @@ namespace Vision.Frm.Link
  {
  using var ofd = new OpenFileDialog
  {
- Filter = "CSVÎÄ¼ş|*.csv|ËùÓĞÎÄ¼ş|*.*",
- Title = "µ¼Èë±äÁ¿ÅäÖÃ"
+Filter = "CSVæ–‡ä»¶|*.csv|æ‰€æœ‰æ–‡ä»¶|*.*",
+Title = "å¯¼å…¥å˜é‡"
  };
  
  if (ofd.ShowDialog(this) != DialogResult.OK) return;
@@ -343,11 +343,11 @@ namespace Vision.Frm.Link
  var lines = System.IO.File.ReadAllLines(ofd.FileName, System.Text.Encoding.UTF8);
  if (lines.Length < 2)
  {
- MessageBox.Show("CSVÎÄ¼ş¸ñÊ½²»ÕıÈ·", "´íÎó", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+MessageBox.Show("CSVæ–‡ä»¶æ ¼å¼ä¸æ­£ç¡®", "è­¦å‘Š", MessageBoxButtons.OK, MessageBoxIcon.Warning);
  return;
  }
 
- // Ìø¹ı±íÍ·
+// è·³è¿‡è¡¨å¤´
  var imported = 0;
  for (int i = 1; i < lines.Length; i++)
  {
@@ -371,10 +371,10 @@ namespace Vision.Frm.Link
  DefaultValue = parts.Length > 7 ? parts[7].Trim() : string.Empty
  };
 
- // ¼ì²éÊÇ·ñÒÑ´æÔÚÍ¬Ãû±äÁ¿
+// åˆ¤æ–­æ˜¯å¦å·²å­˜åœ¨åŒåå˜é‡
  if (_vars.Any(v => string.Equals(v.Name, varCfg.Name, StringComparison.OrdinalIgnoreCase)))
  {
- continue; // Ìø¹ıÖØ¸´
+continue; // è·³è¿‡é‡å¤
  }
 
  _vars.Add(varCfg);
@@ -382,15 +382,15 @@ namespace Vision.Frm.Link
  }
  catch
  {
- // Ìø¹ı½âÎöÊ§°ÜµÄĞĞ
+ // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Üµï¿½ï¿½ï¿½
  }
  }
 
- MessageBox.Show($"³É¹¦µ¼Èë {imported} ¸ö±äÁ¿", "µ¼ÈëÍê³É", MessageBoxButtons.OK, MessageBoxIcon.Information);
+MessageBox.Show($"æˆåŠŸå¯¼å…¥ {imported} ä¸ªå˜é‡", "å¯¼å…¥å®Œæˆ", MessageBoxButtons.OK, MessageBoxIcon.Information);
  }
  catch (Exception ex)
  {
- MessageBox.Show($"µ¼ÈëÊ§°Ü: {ex.Message}", "´íÎó", MessageBoxButtons.OK, MessageBoxIcon.Error);
+MessageBox.Show($"å¯¼å…¥å¤±è´¥: {ex.Message}", "é”™è¯¯", MessageBoxButtons.OK, MessageBoxIcon.Error);
  }
  }
 
@@ -398,14 +398,14 @@ namespace Vision.Frm.Link
  {
  if (_vars.Count == 0)
  {
- MessageBox.Show("Ã»ÓĞ¿Éµ¼³öµÄ±äÁ¿", "ÌáÊ¾", MessageBoxButtons.OK, MessageBoxIcon.Information);
+MessageBox.Show("æ²¡æœ‰å¯å¯¼å‡ºçš„å˜é‡", "æç¤º", MessageBoxButtons.OK, MessageBoxIcon.Information);
  return;
  }
 
  using var sfd = new SaveFileDialog
  {
- Filter = "CSVÎÄ¼ş|*.csv",
- Title = "µ¼³ö±äÁ¿ÅäÖÃ",
+Filter = "CSVæ–‡ä»¶|*.csv",
+Title = "å¯¼å‡ºå˜é‡",
  FileName = $"IOTable_{_station.Name}_{DateTime.Now:yyyyMMddHHmmss}.csv"
  };
 
@@ -415,7 +415,7 @@ namespace Vision.Frm.Link
  {
  var lines = new List<string>
  {
- "Ãû³Æ,ÃèÊö,Êı¾İÀàĞÍ,·ÃÎÊÀàĞÍ,Éè±¸Ãû,µØÖ·,¹ØÁªÊä³ö,Ä¬ÈÏÖµ"
+"åç§°,è¯´æ˜,æ•°æ®ç±»å‹,æ–¹å‘,è®¾å¤‡å,åœ°å€,è¾“å‡ºå˜é‡,é»˜è®¤å€¼"
  };
 
  foreach (var v in _vars)
@@ -425,11 +425,11 @@ namespace Vision.Frm.Link
  }
 
  System.IO.File.WriteAllLines(sfd.FileName, lines, System.Text.Encoding.UTF8);
- MessageBox.Show($"³É¹¦µ¼³ö {_vars.Count} ¸ö±äÁ¿", "µ¼³öÍê³É", MessageBoxButtons.OK, MessageBoxIcon.Information);
+MessageBox.Show($"æˆåŠŸå¯¼å‡º {_vars.Count} ä¸ªå˜é‡", "å¯¼å‡ºå®Œæˆ", MessageBoxButtons.OK, MessageBoxIcon.Information);
  }
  catch (Exception ex)
  {
- MessageBox.Show($"µ¼³öÊ§°Ü: {ex.Message}", "´íÎó", MessageBoxButtons.OK, MessageBoxIcon.Error);
+MessageBox.Show($"å¯¼å‡ºå¤±è´¥: {ex.Message}", "é”™è¯¯", MessageBoxButtons.OK, MessageBoxIcon.Error);
  }
  }
  
@@ -437,20 +437,20 @@ namespace Vision.Frm.Link
  {
  if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
- // ¼ì²éÊÇ·ñÎª"¹ØÁªÊä³ö"ÁĞ
+// æ˜¯å¦ä¸ºâ€œè¾“å‡ºå˜é‡â€åˆ—
  var col = _dgvVars.Columns[e.ColumnIndex];
  if (col.DataPropertyName != nameof(IOVariableConfig.ToolBlockOutputName)) return;
 
- // »ñÈ¡µ±Ç°ĞĞµÄ·ÃÎÊÀàĞÍ
+// è·å–å½“å‰è¡Œçš„å˜é‡é…ç½®
  if (_dgvVars.Rows[e.RowIndex].DataBoundItem is not IOVariableConfig varCfg) return;
 
- // Ö»ÓĞOutputÀàĞÍ²ÅĞèÒª¹ØÁªÊä³ö
+// ä»… Output æˆ– InputOutput æ–¹å‘æ‰éœ€è¦è¾“å‡ºå˜é‡
  if (varCfg.AccessType != IOAccessType.Output && varCfg.AccessType != IOAccessType.InputOutput)
  {
  return;
  }
 
- // ´ÓToolBlock»ñÈ¡Êä³ö¶Ë×ÓÁĞ±í
+// ä» ToolBlock è·å–è¾“å‡ºåˆ—è¡¨
  var outputNames = GetToolBlockOutputNames();
  
  if (col is DataGridViewComboBoxColumn comboCol)
@@ -461,7 +461,7 @@ namespace Vision.Frm.Link
 
  private List<string> GetToolBlockOutputNames()
  {
- var list = new List<string> { string.Empty }; // ¿ÕÑ¡Ïî
+var list = new List<string> { string.Empty }; // å¯ä¸é€‰
 
  try
  {
@@ -480,7 +480,7 @@ namespace Vision.Frm.Link
  }
  catch
  {
- // »ñÈ¡Ê§°ÜÊ±·µ»Ø¿ÕÁĞ±í
+// è·å–å¤±è´¥æ—¶è¿”å›ç©ºåˆ—è¡¨
  }
 
  return list;
@@ -490,26 +490,26 @@ namespace Vision.Frm.Link
  {
  var outputNames = GetToolBlockOutputNames();
  
- // ¸üĞÂ"¹ØÁªÊä³ö"ÁĞµÄÊı¾İÔ´
+// åˆ·æ–°â€œè¾“å‡ºå˜é‡â€åˆ—çš„æ•°æ®æº
  foreach (DataGridViewColumn col in _dgvVars.Columns)
  {
  if (col.DataPropertyName == nameof(IOVariableConfig.ToolBlockOutputName) && col is DataGridViewComboBoxColumn comboCol)
  {
- comboCol.DataSource = null; // ÏÈÇå¿Õ
+ comboCol.DataSource = null; // ï¿½ï¿½ï¿½ï¿½ï¿½
  comboCol.DataSource = outputNames;
  break;
  }
  }
 
- // Ë¢ĞÂÏÔÊ¾
+// åˆ·æ–°æ˜¾ç¤º
  _dgvVars.Refresh();
  
- MessageBox.Show($"ÒÑË¢ĞÂÊä³ö¶Ë×ÓÁĞ±í£¬¹² {outputNames.Count - 1} ¸ö¿ÉÓÃ¶Ë×Ó", "Ë¢ĞÂÍê³É", MessageBoxButtons.OK, MessageBoxIcon.Information);
+MessageBox.Show($"å·²åˆ·æ–°è¾“å‡ºåˆ—è¡¨ï¼Œå…± {outputNames.Count - 1} ä¸ªå¯ç”¨é¡¹", "åˆ·æ–°å®Œæˆ", MessageBoxButtons.OK, MessageBoxIcon.Information);
  }
 
  private void SaveWithoutClosing()
  {
- // Ğ´»Ø¹¤Î»µÄ IOTableConfig
+// å†™å›ç«™ä½çš„ IOTableConfig
  _config ??= new IOTableConfig();
  _config.Variables = _vars.ToList();
  _config.Triggers = _trigs.ToList();
@@ -521,7 +521,7 @@ namespace Vision.Frm.Link
  bool solutionSaved = false;
  string errorMsg = string.Empty;
 
- // ±£´æµ½Éè±¸ÎÄ¼ş
+// ä¿å­˜åˆ°è®¾å¤‡æ–‡ä»¶
  try
  {
  if (!string.IsNullOrWhiteSpace(_station.CommDeviceName) && _config != null)
@@ -532,10 +532,10 @@ namespace Vision.Frm.Link
  }
  catch (Exception ex)
  {
- errorMsg += $"Éè±¸ÎÄ¼ş±£´æÊ§°Ü: {ex.Message}\n";
+errorMsg += $"è®¾å¤‡æ–‡ä»¶ä¿å­˜å¤±è´¥: {ex.Message}\n";
  }
 
- // ±£´æµ½·½°¸ÎÄ¼ş
+// ä¿å­˜åˆ°æ–¹æ¡ˆæ–‡ä»¶
  try
  {
  SolutionManager.Instance.SaveCurrent();
@@ -543,20 +543,20 @@ namespace Vision.Frm.Link
  }
  catch (Exception ex)
  {
- errorMsg += $"·½°¸ÎÄ¼ş±£´æÊ§°Ü: {ex.Message}\n";
+errorMsg += $"æ–¹æ¡ˆæ–‡ä»¶ä¿å­˜å¤±è´¥: {ex.Message}\n";
  }
 
- // ÏÔÊ¾½á¹û
+// æ˜¾ç¤ºç»“æœ
  if (!string.IsNullOrEmpty(errorMsg))
  {
- MessageBox.Show(errorMsg, "±£´æ¾¯¸æ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+MessageBox.Show(errorMsg, "ä¿å­˜è­¦å‘Š", MessageBoxButtons.OK, MessageBoxIcon.Warning);
  }
  else if (deviceSaved || solutionSaved)
  {
- var msg = $"? Í¨Ñ¶±íÅäÖÃÒÑ±£´æ\n\n±äÁ¿: {_vars.Count} ¸ö\n´¥·¢Æ÷: {_trigs.Count} ¸ö\n";
- if (deviceSaved) msg += $"\nÒÑ±£´æµ½Éè±¸ÎÄ¼ş: {_station.CommDeviceName}.iot.xml";
- if (solutionSaved) msg += "\nÒÑ±£´æµ½·½°¸ÎÄ¼ş";
- MessageBox.Show(msg, "±£´æ³É¹¦", MessageBoxButtons.OK, MessageBoxIcon.Information);
+var msg = $"â€¢ é€šè®¯é…ç½®å·²ä¿å­˜\n\nå˜é‡: {_vars.Count} ä¸ª\nè§¦å‘å™¨: {_trigs.Count} ä¸ª\n";
+if (deviceSaved) msg += $"\nå·²ä¿å­˜åˆ°è®¾å¤‡æ–‡ä»¶: {_station.CommDeviceName}.iot.xml";
+if (solutionSaved) msg += "\nå·²ä¿å­˜åˆ°æ–¹æ¡ˆæ–‡ä»¶";
+MessageBox.Show(msg, "ä¿å­˜æˆåŠŸ", MessageBoxButtons.OK, MessageBoxIcon.Information);
  }
  }
  }

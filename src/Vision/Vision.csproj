@@ -170,6 +170,12 @@
     <Compile Include="Frm\Link\Frm_GlobalVal.Designer.cs">
       <DependentUpon>Frm_GlobalVal.cs</DependentUpon>
     </Compile>
+    <Compile Include="Frm\Link\Frm_LinkValue.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Frm\Link\Frm_LinkValue.Designer.cs">
+      <DependentUpon>Frm_LinkValue.cs</DependentUpon>
+    </Compile>
     <Compile Include="Frm\MainForm\Frm_Camera2D.cs">
       <SubType>Form</SubType>
     </Compile>

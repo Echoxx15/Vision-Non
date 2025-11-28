@@ -485,7 +485,8 @@ public partial class Frm_StationConfig : Form
     using var frm = new Frm_Tool();
     frm.Text = "检测工具配置";
     frm.ToolBlock = st.DetectionTool?.ToolBlock;
-    frm.LoadDetection(st.DetectionTool);
+    // ✅ 修复：传递当前工位配置
+    frm.LoadDetection(st.DetectionTool, st);
     frm.ShowDialog(this);
     try
     {
