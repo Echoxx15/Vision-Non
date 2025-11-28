@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace HardwareCommNet.CommTable;
 
 /// <summary>
-/// Í¨Ñ¶±íĞĞÄ£ĞÍ
+/// é€šè®¯å˜é‡æ¨¡å‹
 /// </summary>
 public sealed class CommCell
 {
@@ -12,10 +12,10 @@ public sealed class CommCell
     public string Name { get; set; } = string.Empty;
     public CommValueType ValueType { get; set; } = CommValueType.Int;
     
-    /// <summary>ÆğÊ¼×Ö½ÚÎ»ÖÃ£¨TCP×Ö·û´®²ğ·ÖÓÃ£¬´Ó0¿ªÊ¼£»Modbus²»Ê¹ÓÃ£©</summary>
+    /// <summary>èµ·å§‹å­—èŠ‚ä½ç½®ï¼ˆTCPå­—ç¬¦ä¸²è§£æç”¨ï¼Œä»0å¼€å§‹ï¼ŒModbusä¸ä½¿ç”¨ï¼‰</summary>
     public int StartByte { get; set; } = 0;
     
-    /// <summary>×Ö½Ú³¤¶È/ÊıÁ¿£¨Modbus¶ÁÈ¡³¤¶È¡¢TCP½ØÈ¡³¤¶È£©</summary>
+    /// <summary>å­—èŠ‚é•¿åº¦/æ•°é‡ï¼ˆModbusè¯»å–é•¿åº¦ã€TCPè¯»å–é•¿åº¦ï¼‰</summary>
     public int Length { get; set; } = 1;
     
     public string Address { get; set; } = string.Empty;
@@ -23,12 +23,22 @@ public sealed class CommCell
     public string Description { get; set; } = string.Empty;
     
     /// <summary>
-    /// ÊÇ·ñÎª´¥·¢ĞÅºÅ
-    /// ±êÊ¶¸Ã±äÁ¿ÊÇ·ñĞèÒªÔÚ´¥·¢ºó×Ô¶¯¸´Î»£¨Ğ´»Ø0»òfalse£©
+    /// æ˜¯å¦ä¸ºè§¦å‘ä¿¡å·
+    /// æ ‡è¯†è¯¥å˜é‡æ˜¯å¦éœ€è¦åœ¨è§¦å‘åè‡ªåŠ¨å¤ä½ï¼ˆå†™å…¥0/falseï¼‰
     /// </summary>
     public bool IsTrigger { get; set; } = false;
     
-    /// <summary>Êµ¼ÊµÄ.NETÀàĞÍ£¨ÓÃÓÚTypeValueUtil×ª»»£©£¬¸ù¾İValueType×Ô¶¯¼ÆËã</summary>
+    /// <summary>
+    /// ç¼“å­˜çš„å½“å‰å€¼ï¼ˆç”±è½®è¯¢çº¿ç¨‹æ›´æ–°ï¼Œå¤–éƒ¨è¯»å–æ—¶ç›´æ¥è·å–æ­¤å€¼ï¼‰
+    /// </summary>
+    public object CachedValue { get; set; }
+    
+    /// <summary>
+    /// ç¼“å­˜å€¼çš„æ›´æ–°æ—¶é—´
+    /// </summary>
+    public DateTime CachedTime { get; set; }
+    
+    /// <summary>å®é™…çš„.NETç±»å‹ï¼ˆæ ¹æ®TypeValueUtilè½¬æ¢ï¼Œæˆ–æ ¹æ®ValueTypeè‡ªåŠ¨ç”Ÿæˆï¼‰</summary>
     public Type RealType
     {
         get

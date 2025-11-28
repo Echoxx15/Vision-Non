@@ -170,6 +170,8 @@ public partial class Frm_Tool : Form
         r.LinkGlobal = null;
         r.LinkStation = null;
         r.LinkOutput = null;
+        r.LinkCommDevice = null;
+        r.LinkCommInput = null;
         
         if (frm.SelectedKind == "Global")
         {
@@ -180,7 +182,13 @@ public partial class Frm_Tool : Form
           r.LinkStation = frm.SelectedStation; 
           r.LinkOutput = frm.SelectedOutput;
         }
+        else if (frm.SelectedKind == "Comm")
+        {
+          r.LinkCommDevice = frm.SelectedCommDevice;
+          r.LinkCommInput = frm.SelectedCommInput;
+        }
         var parts = new System.Collections.Generic.List<string>();
+        if (!string.IsNullOrWhiteSpace(r.LinkCommDevice) && !string.IsNullOrWhiteSpace(r.LinkCommInput)) parts.Add($"通讯[{r.LinkCommDevice}].输入[{r.LinkCommInput}]");
         if (!string.IsNullOrWhiteSpace(r.LinkGlobal)) parts.Add($"全局[{r.LinkGlobal}]");
         if (!string.IsNullOrWhiteSpace(r.LinkStation) && !string.IsNullOrWhiteSpace(r.LinkOutput)) parts.Add($"工位[{r.LinkStation}].输出[{r.LinkOutput}]");
         if (parts.Count > 0) r.Comment = "链接: " + string.Join("; ", parts);

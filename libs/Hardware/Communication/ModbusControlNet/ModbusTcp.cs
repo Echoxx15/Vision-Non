@@ -179,6 +179,10 @@ public class ModbusTcp : CommAdapterBase
                 {
                     object value = ReadCellValue(cell);
                     Interlocked.Increment(ref _readOps);
+                    
+                    // ✅ 更新缓存值（无论是否为非零值都更新）
+                    Table.UpdateInputCachedValue(cell.Name, value);
+                    
                     if (IsNonZero(value))
                     {
                         //先发布事件（让上层尽快收到)

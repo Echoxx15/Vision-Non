@@ -567,3 +567,21 @@
 错误类型：System.Net.Sockets.SocketException
 错误方法：Int32 EndReceive(System.IAsyncResult)
 /=================================================[    Exception    ]================================================/
+
+[信息] 2025-11-28 08:57:04.001 thread:[01] ModbusTcpServer[502] : 启动引擎
+[调试] 2025-11-28 08:57:28.020 thread:[04] ModbusTcpServer[502] : 客户端 [ 127.0.0.1:52004 ] 上线
+[致命] 2025-11-28 08:58:36.986 thread:[12] ModbusTcpServer[502] : 客户端 [ 127.0.0.1:52004 ] 下线 : 错误信息：远程主机强迫关闭了一个现有的连接。
+错误源：System
+错误堆栈：   在 System.Net.Sockets.Socket.EndReceive(IAsyncResult asyncResult)
+   在 HslCommunication.ModBus.ModbusTcpServer.ModbusHeadReveiveCallback(IAsyncResult ar) 位置 I:\HslProjects\HslCommunication\HslCommunication_Net45\ModBus\ModbusTcp\ModbusTcpServer.cs:行号 1000
+错误类型：System.Net.Sockets.SocketException
+错误方法：Int32 EndReceive(System.IAsyncResult)
+/=================================================[    Exception    ]================================================/
+[调试] 2025-11-28 08:58:43.171 thread:[04] ModbusTcpServer[502] : 客户端 [ 127.0.0.1:52237 ] 上线
+[致命] 2025-11-28 09:08:22.631 thread:[12] ModbusTcpServer[502] : 客户端 [ 127.0.0.1:52237 ] 下线 : 错误信息：远程主机强迫关闭了一个现有的连接。
+错误源：System
+错误堆栈：   在 System.Net.Sockets.Socket.EndReceive(IAsyncResult asyncResult)
+   在 HslCommunication.ModBus.ModbusTcpServer.ModbusHeadReveiveCallback(IAsyncResult ar) 位置 I:\HslProjects\HslCommunication\HslCommunication_Net45\ModBus\ModbusTcp\ModbusTcpServer.cs:行号 1000
+错误类型：System.Net.Sockets.SocketException
+错误方法：Int32 EndReceive(System.IAsyncResult)
+/=================================================[    Exception    ]================================================/

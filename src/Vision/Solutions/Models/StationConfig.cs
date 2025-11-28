@@ -9,6 +9,7 @@ using System.Linq;
 using Vision.Common;
 using Vision.LightSource;
 using Vision.Frm.Process;
+using HardwareCommNet;
 
 namespace Vision.Solutions.Models;
 
@@ -173,10 +174,13 @@ public class StationConfig
     public string TypeName { get; set; }
     public string Value { get; set; }
     public string Comment { get; set; }
-    // 变量链接：可同时链接工位输出和全局变量；运行时按“工位优先，其次全局”的顺序赋值
+    // 变量链接：可同时链接工位输出、全局变量、通讯输入；运行时按"通讯输入优先，其次工位输出，最后全局"的顺序赋值
     public string LinkStation { get; set; }
     public string LinkOutput { get; set; }
     public string LinkGlobal { get; set; }
+    // 通讯输入链接
+    public string LinkCommDevice { get; set; }
+    public string LinkCommInput { get; set; }
   }
 
     /// <summary>
@@ -256,14 +260,35 @@ public class StationConfig
 
         object obj = null;
         bool haveValue = false;
-        // 变量链接优先：先尝试工位输出，其次全局变量
+        // 变量链接优先：先尝试通讯输入，其次工位输出，最后全局变量
         try
         {
           var sol = SolutionManager.Instance.Current;
+          
+          // 通讯输入（最高优先级）- 直接从缓存获取，不重新读取PLC
+          if (!haveValue && !string.IsNullOrWhiteSpace(v.LinkCommDevice) && !string.IsNullOrWhiteSpace(v.LinkCommInput))
+          {
+            try
+            {
+              var device = CommunicationFactory.Instance.GetDevice(v.LinkCommDevice);
+              if (device != null)
+              {
+                // 直接从通讯表缓存获取值（轮询线程已经在持续更新）
+                var cv = device.Table?.GetInputCachedValue(v.LinkCommInput);
+                if (cv != null)
+                {
+                  if (targetType.IsAssignableFrom(cv.GetType())) { obj = cv; haveValue = true; }
+                  else { try { obj = Convert.ChangeType(cv, targetType); haveValue = true; } catch { haveValue = false; } }
+                }
+              }
+            }
+            catch { }
+          }
+          
           if (sol != null)
           {
             // 工位输出
-            if (!string.IsNullOrWhiteSpace(v.LinkStation) && !string.IsNullOrWhiteSpace(v.LinkOutput))
+            if (!haveValue && !string.IsNullOrWhiteSpace(v.LinkStation) && !string.IsNullOrWhiteSpace(v.LinkOutput))
             {
               if (sol.LastOutputs != null && sol.LastOutputs.TryGetValue(v.LinkStation, out var dict) && dict != null && dict.TryGetValue(v.LinkOutput, out var sv) && sv != null)
               {

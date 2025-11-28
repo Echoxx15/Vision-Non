@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using Vision.Solutions.Models;
+using HardwareCommNet;
 
 namespace Vision.Frm.Link
 {
@@ -14,6 +15,8 @@ namespace Vision.Frm.Link
         public string SelectedStation { get; private set; }
         public string SelectedOutput { get; private set; }
         public string SelectedGlobal { get; private set; }
+        public string SelectedCommDevice { get; private set; }
+        public string SelectedCommInput { get; private set; }
 
 
         public Frm_LinkValue(Type targetType = null, string excludeStation = null)
@@ -33,8 +36,25 @@ namespace Vision.Frm.Link
             treeView1.Nodes.Clear();
             var sol = SolutionManager.Instance.Current;
             if (sol == null) return;
+            
+            // 全局变量节点
             var globalNode = new TreeNode("全局变量") { Tag = "Global" };
             treeView1.Nodes.Add(globalNode);
+            
+            // 通讯设备节点
+            var commDevices = CommunicationFactory.Instance.GetAllDevices().ToList();
+            if (commDevices.Count > 0)
+            {
+                var commRootNode = new TreeNode("通讯输入") { Tag = "CommRoot" };
+                foreach (var dev in commDevices)
+                {
+                    var devNode = new TreeNode(dev.Name) { Tag = ("CommDevice", dev) };
+                    commRootNode.Nodes.Add(devNode);
+                }
+                treeView1.Nodes.Add(commRootNode);
+            }
+            
+            // 工位节点
             foreach (var st in sol.Stations ?? new List<StationConfig>())
             {
                 if (st == null) continue;
@@ -56,6 +76,7 @@ namespace Vision.Frm.Link
             if (e.Node?.Tag is string s && s == "Global")
             {
                 SelectedKind = "Global"; SelectedStation = null; SelectedOutput = null; SelectedGlobal = null;
+                SelectedCommDevice = null; SelectedCommInput = null;
                 foreach (var g in sol.Globals ?? new List<GlobalVariableDef>())
                 {
                     var t = SolutionManager.ResolveType(g.TypeName);
@@ -67,9 +88,35 @@ namespace Vision.Frm.Link
                     dgv_List.Rows.Add(t.Name, g.Name, v == null ? "<null>" : v.ToString());
                 }
             }
+            else if (e.Node?.Tag is ValueTuple<string, IComm> commTag && commTag.Item1 == "CommDevice")
+            {
+                // 通讯设备输入
+                SelectedKind = "Comm"; SelectedStation = null; SelectedOutput = null; SelectedGlobal = null;
+                SelectedCommDevice = commTag.Item2.Name; SelectedCommInput = null;
+                var inputs = commTag.Item2.Table?.Inputs;
+                if (inputs != null)
+                {
+                    foreach (var cell in inputs)
+                    {
+                        var t = cell.RealType;
+                        if (t == null) continue;
+                        if (!_targetType.IsAssignableFrom(t)) continue;
+                        // 直接获取缓存值（轮询线程已经在持续更新）
+                        var valStr = "<未读取>";
+                        try
+                        {
+                            var v = cell.CachedValue;
+                            valStr = v == null ? "<null>" : v.ToString();
+                        }
+                        catch { }
+                        dgv_List.Rows.Add(t.Name, cell.Name, valStr);
+                    }
+                }
+            }
             else if (e.Node?.Tag is StationConfig st)
             {
                 SelectedKind = "Station"; SelectedStation = st.Name; SelectedOutput = null; SelectedGlobal = null;
+                SelectedCommDevice = null; SelectedCommInput = null;
                 var tb = st.DetectionTool?.ToolBlock;
                 if (tb != null)
                 {
@@ -100,7 +147,9 @@ namespace Vision.Frm.Link
         {
             if (dgv_List.CurrentRow == null) return;
             var name = dgv_List.CurrentRow.Cells["名称"].Value?.ToString();
-            if (SelectedKind == "Global") SelectedGlobal = name; else if (SelectedKind == "Station") SelectedOutput = name;
+            if (SelectedKind == "Global") SelectedGlobal = name; 
+            else if (SelectedKind == "Station") SelectedOutput = name;
+            else if (SelectedKind == "Comm") SelectedCommInput = name;
         }
     }
 }

@@ -258,10 +258,17 @@ internal sealed class TaskFlow : IDisposable
                 cogImg = (ICogImage)t.Outputs["Image"].Value;
             }
 
-   try { _station.DetectionTool?.ApplyVarsToInputs(); } catch { }
-   tool.Inputs["Image"].Value = cogImg;
-   tool.Run();
-   result = (bool)tool.Outputs["Result"].Value;
+            try
+            {
+                _station.DetectionTool?.ApplyVarsToInputs();
+            }
+            catch
+            {
+            }
+
+            tool.Inputs["Image"].Value = cogImg;
+            tool.Run();
+            result = (bool)tool.Outputs["Result"].Value;
             LogHelper.Info($"[{StationName}]检测完成，结果【{(result ? "OK" : "NG")}】");
             if (tool.RunStatus.Result != CogToolResultConstants.Accept)
             {
@@ -290,20 +297,33 @@ internal sealed class TaskFlow : IDisposable
                 var sol = Vision.Solutions.Models.SolutionManager.Instance.Current;
                 if (sol != null)
                 {
-                    sol.LastOutputs ??= new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, object>>(System.StringComparer.OrdinalIgnoreCase);
+                    sol.LastOutputs ??=
+                        new System.Collections.Generic.Dictionary<string,
+                            System.Collections.Generic.Dictionary<string, object>>(System.StringComparer
+                            .OrdinalIgnoreCase);
                     if (!sol.LastOutputs.TryGetValue(StationName, out var dict) || dict == null)
                     {
-                        dict = new System.Collections.Generic.Dictionary<string, object>(System.StringComparer.OrdinalIgnoreCase);
+                        dict = new System.Collections.Generic.Dictionary<string, object>(System.StringComparer
+                            .OrdinalIgnoreCase);
                         sol.LastOutputs[StationName] = dict;
                     }
+
                     for (int i = 0; i < tool.Outputs.Count; i++)
                     {
                         var term = tool.Outputs[i];
-                        try { dict[term.Name] = term.Value; } catch { }
+                        try
+                        {
+                            dict[term.Name] = term.Value;
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
         catch (Exception ex)
         {

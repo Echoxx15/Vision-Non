@@ -6,7 +6,7 @@ using System.Threading;
 namespace HardwareCommNet.CommTable;
 
 /// <summary>
-///Éè±¸Í¨Ñ¶±í£ºÎ¬»¤ÊäÈë/Êä³öĞĞ²¢Ìá¹©Ïß³Ì°²È«·ÃÎÊÓëÂÖÑ¯µ÷¶ÈÈë¿Ú¡£
+///ï¿½è±¸Í¨Ñ¶ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½Ğ²ï¿½ï¿½á¹©ï¿½ß³Ì°ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¡ï¿½
 /// </summary>
 public sealed class CommTable
 {
@@ -93,6 +93,46 @@ public sealed class CommTable
  public void MoveInput(int index, int offset) => Move(_inputs, index, offset);
  public void MoveOutput(int index, int offset) => Move(_outputs, index, offset);
 
+ /// <summary>
+ /// æ›´æ–°è¾“å…¥å˜é‡çš„ç¼“å­˜å€¼ï¼ˆç”±è½®è¯¢çº¿ç¨‹è°ƒç”¨ï¼‰
+ /// </summary>
+ public void UpdateInputCachedValue(string name, object value)
+ {
+  if (string.IsNullOrWhiteSpace(name)) return;
+  _lock.EnterWriteLock();
+  try
+  {
+   var cell = _inputs.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+   if (cell != null)
+   {
+    cell.CachedValue = value;
+    cell.CachedTime = DateTime.Now;
+   }
+  }
+  finally
+  {
+   _lock.ExitWriteLock();
+  }
+ }
+
+ /// <summary>
+ /// è·å–è¾“å…¥å˜é‡çš„ç¼“å­˜å€¼
+ /// </summary>
+ public object GetInputCachedValue(string name)
+ {
+  if (string.IsNullOrWhiteSpace(name)) return null;
+  _lock.EnterReadLock();
+  try
+  {
+   var cell = _inputs.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+   return cell?.CachedValue;
+  }
+  finally
+  {
+   _lock.ExitReadLock();
+  }
+ }
+
  private void AddOrUpdate(List<CommCell> list, CommCell cell)
  {
   if (cell == null || string.IsNullOrWhiteSpace(cell.Name)) return;
@@ -160,6 +200,8 @@ public sealed class CommTable
   Address = c.Address,
   TriggerValues = new List<string>(c.TriggerValues),
   Description = c.Description,
-  IsTrigger = c.IsTrigger
+  IsTrigger = c.IsTrigger,
+  CachedValue = c.CachedValue,
+  CachedTime = c.CachedTime
  };
 }
