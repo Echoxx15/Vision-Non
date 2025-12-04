@@ -3,13 +3,13 @@ using System;
 namespace HardwareCommNet;
 
 /// <summary>
-/// Í¨Ñ¶³§ÉÌ±êÊ¶ÌØĞÔ£ºÓÃÓÚ±ê¼ÇÍ¨Ñ¶²å¼şÖ§³ÖµÄÀàĞÍÃû³Æ
+/// é€šè®¯åˆ¶é€ å•†æ ‡è¯†ç‰¹æ€§ï¼Œç”¨äºæ ‡è¯†é€šè®¯æ’ä»¶æ”¯æŒçš„åˆ¶é€ å•†åç§°ã€‚
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class CommManufacturerAttribute : Attribute
 {
 	/// <summary>
-	/// Í¨Ñ¶ÀàĞÍÃû³Æ£¨Èç"ModbusTcp"¡¢"TcpClient"£©
+	/// é€šè®¯ç±»å‹åç§°ï¼Œå¦‚"ModbusTcp"ã€"TcpClient"ã€‚
 	/// </summary>
 	public string ManufacturerName { get; }
 

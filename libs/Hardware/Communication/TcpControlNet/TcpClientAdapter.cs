@@ -5,293 +5,318 @@ using System.Linq;
 using HardwareCommNet;
 using TcpControlNet.UI;
 using Logger;
-using HardwareCommNet.CommTable;
 
 namespace TcpControlNet;
 
 /// <summary>
-/// TCP ¿Í»§¶ËÍ¨Ñ¶ÊÊÅäÆ÷£¨IComm ÊµÏÖ£©
+/// TCP å®¢æˆ·ç«¯é€šè®¯é€‚é…å™¨ï¼ˆIComm å®ç°ï¼‰
 /// </summary>
 [CommManufacturer("TcpClient")]
 public class TcpClientAdapter : CommAdapterBase
 {
-	#region ÊôĞÔ
+    #region å­—æ®µ
 
-	private NetTcpClient _client;
-	public CommTable Table { get; } = new CommTable();
+    private NetTcpClient _client;
 
-	// ÅäÖÃ²ÎÊı
-	public string IpAddress { get; set; } = "127.0.0.1";
-	public int Port { get; set; } = 5000;
-	public string EncodingName { get; set; } = "UTF-8";
-	public bool FrameByNewLine { get; set; } = true;
-	public bool AutoReconnect { get; set; } = true;
-	public int ReconnectDelayMs { get; set; } = 3000;
-	public int ConnectTimeoutMs { get; set; } = 5000;
+    // é…ç½®å‚æ•°
+    public string IpAddress { get; set; } = "127.0.0.1";
+    public int Port { get; set; } = 5000;
+    public string EncodingName { get; set; } = "UTF-8";
+    public bool FrameByNewLine { get; set; } = true;
+    public bool AutoReconnect { get; set; } = true;
+    public int ReconnectDelayMs { get; set; } = 3000;
+    public int ConnectTimeoutMs { get; set; } = 5000;
 
-	/// <summary>
-	/// ÊÇ·ñÒÑÁ¬½Ó£¨Ö»¶ÁÊôĞÔ£©
-	/// </summary>
-	public override bool IsConnected => _client?.IsConnected ?? false;
+    /// <summary>
+    /// æ˜¯å¦å·²è¿æ¥ï¼ˆåªè¯»å±æ€§ï¼‰
+    /// </summary>
+    public override bool IsConnected => _client?.IsConnected ?? false;
 
-	#endregion
+    /// <summary>
+    /// åŸå§‹æ¶ˆæ¯æ¥æ”¶äº‹ä»¶ï¼ˆç”¨äºUIç›´æ¥æ˜¾ç¤ºï¼Œæœªç»å¤„ç†çš„æ¶ˆæ¯ï¼‰
+    /// </summary>
+    public event EventHandler<string> RawMessageReceived;
 
-	#region Ë½ÓĞ×Ö¶Î
+    #endregion
 
-	private uConfigControl _configControl;
+    #region ç§æœ‰å­—æ®µ
 
-	#endregion
+    private uConfigControl _configControl;
 
-	#region ¹¹Ôìº¯Êı
+    #endregion
 
-	/// <summary>
-	/// ³õÊ¼»¯ TCP ¿Í»§¶ËÊÊÅäÆ÷
-	/// </summary>
-	public TcpClientAdapter(string name = "TcpClient") : base(name)
-	{
-	}
+    #region æ„é€ å‡½æ•°
 
-	#endregion
+    /// <summary>
+    /// åˆå§‹åŒ– TCP å®¢æˆ·ç«¯é€‚é…å™¨
+    /// </summary>
+    public TcpClientAdapter(string name = "TcpClient") : base(name)
+    {
+    }
 
-	#region ÖØĞ´½Ó¿Ú·½·¨
+    #endregion
 
-	/// <summary>
-	/// »ñÈ¡ÅäÖÃ¿Ø¼ş
-	/// </summary>
-	public override UserControl GetConfigControl()
-	{
-		if (_configControl == null || _configControl.IsDisposed)
-		{
-			_configControl = new uConfigControl();
-			_configControl.SetDevice(this, TcpType.Client);
-		}
+    #region é‡å†™æ¥å£æ–¹æ³•
 
-		return _configControl;
-	}
+    /// <summary>
+    /// è·å–é…ç½®æ§ä»¶
+    /// </summary>
+    public override UserControl GetConfigControl()
+    {
+        if (_configControl == null || _configControl.IsDisposed)
+        {
+            _configControl = new uConfigControl();
+            _configControl.SetDevice(this, TcpType.Client);
+        }
 
-	/// <summary>
-	/// Á¬½ÓÉè±¸
-	/// </summary>
-	public override void Connect()
-	{
-		if (IsConnected) return;
+        return _configControl;
+    }
 
-		try
-		{
-			LogHelper.Info($"[{Name}] ========== TCP¿Í»§¶Ë¿ªÊ¼Á¬½Ó ==========");
-			LogHelper.Info($"[{Name}] Ä¿±êµØÖ·: {IpAddress}:{Port}");
+    /// <summary>
+    /// è¿æ¥è®¾å¤‡
+    /// </summary>
+    public override void Connect()
+    {
+        if (IsConnected) return;
 
-			// »ñÈ¡±àÂë
-			Encoding encoding;
-			try
-			{
-				encoding = Encoding.GetEncoding(EncodingName);
-			}
-			catch
-			{
-				encoding = Encoding.UTF8;
-			}
+        try
+        {
+            LogHelper.Info($"[{Name}] ========== TCPå®¢æˆ·ç«¯å¼€å§‹è¿æ¥ ==========");
+            LogHelper.Info($"[{Name}] ç›®æ ‡åœ°å€: {IpAddress}:{Port}");
 
-			// ´´½¨µ×²ã¿Í»§¶Ë£¨´«Èë Name ²ÎÊı£©
-			_client = new NetTcpClient(IpAddress, Port, encoding, Name)
-			{
-				AutoReconnect = AutoReconnect,
-				ReconnectDelayMs = ReconnectDelayMs,
-				ConnectTimeoutMs = ConnectTimeoutMs,
-				FrameByNewLine = FrameByNewLine
-			};
+            // è·å–ç¼–ç 
+            Encoding encoding;
+            try
+            {
+                encoding = Encoding.GetEncoding(EncodingName);
+            }
+            catch
+            {
+                encoding = Encoding.UTF8;
+            }
 
-			// ? ¶©ÔÄµ×²ã¿Í»§¶ËÊÂ¼ş£¨Ê¹ÓÃ»ùÀà·½·¨´¥·¢£©
-			_client.ConnectionStatusChanged += OnClientConnectionStatusChanged;
-			_client.MessageReceived += OnClientMessageReceived;
+            // åˆ›å»ºåº•å±‚å®¢æˆ·ç«¯ï¼ˆä¼ å…¥ Name å‚æ•°ï¼‰
+            _client = new NetTcpClient(IpAddress, Port, encoding, Name)
+            {
+                AutoReconnect = AutoReconnect,
+                ReconnectDelayMs = ReconnectDelayMs,
+                ConnectTimeoutMs = ConnectTimeoutMs,
+                FrameByNewLine = FrameByNewLine
+            };
 
-			LogHelper.Info($"[{Name}] ? ÒÑ¶©ÔÄÊÂ¼ş");
+            // è®¢é˜…åº•å±‚å®¢æˆ·ç«¯äº‹ä»¶ï¼Œä½¿ç”¨åŸºç±»æ–¹æ³•æ¥å‘é€
+            _client.ConnectionStatusChanged += OnClientConnectionStatusChanged;
+            _client.MessageReceived += OnClientMessageReceived;
+            _client.RawMessageReceived += OnClientRawMessageReceived;
 
-			// ?? ÖØÒª£ºÏÔÊ½Æô¶¯Á¬½Ó
-			_client.Start();
+            LogHelper.Info($"[{Name}] âœ“ å·²è®¢é˜…äº‹ä»¶");
 
-			LogHelper.Info($"[{Name}] TCP¿Í»§¶Ë¿ªÊ¼Á¬½Ó: {IpAddress}:{Port}");
-		}
-		catch (Exception ex)
-		{
-			LogHelper.Error(ex, $"[{Name}] TCP¿Í»§¶Ë´´½¨Ê§°Ü");
-			OnConnectionStatusChanged(false);
-		}
-	}
+            // å¼€å§‹è¿æ¥
+            _client.Start();
 
-	/// <summary>
-	/// ¶Ï¿ªÁ¬½Ó
-	/// </summary>
-	public override void Disconnect()
-	{
-		if (!IsConnected) return;
+            LogHelper.Info($"[{Name}] TCPå®¢æˆ·ç«¯å¼€å§‹è¿æ¥: {IpAddress}:{Port}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"[{Name}] TCPå®¢æˆ·ç«¯åˆ›å»ºå¤±è´¥");
+            OnConnectionStatusChanged(false);
+        }
+    }
 
-		try
-		{
-			if (_client != null)
-			{
-				// ? È¡Ïû¶©ÔÄ
-				_client.ConnectionStatusChanged -= OnClientConnectionStatusChanged;
-				_client.MessageReceived -= OnClientMessageReceived;
+    /// <summary>
+    /// æ–­å¼€è¿æ¥
+    /// </summary>
+    public override void Disconnect()
+    {
+        if (!IsConnected) return;
 
-				_client.Dispose();
-				_client = null;
-			}
+        try
+        {
+            if (_client != null)
+            {
+                // å–æ¶ˆè®¢é˜…
+                _client.ConnectionStatusChanged -= OnClientConnectionStatusChanged;
+                _client.MessageReceived -= OnClientMessageReceived;
+                _client.RawMessageReceived -= OnClientRawMessageReceived;
 
-			OnConnectionStatusChanged(false);
-			LogHelper.Info($"[{Name}] TCP¿Í»§¶ËÒÑ¶Ï¿ªÁ¬½Ó");
-		}
-		catch (Exception ex)
-		{
-			LogHelper.Error(ex, $"[{Name}] TCP¿Í»§¶Ë¶Ï¿ªÊ§°Ü");
-		}
-	}
+                _client.Dispose();
+                _client = null;
+            }
 
-	/// <summary>
-	/// Ğ´ÈëÊı¾İ
-	/// </summary>
-	public override void Write(string address, object data)
-	{
-		// ? Ê¹ÓÃ»ùÀàÑéÖ¤·½·¨
-		ValidateNotNull(data, nameof(data));
+            OnConnectionStatusChanged(false);
+            LogHelper.Info($"[{Name}] TCPå®¢æˆ·ç«¯å·²æ–­å¼€è¿æ¥");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"[{Name}] TCPå®¢æˆ·ç«¯æ–­å¼€å¤±è´¥");
+        }
+    }
 
-		if (!IsConnected || _client == null)
-		{
-			LogHelper.Warn($"[{Name}] TCP¿Í»§¶ËÎ´Á¬½Ó£¬ÎŞ·¨·¢ËÍÊı¾İ");
-			return;
-		}
+    /// <summary>
+    /// å†™å…¥æ•°æ®
+    /// </summary>
+    public override void Write(string address, object data)
+    {
+        // ä½¿ç”¨åŸºç±»éªŒè¯æ•°æ®
+        ValidateNotNull(data, nameof(data));
 
-		try
-		{
-			string message = data.ToString();
-			_client.Send(message);
-			LogHelper.Info($"[{Name}] ·¢ËÍÏûÏ¢: {message}");
-		}
-		catch (Exception ex)
-		{
-			LogHelper.Error(ex, $"[{Name}] TCP¿Í»§¶Ë·¢ËÍÊ§°Ü");
-		}
-	}
+        if (!IsConnected || _client == null)
+        {
+            LogHelper.Warn($"[{Name}] TCPå®¢æˆ·ç«¯æœªè¿æ¥ï¼Œæ— æ³•å‘é€æ•°æ®");
+            return;
+        }
 
-	/// <summary>
-	/// Ğ´ÈëÊı¾İÊı×é
-	/// </summary>
-	public override void Write(string address, object[] data)
-	{
-		// ? Ê¹ÓÃ»ùÀàÑéÖ¤·½·¨
-		ValidateNotEmpty(data, nameof(data));
+        try
+        {
+            string message = data.ToString();
+            _client.Send(message);
+            LogHelper.Info($"[{Name}] å‘é€æ¶ˆæ¯: {message}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, $"[{Name}] TCPå®¢æˆ·ç«¯å‘é€å¤±è´¥");
+        }
+    }
 
-		// TCP²»ĞèÒªµØÖ·£¬½«Êı×é×ª»»Îª×Ö·û´®·¢ËÍ
-		Write(address, string.Join("", data));
-	}
+    /// <summary>
+    /// å†™å…¥å¤šä¸ªæ•°æ®
+    /// </summary>
+    public override void Write(string address, object[] data)
+    {
+        // ä½¿ç”¨åŸºç±»éªŒè¯æ•°æ®
+        ValidateNotEmpty(data, nameof(data));
 
-	/// <summary>
-	/// »ñÈ¡µ±Ç°ÅäÖÃ
-	/// </summary>
-	public override CommConfig GetConfig()
-	{
-		var config = new CommConfig(Name, "TcpClient");
-		config.SetParameter("IpAddress", IpAddress);
-		config.SetParameter("Port", Port.ToString());
-		config.SetParameter("Encoding", EncodingName);
-		config.SetParameter("FrameByNewLine", FrameByNewLine.ToString());
-		config.SetParameter("AutoReconnect", AutoReconnect.ToString());
-		config.SetParameter("ReconnectDelayMs", ReconnectDelayMs.ToString());
-		config.SetParameter("ConnectTimeoutMs", ConnectTimeoutMs.ToString());
-		config.SetParameter("IsConnected", IsConnected.ToString());
-		return config;
-	}
+        // TCPä¸éœ€è¦åœ°å€ï¼Œå°†æ•°æ®è½¬æ¢ä¸ºå­—ç¬¦ä¸²å‘é€
+        Write(address, string.Join("", data));
+    }
 
-	/// <summary>
-	/// Ó¦ÓÃÅäÖÃ
-	/// </summary>
-	public override void ApplyConfig(CommConfig config)
-	{
-		if (config == null) return;
+    /// <summary>
+    /// è·å–å½“å‰é…ç½®
+    /// </summary>
+    public override CommConfig GetConfig()
+    {
+        // å…ˆè®©åŸºç±»åºåˆ—åŒ–é€šè®¯è¡¨
+        var config = base.GetConfig();
+        // å†å†™å…¥æœ¬è®¾å¤‡ç‰¹æœ‰å‚æ•°
+        config.SetParameter("IpAddress", IpAddress);
+        config.SetParameter("Port", Port.ToString());
+        config.SetParameter("Encoding", EncodingName);
+        config.SetParameter("FrameByNewLine", FrameByNewLine.ToString());
+        config.SetParameter("AutoReconnect", AutoReconnect.ToString());
+        config.SetParameter("ReconnectDelayMs", ReconnectDelayMs.ToString());
+        config.SetParameter("ConnectTimeoutMs", ConnectTimeoutMs.ToString());
+        config.SetParameter("IsConnected", IsConnected.ToString());
+        return config;
+    }
 
-		IpAddress = config.GetParameter("IpAddress", "127.0.0.1");
+    /// <summary>
+    /// åº”ç”¨é…ç½®
+    /// </summary>
+    public override void ApplyConfig(CommConfig config)
+    {
+        if (config == null) return;
 
-		if (int.TryParse(config.GetParameter("Port", "5000"), out var port))
-			Port = port;
+        // å…ˆè®©åŸºç±»æ¢å¤é€šè®¯è¡¨
+        base.ApplyConfig(config);
 
-		EncodingName = config.GetParameter("Encoding", "UTF-8");
+        // åº”ç”¨æœ¬è®¾å¤‡å‚æ•°
+        IpAddress = config.GetParameter("IpAddress", "127.0.0.1");
 
-		if (bool.TryParse(config.GetParameter("FrameByNewLine", "true"), out var frameByNewLine))
-			FrameByNewLine = frameByNewLine;
+        if (int.TryParse(config.GetParameter("Port", "5000"), out var port))
+            Port = port;
 
-		if (bool.TryParse(config.GetParameter("AutoReconnect", "true"), out var autoReconnect))
-			AutoReconnect = autoReconnect;
+        EncodingName = config.GetParameter("Encoding", "UTF-8");
 
-		if (int.TryParse(config.GetParameter("ReconnectDelayMs", "3000"), out var reconnectDelay))
-			ReconnectDelayMs = reconnectDelay;
+        if (bool.TryParse(config.GetParameter("FrameByNewLine", "true"), out var frameByNewLine))
+            FrameByNewLine = frameByNewLine;
 
-		if (int.TryParse(config.GetParameter("ConnectTimeoutMs", "5000"), out var connectTimeout))
-			ConnectTimeoutMs = connectTimeout;
+        if (bool.TryParse(config.GetParameter("AutoReconnect", "true"), out var autoReconnect))
+            AutoReconnect = autoReconnect;
 
-		// »Ö¸´Ö®Ç°µÄÁ¬½Ó×´Ì¬£¨Èç¹ûĞèÒª×Ô¶¯Á¬½Ó£©
-		if (bool.TryParse(config.GetParameter("IsConnected", "false"), out var wasConnected) && wasConnected)
-		{
-			try
-			{
-				Connect();
-			}
-			catch
-			{
-			}
-		}
-	}
+        if (int.TryParse(config.GetParameter("ReconnectDelayMs", "3000"), out var reconnectDelay))
+            ReconnectDelayMs = reconnectDelay;
 
-	/// <summary>
-	/// ÊÍ·Å×ÊÔ´
-	/// </summary>
-	protected override void Dispose(bool disposing)
-	{
-		if (disposing)
-		{
-			try
-			{
-				_client?.Dispose();
-				_client = null;
-				_configControl?.Dispose();
-				_configControl = null;
-			}
-			catch
-			{
-			}
-		}
+        if (int.TryParse(config.GetParameter("ConnectTimeoutMs", "5000"), out var connectTimeout))
+            ConnectTimeoutMs = connectTimeout;
 
-		base.Dispose(disposing);
-	}
+        // ä¸åœ¨æ­¤å¤„è‡ªåŠ¨è¿æ¥ï¼Œäº¤ç”±å·¥å‚åœ¨ ApplyConfig ä¹‹åè°ƒç”¨ Connect()
+    }
 
-	#endregion
+    /// <summary>
+    /// é‡Šæ”¾èµ„æº
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            try
+            {
+                _client?.Dispose();
+                _client = null;
+                _configControl?.Dispose();
+                _configControl = null;
+            }
+            catch
+            {
+            }
+        }
 
-	#region ÊÂ¼ş´¦Àí£¨×ª·¢¸ø»ùÀà£©
+        base.Dispose(disposing);
+    }
 
-	/// <summary>
-	/// µ×²ã¿Í»§¶ËÁ¬½Ó×´Ì¬±ä»¯ÊÂ¼ş´¦Àí
-	/// </summary>
-	private void OnClientConnectionStatusChanged(object sender, bool connected)
-	{
-		LogHelper.Info($"[{Name}] ?? µ×²ãÁ¬½Ó×´Ì¬±ä»¯: {connected}");
-		OnConnectionStatusChanged(connected);
-	}
+    #endregion
 
-	/// <summary>
-	/// µ×²ã¿Í»§¶ËÏûÏ¢½ÓÊÕÊÂ¼ş´¦Àí
-	/// </summary>
-	private void OnClientMessageReceived(object sender, object message)
-	{
-		LogHelper.Info($"?? [TcpClientAdapter] ¿Í»§¶ËÊÕµ½ÏûÏ¢");
-		LogHelper.Info($"   ©À©¤ ÊÊÅäÆ÷Ãû³Æ: {Name}");
-		LogHelper.Info($"   ©À©¤ ÏûÏ¢ÄÚÈİ: {message}");
-		LogHelper.Info($"   ©¸©¤ ×¼±¸·¢²¼ MessageReceived ÊÂ¼ş...");
+    #region äº‹ä»¶å¤„ç†ï¼ˆè½¬å‘åˆ°åŸºç±»ï¼‰
 
-		var firstInput = Table.Inputs.FirstOrDefault();
-		var payload = new { Name = firstInput?.Name ?? "Message", Value = message?.ToString() };
-		OnMessageReceived(payload);
+    /// <summary>
+    /// åº•å±‚å®¢æˆ·ç«¯è¿æ¥çŠ¶æ€å˜åŒ–äº‹ä»¶å¤„ç†
+    /// </summary>
+    private void OnClientConnectionStatusChanged(object sender, bool connected)
+    {
+        if (connected)
+        {
+            LogHelper.Info($"[{Name}] âœ… TCPå®¢æˆ·ç«¯è¿æ¥æˆåŠŸ: {IpAddress}:{Port}");
+        }
+        else
+        {
+            LogHelper.Warn($"[{Name}] âŒ TCPå®¢æˆ·ç«¯è¿æ¥å¤±è´¥ï¼Œå°†è‡ªåŠ¨é‡è¿...");
+        }
+        OnConnectionStatusChanged(connected);
+    }
 
-		LogHelper.Info($"   ? ÊÂ¼şÒÑ·¢²¼");
-	}
+    /// <summary>
+    /// åº•å±‚å®¢æˆ·ç«¯æ¶ˆæ¯æ¥æ”¶äº‹ä»¶å¤„ç†
+    /// </summary>
+    private void OnClientMessageReceived(object sender, object message)
+    {
+        var text = message?.ToString() ?? "";
 
-	#endregion
+        // ä½¿ç”¨TcpMessageHelperå¤„ç†æ¶ˆæ¯ï¼ˆæ—¥å¿—å·²åœ¨Helperä¸­ç²¾ç®€ï¼‰
+        var result = TcpMessageHelper.ProcessMessage(text, Table, Name);
+
+        // å¦‚æœæœ‰è§¦å‘ï¼Œå‘é€MessageReceivedäº‹ä»¶
+        if (result.HasTrigger)
+        {
+            var payload = TcpMessageHelper.CreateTriggerPayload(result);
+            OnMessageReceived(payload);
+        }
+    }
+
+    /// <summary>
+    /// åº•å±‚å®¢æˆ·ç«¯åŸå§‹æ¶ˆæ¯æ¥æ”¶äº‹ä»¶å¤„ç†ï¼ˆç”¨äºUIæ˜¾ç¤ºï¼‰
+    /// </summary>
+    private void OnClientRawMessageReceived(object sender, string message)
+    {
+        // è½¬å‘åŸå§‹æ¶ˆæ¯ç»™UI
+        try
+        {
+            RawMessageReceived?.Invoke(this, message);
+        }
+        catch
+        {
+            // äº‹ä»¶å¤„ç†å¼‚å¸¸ä¸å½±å“æ¶ˆæ¯å¤„ç†
+        }
+    }
+
+    #endregion
 }

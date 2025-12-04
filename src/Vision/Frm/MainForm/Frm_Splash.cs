@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace UniVision.Forms;
+namespace Vision.Frm.MainForm;
 public partial class Frm_Splash : Form
 {
     public Frm_Splash()

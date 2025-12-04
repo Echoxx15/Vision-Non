@@ -8,7 +8,7 @@ using System.Threading;
 namespace HardwareCommNet;
 
 /// <summary>
-/// Í¨Ñ¶²å¼ş·şÎñÆ÷£º¸ºÔğ´Ó Plugins/CommÄ¿Â¼¼ÓÔØËùÓĞÍ¨Ñ¶²å¼ş£¨µ¥ÀıÄ£Ê½£©
+/// é€šè®¯æ’ä»¶æœåŠ¡å™¨ï¼Œè´Ÿè´£ä» Plugins/Commç›®å½•åŠ è½½æ‰€æœ‰é€šè®¯æ’ä»¶ï¼ˆå•ä¾‹æ¨¡å¼ï¼‰ã€‚
 /// </summary>
 public sealed class CommPluginServer
 {
@@ -17,12 +17,12 @@ public sealed class CommPluginServer
 
 	public static CommPluginServer Instance => _instance.Value;
 
-// ÀàĞÍ-²å¼şÓ³Éä£¨ÀàĞÍÈ«Ãû -> ²å¼şĞÅÏ¢£©
+// ç¼“å­˜-æ˜ å°„è¡¨ï¼ˆç±»å‹å…¨å -> æ’ä»¶ä¿¡æ¯ï¼‰
 	private readonly Dictionary<string, PluginInfo> _pluginInfos =
 		new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
-	/// ¼ÓÔØµÄ²å¼şÀàĞÍÓ³Éä£¨ÀàĞÍÈ«Ãû -> ÀàĞÍ£©
+	/// å·²åŠ è½½çš„æ’ä»¶æ˜ å°„è¡¨ï¼ˆç±»å‹å…¨å -> ç±»å‹ï¼‰
 	/// </summary>
 	private readonly Dictionary<string, Type> _pluginTypes =
 		new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
@@ -32,14 +32,14 @@ public sealed class CommPluginServer
 	}
 
 	/// <summary>
-	/// ´Ó Plugins/CommÄ¿Â¼¼ÓÔØËùÓĞÍ¨Ñ¶²å¼ş
+	/// ä» Plugins/Commç›®å½•åŠ è½½æ‰€æœ‰é€šè®¯æ’ä»¶
 	/// </summary>
 	public void LoadPlugins()
 	{
 		var pluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", "Comm");
 		if (!Directory.Exists(pluginDir))
 		{
-			Console.WriteLine($"Í¨Ñ¶²å¼şÄ¿Â¼²»´æÔÚ: {pluginDir}");
+			Console.WriteLine($"é€šè®¯æ’ä»¶ç›®å½•ä¸å­˜åœ¨: {pluginDir}");
 			return;
 		}
 
@@ -56,9 +56,9 @@ public sealed class CommPluginServer
 				}
 				catch (ReflectionTypeLoadException rtlEx)
 				{
-					//¼ÇÂ¼ÒÀÀµ¼ÓÔØÒì³£²¢¾¡¿ÉÄÜÊ¹ÓÃÒÑ³É¹¦¼ÓÔØµÄÀàĞÍ¼ÌĞø
+					// è®°å½•éƒ¨åˆ†åŠ è½½å¼‚å¸¸ï¼Œä½†ä»ç„¶ä½¿ç”¨å·²æˆåŠŸåŠ è½½çš„ç±»å‹ç»§ç»­
 					var msgs = rtlEx.LoaderExceptions?.Where(e => e != null).Select(e => e.Message).ToArray() ?? Array.Empty<string>();
-					Console.WriteLine($"³ÌĞò¼¯ÀàĞÍ¼ÓÔØ²¿·ÖÊ§°Ü: {dll}\n -> {string.Join(" | ", msgs)}");
+					Console.WriteLine($"éƒ¨åˆ†ç±»å‹åŠ è½½å¤±è´¥: {dll}\n -> {string.Join(" | ", msgs)}");
 					types = rtlEx.Types?.Where(t => t != null).ToArray() ?? Array.Empty<Type>();
 				}
 
@@ -67,25 +67,25 @@ public sealed class CommPluginServer
 					if (type == null) continue;
 					if (!type.IsClass || type.IsAbstract) continue;
 
-					//Ö»ÊÕ¼¯ICommÊµÏÖÀà
+					// åªæ”¶é›†ICommå®ç°ç±»
 					if (!typeof(IComm).IsAssignableFrom(type)) continue;
 
 					var info = new PluginInfo(type.FullName, asm.GetName().Name);
 					_pluginInfos[type.FullName] = info;
 					_pluginTypes[type.FullName] = type;
 
-					Console.WriteLine($"¼ÓÔØÍ¨Ñ¶²å¼ş: {type.FullName}");
+					Console.WriteLine($"åŠ è½½é€šè®¯æ’ä»¶: {type.FullName}");
 				}
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"²å¼ş¼ÓÔØÊ§°Ü: {dll}, {ex.Message}");
+				Console.WriteLine($"åŠ è½½æ’ä»¶å¤±è´¥: {dll}, {ex.Message}");
 			}
 		}
 	}
 
 	/// <summary>
-	/// »ñÈ¡ÒÑ¼ÓÔØµÄ²å¼şÀàĞÍ£¨·µ»Ø¸±±¾£¬±ÜÃâÍâ²¿ĞŞ¸Ä£©
+	/// è·å–å·²åŠ è½½çš„æ’ä»¶ç±»å‹ï¼ˆè¿”å›å‰¯æœ¬ä»¥é˜²æ­¢å¤–éƒ¨ä¿®æ”¹ï¼‰
 	/// </summary>
 	public Dictionary<string, Type> GetLoadedPluginTypes()
 	{
@@ -107,7 +107,7 @@ public sealed class CommPluginServer
 }
 
 /// <summary>
-/// ²å¼şĞÅÏ¢
+/// æ’ä»¶ä¿¡æ¯
 /// </summary>
 public class PluginInfo
 {

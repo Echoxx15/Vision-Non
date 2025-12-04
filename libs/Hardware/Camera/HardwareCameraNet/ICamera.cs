@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Cognex.VisionPro;
 
 namespace HardwareCameraNet;
@@ -69,10 +69,6 @@ public interface ICamera
     /// </summary>
     /// <returns></returns>
     int StopGrabbing();
-    /// <summary>
-    /// 断开相机
-    /// </summary>
-    void DisConnet();
     void Close();
     #endregion
 }

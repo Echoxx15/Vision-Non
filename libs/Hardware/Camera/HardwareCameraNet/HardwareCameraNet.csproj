@@ -44,15 +44,31 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CameraConfig.cs" />
+    <Compile Include="CameraFactory.cs" />
+    <Compile Include="CameraHost.cs" />
     <Compile Include="CameraManufacturerAttribute.cs" />
+    <Compile Include="CameraPluginServer.cs" />
     <Compile Include="ICamera.cs" />
     <Compile Include="IParameters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Type.cs" />
+    <Compile Include="UI\Frm_CameraConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Frm_CameraConfig.Designer.cs">
+      <DependentUpon>Frm_CameraConfig.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="UI\Frm_CameraConfig.resx">
+      <DependentUpon>Frm_CameraConfig.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -9,7 +9,7 @@ using LightControlNet;
 namespace Fgen.LightPlugin
 {
     [LightManufacturer(LightControllerType.Fgen, "孚根FG")]
-    public class FgenLightController : ILightController
+    public class FgenLightController : LightControllerBase
     {
         private SerialPort _serialPort;
         private readonly LightConfig _config;
@@ -17,14 +17,11 @@ namespace Fgen.LightPlugin
 
         private const char START_CHAR = '#';
 
-        public string Name => _config.Name;
-        public LightControllerType Type => LightControllerType.Fgen;
-        public bool IsConnected => _serialPort?.IsOpen ?? false;
-        public int ChannelCount => _config.ChannelCount;
+        public override LightControllerType Type => LightControllerType.Fgen;
 
-        public Form TestForm { get { return new Frm_FgenTest(this); } }
+        public override Form TestForm => new Frm_FgenTest(this);
 
-        public FgenLightController(LightConfig config)
+        public FgenLightController(LightConfig config) : base(config)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
         }
@@ -34,7 +31,7 @@ namespace Fgen.LightPlugin
             return new System.Collections.Generic.List<string>(SerialPort.GetPortNames());
         }
 
-        public bool Open()
+        public override bool Open()
         {
             try
             {
@@ -50,12 +47,17 @@ namespace Fgen.LightPlugin
                     WriteTimeout = 1000
                 };
                 _serialPort.Open();
+                IsConnected = true;
                 return true;
             }
-            catch { return false; }
+            catch
+            {
+                IsConnected = false;
+                return false;
+            }
         }
 
-        public void Close()
+        public override void Close()
         {
             try
             {
@@ -67,9 +69,13 @@ namespace Fgen.LightPlugin
                 }
             }
             catch { }
+            finally
+            {
+                IsConnected = false;
+            }
         }
 
-        public bool TurnOn(int channel)
+        public override bool TurnOn(int channel)
         {
             if (!ValidateChannel(channel)) return false;
             try
@@ -83,7 +89,7 @@ namespace Fgen.LightPlugin
             catch { return false; }
         }
 
-        public bool TurnOff(int channel)
+        public override bool TurnOff(int channel)
         {
             if (!ValidateChannel(channel)) return false;
             try
@@ -97,7 +103,7 @@ namespace Fgen.LightPlugin
             catch { return false; }
         }
 
-        public bool SetBrightness(int channel, int brightness)
+        public override bool SetBrightness(int channel, int brightness)
         {
             if (!ValidateChannel(channel)) return false;
             if (!ValidateBrightness(brightness)) return false;
@@ -112,7 +118,7 @@ namespace Fgen.LightPlugin
             catch { return false; }
         }
 
-        public int GetBrightness(int channel)
+        public override int GetBrightness(int channel)
         {
             if (!ValidateChannel(channel)) return -1;
             try
@@ -136,18 +142,6 @@ namespace Fgen.LightPlugin
             }
             catch { }
             return -1;
-        }
-
-        public bool SetMultiChannelBrightness(int[] channels, int brightness)
-        {
-            if (channels == null || channels.Length == 0) return false;
-            if (!ValidateBrightness(brightness)) return false;
-            bool allSuccess = true;
-            foreach (var channel in channels)
-            {
-                if (!SetBrightness(channel, brightness)) allSuccess = false;
-            }
-            return allSuccess;
         }
 
         private string BuildCommand(int command, int channel, int data)
@@ -197,7 +191,7 @@ namespace Fgen.LightPlugin
             return string.Empty;
         }
 
-        public string SendRawCommand(string command)
+        public override string SendRawCommand(string command)
         {
             if (!IsConnected) return string.Empty;
             try
@@ -240,39 +234,15 @@ namespace Fgen.LightPlugin
             }
         }
 
-        /// <summary>
-        /// 关闭所有通道（程序退出前调用）
-        /// </summary>
-        public void TurnOffAllChannels()
+        protected override void Dispose(bool disposing)
         {
-            if (!IsConnected) return;
-
-            try
+            if (disposing)
             {
-                for (int ch = 1; ch <= ChannelCount; ch++)
-                {
-                    try
-                    {
-                        TurnOff(ch);
-                    }
-                    catch (Exception ex)
-                    {
-                        // 记录但不中断循环
-                        Console.WriteLine($"[{Name}] 关闭通道{ch}失败: {ex.Message}");
-                    }
-                }
+                // 释放前先关闭所有通道
+                TurnOffAllChannels();
+                Close();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[{Name}] 关闭所有通道时发生错误: {ex.Message}");
-            }
-        }
-
-        public void Dispose() 
-        { 
-            // 释放前先关闭所有通道
-            TurnOffAllChannels();
-            Close(); 
+            base.Dispose(disposing);
         }
     }
 }

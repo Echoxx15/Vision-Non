@@ -1,10 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Linq;
 using HardwareCommNet;
-using Vision.Solutions.Models;
 
-namespace Vision.Frm.Process;
+namespace Vision.Solutions.Models;
 
 /// <summary>
 /// 为工位选择通讯设备时提供输入变量的下拉选择

@@ -21,9 +21,10 @@ namespace IKapBoradCL;
 /// </summary>
 // 标记支持的品牌名称
 [CameraManufacturer("埃科采集卡")]
-public class IKapBoradCL : ICamera
+public class IKapBoradCL : ICamera, IDisposable
 {
     #region 相机属性
+
     /// <summary>
     /// 断线重连回调函数
     /// </summary>
@@ -33,14 +34,17 @@ public class IKapBoradCL : ICamera
 
     // 相机特有属性
     private IKCamera device = new();
+
     /// <summary>
     /// 保存相机序号
     /// </summary>
     private static readonly Dictionary<string, IKCamera> gDeviceInfos = new();
+
     /// <summary>
     /// ch: 断线重连线程 | en: Reconnect thread
     /// </summary>
     private Thread ReconnectThread;
+
     /// <summary>
     /// ch: 帧缓存队列 | en: frame queue for process
     /// </summary>
@@ -55,6 +59,7 @@ public class IKapBoradCL : ICamera
     /// ch: 队列图像数量上限 | en: maximum number of frames in the queue
     /// </summary>
     private const uint _maxQueueSize = 200;
+
     /// <summary>
     /// ch: 异步处理线程退出标志 false 不退出 | en: Flag to notify the  processing thread to exit
     /// </summary>
@@ -62,18 +67,25 @@ public class IKapBoradCL : ICamera
 
     private readonly Stopwatch _stopwatch = new();
 
+    /// <summary>
+    /// 标记是否已释放，防止多次释放
+    /// </summary>
+    private bool _disposed;
 
 
     #endregion
 
     #region 接口属性
+
     // 图像回调事件（需显式实现事件添加/移除逻辑，确保线程安全）
     private event EventHandler<ICogImage> frameGrabedEvent;
+
     public event EventHandler<ICogImage> FrameGrabedEvent
     {
         add => frameGrabedEvent += value;
         remove => frameGrabedEvent -= value;
     }
+
     public event EventHandler<bool> DisConnetEvent;
     public string SN { get; }
     public CameraType Type => CameraType.线扫相机;
@@ -83,6 +95,7 @@ public class IKapBoradCL : ICamera
     #endregion
 
     #region 构造函数
+
     public IKapBoradCL(string sn)
     {
         SN = sn ?? throw new ArgumentNullException(nameof(sn));
@@ -93,6 +106,7 @@ public class IKapBoradCL : ICamera
     #endregion
 
     #region 静态枚举方法
+
     public static List<string> EnumerateDevices()
     {
         //IKapBoard.IKapC 函数返回值				   
@@ -129,6 +143,7 @@ public class IKapBoradCL : ICamera
             IKapC.ItkManTerminate();
             IKUtils.pressEnterToExit();
         }
+
         uint i = 0;
         for (; i < numDevices; ++i)
         {
@@ -142,7 +157,7 @@ public class IKapBoradCL : ICamera
             // Get device information.
             IKapC.ItkManGetDeviceInfo(i, di);
 
-            if(di.SerialNumber == "" || gDeviceInfos.ContainsKey(di.SerialNumber))
+            if (di.SerialNumber == "" || gDeviceInfos.ContainsKey(di.SerialNumber))
                 continue;
             cam.g_index = (int)i;
             cam.g_devInfo = di;
@@ -157,8 +172,10 @@ public class IKapBoradCL : ICamera
                 $"Device Version:{di.DeviceVersion}\n User Defined Name:{di.UserDefinedName}\n");
 
         }
+
         return gDeviceInfos.Keys.ToList();
     }
+
     #endregion
 
 
@@ -169,7 +186,8 @@ public class IKapBoradCL : ICamera
         device = gDeviceInfos[SN];
         var i = (uint)device.g_index;
         var di = device.g_devInfo;
-        Console.Write("Using camera: serial: {0}, name: {1}, interface: {2}.\n", di.SerialNumber, di.FullName, di.DeviceClass);
+        Console.Write("Using camera: serial: {0}, name: {1}, interface: {2}.\n", di.SerialNumber, di.FullName,
+            di.DeviceClass);
         var res = IKapC.ItkDevOpen(i, IKapC.ITKDEV_VAL_ACCESS_MODE_EXCLUSIVE, ref device.g_hCamera);
         IKUtils.CheckIKapC(res);
 
@@ -220,6 +238,9 @@ public class IKapBoradCL : ICamera
         if (device.g_hBoard == IntPtr.Zero)
             IKUtils.CheckIKapBoard(IKapBoard.IKStatus_OpenBoardFail);
 
+
+
+
         if (device.g_hBoard == IntPtr.Zero)
         {
             Console.Write("Please select camera with grabber.\n");
@@ -227,22 +248,25 @@ public class IKapBoradCL : ICamera
             IKUtils.pressEnterToExit();
             return -1;
         }
+        // ch: 配置采集卡参数 | en: Configure frame grabber parameters
+        ConfigureFrameGrabber(device);
+
 
         /// \~chinese 注册设备移除回调函数		            \~english Register device removal callback function
         DeviceRemoveCallBackDelegate deviceRemoveCallbackDelegate = cbOnReconnect;
-        res = IKapC.ItkDevRegisterCallback(device.g_hCamera, "DeviceRemove", Marshal.GetFunctionPointerForDelegate(deviceRemoveCallbackDelegate), IntPtr.Zero);
+        res = IKapC.ItkDevRegisterCallback(device.g_hCamera, "DeviceRemove",
+            Marshal.GetFunctionPointerForDelegate(deviceRemoveCallbackDelegate), IntPtr.Zero);
         IKUtils.CheckIKapC(res);
 
-        // ch: 配置采集卡参数 | en: Configure frame grabber parameters
-        ConfigureFrameGrabber(device);
+
 
 
         //chinese 注册回调函数                        \~english Register callback functions.
         RegisterCallbackWithGrabber(device);
 
         //chinese 配置相机触发方式		            \~english Configure trigger method of the camera
-        SetSoftTriggerWithGrabber(device);
-
+        //SetSoftTriggerWithGrabber(device);
+        StartGrabbing();
         if (_asyncProcessThread == null)
         {
             _processThreadExit = false;
@@ -252,6 +276,7 @@ public class IKapBoradCL : ICamera
             };
             _asyncProcessThread.Start();
         }
+
         return (int)IKapC.ITKSTATUS_OK;
     }
 
@@ -272,6 +297,8 @@ public class IKapBoradCL : ICamera
 
     public int StartGrabbing()
     {
+        /// \~chinese 创建数据流和缓冲区				    \~english Create data stream and buffer
+        CreateStreamAndBuffer();
         /// \~chinese 开始图像采集				        \~english Start grabbing images
         StartGrabImage(device);
         return 0;
@@ -290,43 +317,16 @@ public class IKapBoradCL : ICamera
         {
             Marshal.FreeHGlobal(device.g_user_buffer);
         }
+
         return IKapBoard.IKapStopGrab(device.g_hBoard);
-    }
-
-    public void DisConnet()
-    {
-        _processThreadExit = true;
-
-        /// \~chinese 停止图像采集				        \~english Stop grabbing images
-        var ret = IKapBoard.IKapStopGrab(device.g_hBoard);
-        IKUtils.CheckIKapBoard(ret);
-
-        /// \~chinese 清除回调函数				        \~english Unregister callback functions
-        UnRegisterCallbackWithGrabber(device);
-
-        /// \~chinese 关闭采集卡设备				        \~english Close frame grabber device
-        ret = IKapBoard.IKapClose(device.g_hBoard);
-        IKUtils.CheckIKapBoard(ret);
-
-        /// \~chinese 关闭相机设备				        \~english Close camera device
-        var res = IKapC.ItkDevClose(device.g_hCamera);
-        IKUtils.CheckIKapC(res);
-
-        /// \~chinese 释放用户申请的用于存放缓冲区数据的内存				    \~english Release the memory for storing the buffer data
-        if (device.g_bufferData != IntPtr.Zero)
-        {
-            Marshal.FreeHGlobal(device.g_bufferData);
-        }
-
-        /// \~chinese 释放用户申请的用于设置Buffer地址的内存				    \~english Release the memory that the user requests for setting the Buffer address
-        if (device.g_user_buffer != IntPtr.Zero)
-        {
-            Marshal.FreeHGlobal(device.g_user_buffer);
-        }
     }
 
     public void Close()
     {
+        // 防止多次释放
+        if (_disposed) return;
+        _disposed = true;
+
         _processThreadExit = true;
 
         /// \~chinese 停止图像采集				        \~english Stop grabbing images
@@ -361,39 +361,120 @@ public class IKapBoradCL : ICamera
 
         IKUtils.WaitEnterKeyInput();
     }
+
+    /// <summary>
+    /// 实现IDisposable接口，释放资源时自动调用Close
+    /// </summary>
+    public void Dispose()
+    {
+        Close();
+        GC.SuppressFinalize(this);
+    }
+
     #endregion
 
     #region 内部方法
 
+    #region 创建缓冲区
+
+    private void CreateStreamAndBuffer()
+    {
+        uint res = IKapC.ITKSTATUS_OK;
+
+        /// \~chinese  数据流数量				     \~english The number of data stream
+        uint streamCount = 0;
+
+        /// \~chinese  获取数据流数量			     \~english Get the number of data stream
+        res = IKapC.ItkDevGetStreamCount(device.g_hCamera, ref streamCount);
+        IKUtils.CheckIKapC(res);
+
+        if (streamCount == 0)
+        {
+            Console.Write("Camera does not have image stream channel.");
+            IKapC.ItkManTerminate();
+            IKUtils.pressEnterToExit();
+        }
+
+        /// \~chinese  申请数据流资源		            \~english Allocate data stream source
+        res = IKapC.ItkDevAllocStreamEx(device.g_hCamera, 0, device.g_bufferCount, ref device.g_hStream);
+        IKUtils.CheckIKapC(res);
+
+        ITKBUFFER hBuffer = new ITKBUFFER();
+
+        res = IKapC.ItkStreamGetBuffer(device.g_hStream, 0, ref hBuffer);
+        IKUtils.CheckIKapC(res);
+        ITK_BUFFER_INFO bufferInfo = new ITK_BUFFER_INFO();
+        res = IKapC.ItkBufferGetInfo(hBuffer, bufferInfo);
+        IKUtils.CheckIKapC(res);
+
+        /// \~chinese  创建缓冲区数据存储		       \~english Create buffer data saving
+        device.g_bufferData = Marshal.AllocHGlobal((int)bufferInfo.TotalSize);
+        if (device.g_bufferData == IntPtr.Zero)
+        {
+            IKapC.ItkManTerminate();
+            IKUtils.pressEnterToExit();
+        }
+
+        /***************************/
+        ///// \~chinese  展示如果使用用户申请的内存地址作为Buffer的内存地址，注意不要忘记释放该内存	       \~english Show how to using the memory address as the memory address of Buffer,be careful not to forget to release the memory
+        ///// \~chinese  创建用于设置Buffer地址的内存		       \~english Create the memory that the user requests for setting the Buffer address
+        //cam.g_user_buffer = Marshal.AllocHGlobal((int)bufferInfo.TotalSize);
+        //if (cam.g_user_buffer == IntPtr.Zero)
+        //{
+        //    IKUtils.pressEnterToExit();
+        //}
+
+        //// \~chinese 将序号为0的Buffer的内存地址改为用户申请的大小合适的内存地址，序号为1~g_bufferCount-1的Buffer同理。		\~english The memory address of Buffer with index number 0 is changed to the appropriate size memory address applied by the user, just as with Buffer with index number 1~g_bufferCount-1.
+        //res = IKapC.ItkBufferSetAddress(hBuffer, cam.g_user_buffer, bufferInfo.TotalSize);
+        //IKUtils.CheckIKapC(res); 
+        /***************************/
+    }
+
+
+    #endregion
+
     #region 图像回调
 
+    /// <summary>
+    /// 注册函数
+    /// </summary>
+    /// <param name="cam"></param>
     private void RegisterCallbackWithGrabber(IKCamera cam)
     {
         cam.IKCameraGCHandle = GCHandle.Alloc(cam);
         var IKCameraIntPtr = GCHandle.ToIntPtr(cam.IKCameraGCHandle);
 
         cam.OnBoardGrabStartDelegate = OnGrabStart;
-        var ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_GrabStart, Marshal.GetFunctionPointerForDelegate(cam.OnBoardGrabStartDelegate), IntPtr.Zero);
+        var ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_GrabStart,
+            Marshal.GetFunctionPointerForDelegate(cam.OnBoardGrabStartDelegate), IntPtr.Zero);
         IKUtils.CheckIKapBoard(ret);
 
         cam.OnBoardFrameReadyDelegate = OnFrameReady;
-        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_FrameReady, Marshal.GetFunctionPointerForDelegate(cam.OnBoardFrameReadyDelegate), IKCameraIntPtr);
+        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_FrameReady,
+            Marshal.GetFunctionPointerForDelegate(cam.OnBoardFrameReadyDelegate), IKCameraIntPtr);
         IKUtils.CheckIKapBoard(ret);
 
         cam.OnBoardFrameLostDelegate = OnFrameLost;
-        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_FrameLost, Marshal.GetFunctionPointerForDelegate(cam.OnBoardFrameLostDelegate), IntPtr.Zero);
+        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_FrameLost,
+            Marshal.GetFunctionPointerForDelegate(cam.OnBoardFrameLostDelegate), IntPtr.Zero);
         IKUtils.CheckIKapBoard(ret);
 
         cam.OnBoardTimeoutDelegate = OnTimeout;
-        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_TimeOut, Marshal.GetFunctionPointerForDelegate(cam.OnBoardTimeoutDelegate), IntPtr.Zero);
+        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_TimeOut,
+            Marshal.GetFunctionPointerForDelegate(cam.OnBoardTimeoutDelegate), IntPtr.Zero);
         IKUtils.CheckIKapBoard(ret);
 
         cam.OnBoardGrabStopDelegate = OnGrabStop;
-        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_GrabStop, Marshal.GetFunctionPointerForDelegate(cam.OnBoardGrabStopDelegate), IntPtr.Zero);
+        ret = IKapBoard.IKapRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_GrabStop,
+            Marshal.GetFunctionPointerForDelegate(cam.OnBoardGrabStopDelegate), IntPtr.Zero);
         IKUtils.CheckIKapBoard(ret);
 
     }
 
+    /// <summary>
+    /// 释放函数
+    /// </summary>
+    /// <param name="cam"></param>
     private void UnRegisterCallbackWithGrabber(IKCamera cam)
     {
         var ret = IKapBoard.IKapUnRegisterCallback(cam.g_hBoard, (uint)IKapBoard.IKEvent_GrabStart);
@@ -419,6 +500,10 @@ public class IKapBoradCL : ICamera
         Console.Write("Start grabbing image.\n");
     }
 
+    /// <summary>
+    /// 回调函数
+    /// </summary>
+    /// <param name="pContext"></param>
     private void OnFrameReady(IntPtr pContext)
     {
         Console.Write("On end of frame. \n");
@@ -431,6 +516,7 @@ public class IKapBoradCL : ICamera
             {
                 return;
             }
+
             Console.Write("Grab frame ready of camera with serialNumber:{0}.\n", cam.g_devInfo.SerialNumber);
             lock (this)
             {
@@ -443,6 +529,10 @@ public class IKapBoradCL : ICamera
         }
     }
 
+    /// <summary>
+    /// 采集超时
+    /// </summary>
+    /// <param name="pContext"></param>
     private void OnTimeout(IntPtr pContext)
     {
         Console.Write("Grab image timeout.\n");
@@ -464,6 +554,7 @@ public class IKapBoradCL : ICamera
             {
                 return;
             }
+
             Console.Write("On end of stream of camera with serialNumber:{0}. \n", cam.g_devInfo.SerialNumber);
         }
     }
@@ -488,13 +579,16 @@ public class IKapBoradCL : ICamera
                         {
                             return;
                         }
-                        Console.Write("Grab frame ready of camera with serialNumber:{0}.\n", cam.g_devInfo.SerialNumber);
+
+                        Console.Write("Grab frame ready of camera with serialNumber:{0}.\n",
+                            cam.g_devInfo.SerialNumber);
 
                         IntPtr pUserBuffer = IntPtr.Zero;
                         int nFrameIndex = 0;
                         IKAPBUFFERSTATUS status = new IKAPBUFFERSTATUS();
 
-                        var ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_CURRENT_BUFFER_INDEX, ref nFrameIndex);
+                        var ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_CURRENT_BUFFER_INDEX,
+                            ref nFrameIndex);
                         IKUtils.CheckIKapBoard(ret);
 
                         ret = IKapBoard.IKapGetBufferStatus(cam.g_hBoard, nFrameIndex, status);
@@ -534,6 +628,7 @@ public class IKapBoradCL : ICamera
                                     bIsColorImage = true;
                                 }
                             }
+
                             if (bIsValidImageBit)
                             {
                                 var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, bIsColorImage);
@@ -541,6 +636,7 @@ public class IKapBoradCL : ICamera
                             }
                         }
                     }
+
                     GC.Collect();
                     Console.WriteLine("转换耗时:{0}", _stopwatch.ElapsedMilliseconds);
                 }
@@ -549,6 +645,7 @@ public class IKapBoradCL : ICamera
             {
                 Console.WriteLine("AsyncProcessThread exception: " + e.Message);
             }
+
             Thread.Sleep(2);
         }
     }
@@ -625,8 +722,14 @@ public class IKapBoradCL : ICamera
 
     #region 断线重连
 
+    /// <summary>
+    /// 断线事件
+    /// </summary>
+    /// <param name="pContext"></param>
+    /// <param name="eventInfo"></param>
     private void cbOnReconnect(IntPtr pContext, IntPtr eventInfo)
     {
+        IsConnected = false;
         DisConnetEvent?.Invoke(this, true);
         // 获取事件信息。
         //
@@ -654,19 +757,25 @@ public class IKapBoradCL : ICamera
         ReconnectThread.Start();
     }
 
+    /// <summary>
+    /// 重连事件
+    /// </summary>
     private void ReconnectProcess()
     {
         while (!IsConnected)
         {
             if (Open() == (int)IKapC.ITKSTATUS_OK)
             {
+                IsConnected = true;
                 DisConnetEvent?.Invoke(this, false);
                 Console.WriteLine($"[{SN}]相机重连成功");
                 break;
             }
+
             Thread.Sleep(3000);
         }
     }
+
     #endregion
 
 
@@ -687,7 +796,7 @@ public class IKapBoradCL : ICamera
             set => SetExposureTime(IKCamera.device, value);
         }
 
-        public double MaxExposureTime => 0;
+        public double MaxExposureTime => 99999;
 
         public double Gain
         {
@@ -700,7 +809,8 @@ public class IKapBoradCL : ICamera
             set => SetDigitalGain(IKCamera.device, value);
         }
 
-        public double MaxGain => 0;
+        public double MaxGain => 99;
+
         public int Width
         {
             get
@@ -711,6 +821,7 @@ public class IKapBoradCL : ICamera
             }
             set => SetWidth(IKCamera.device, value);
         }
+
         public int Height
         {
             get
@@ -731,11 +842,7 @@ public class IKapBoradCL : ICamera
                 GetTriggerSource(IKCamera.device, triggersource, ref len);
                 return triggersource.ToString();
             }
-            set
-            {
-
-                SetTriggerSource(IKCamera.device, value);
-            }
+            set { SetTriggerSource(IKCamera.device, value); }
         }
 
         public List<string> TriggerSoures
@@ -743,10 +850,11 @@ public class IKapBoradCL : ICamera
             get
             {
                 //GeneralConfigureCamera.GetTriggerSource(IKCamera.device, out var val);
-                return [];//val.SupportEnumEntries.Select(e => e.Symbolic).ToList();
+                return []; //val.SupportEnumEntries.Select(e => e.Symbolic).ToList();
             }
         }
     }
+
     #endregion
 
 }

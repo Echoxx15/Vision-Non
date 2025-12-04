@@ -16,21 +16,26 @@ public class ModbusTcp : CommAdapterBase
     #region 属性
 
     /// <summary>
-    /// Modbus 客户端实例
+    /// Modbus 客户端实例（公开供测试界面使用）
     /// </summary>
-    private ModbusTcpNet ModbusClient { get; set; }
+    public ModbusTcpNet ModbusClient { get; private set; }
 
     // 配置参数
     private string IpAddress { get; set; } = "127.0.0.1";
     private int Port { get; set; } = 502;
     private byte Station { get; set; } = 1;
+    
+    /// <summary>
+    /// 字符串反转（读取字符串时是否反转字节顺序）
+    /// </summary>
+    public bool StringReverse { get; set; } = false;
 
     /// <summary>
     /// 是否已连接（重写基类属性）
     /// </summary>
     public override bool IsConnected { get; protected set; }
 
-    private CommTable Table => base.Table; // reuse base table instance
+    private new CommTable Table => base.Table; // reuse base table instance
 
     #endregion
 
@@ -56,6 +61,11 @@ public class ModbusTcp : CommAdapterBase
     private uConfigControl _configControl;
     private Thread _pollThread;
     private volatile bool _polling;
+    
+    /// <summary>
+    /// 触发信号的上一次值缓存（用于检测变化）
+    /// </summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _lastTriggerValues = new();
 
     #endregion
 
@@ -96,11 +106,18 @@ public class ModbusTcp : CommAdapterBase
 
         try
         {
-            // 创建 Modbus 客户端
-            if (ModbusClient == null)
+            // ✅ 每次连接时重新创建 ModbusClient，确保使用最新的IP配置
+            if (ModbusClient != null)
             {
-                ModbusClient = new ModbusTcpNet(IpAddress, Port, Station);
+                try
+                {
+                    ModbusClient.ConnectClose();
+                }
+                catch { }
+                ModbusClient = null;
             }
+            
+            ModbusClient = new ModbusTcpNet(IpAddress, Port, Station);
 
             // 尝试连接
             var result = ModbusClient.ConnectServer();
@@ -183,51 +200,62 @@ public class ModbusTcp : CommAdapterBase
                     // ✅ 更新缓存值（无论是否为非零值都更新）
                     Table.UpdateInputCachedValue(cell.Name, value);
                     
+                    // ✅ 只处理触发信号
+                    if (!cell.IsTrigger) continue;
+                    
+                    // ✅ 检测触发信号值是否变化
+                    var valueStr = ValueToString(value);
+                    var lastValueStr = _lastTriggerValues.TryGetValue(cell.Name, out var lastVal) 
+                        ? ValueToString(lastVal) 
+                        : null;
+                    
+                    bool valueChanged = !string.Equals(valueStr, lastValueStr);
+                    _lastTriggerValues[cell.Name] = value;
+                    
+                    // ✅ 只在值变化时打印日志
+                    if (valueChanged)
+                    {
+                        Logger.LogHelper.Info($"[{Name}] 触发信号变化: {cell.Name} = {valueStr}");
+                    }
+                    
+                    // ✅ 只有非零值才触发事件和自动复位
                     if (IsNonZero(value))
                     {
-                        //先发布事件（让上层尽快收到)
-                        var payload = new { cell.Name, Value = ValueToString(value), RawValue = value };
+                        // 发布事件（让上层处理工位触发）
+                        var payload = new { cell.Name, Value = valueStr, RawValue = value };
                         OnMessageReceived(payload);
 
-                        // 日志紧随其后输出（注意上层可能异步处理，不会阻塞)
-                        Logger.LogHelper.Info($"Received value for {cell.Name}: {ValueToString(value)}");
-
-                        // 自动复位：发布事件后延时50ms写0，避免阻塞轮询
-                        if (cell.IsTrigger)
+                        // 自动复位：发布事件后延时50ms写0
+                        Task.Run(() =>
                         {
-                            Task.Run(() =>
+                            try
                             {
-                                try
+                                Thread.Sleep(50);
+                                switch (cell.ValueType)
                                 {
-                                    Thread.Sleep(50);
-                                    switch (cell.ValueType)
-                                    {
-                                        case CommValueType.Bool:
-                                            ModbusClient.Write(cell.Address, false);
-                                            break;
-                                        case CommValueType.Short:
-                                            ModbusClient.Write(cell.Address, (short)0);
-                                            break;
-                                        case CommValueType.Int:
-                                            ModbusClient.Write(cell.Address, 0);
-                                            break;
-                                        case CommValueType.Float:
-                                            ModbusClient.Write(cell.Address, 0f);
-                                            break;
-                                        case CommValueType.Double:
-                                            ModbusClient.Write(cell.Address, 0d);
-                                            break;
-                                    }
-
-                                    Interlocked.Increment(ref _writeOps);
-                                    Console.WriteLine($"[{Name}] AutoReset(50ms) -> {cell.Address} (type={cell.ValueType}) =0");
+                                    case CommValueType.Bool:
+                                        ModbusClient.Write(cell.Address, false);
+                                        break;
+                                    case CommValueType.Short:
+                                        ModbusClient.Write(cell.Address, (short)0);
+                                        break;
+                                    case CommValueType.Int:
+                                        ModbusClient.Write(cell.Address, 0);
+                                        break;
+                                    case CommValueType.Float:
+                                        ModbusClient.Write(cell.Address, 0f);
+                                        break;
+                                    case CommValueType.Double:
+                                        ModbusClient.Write(cell.Address, 0d);
+                                        break;
                                 }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"[{Name}] AutoReset 写入异常: {ex.Message}");
-                                }
-                            });
-                        }
+                                Interlocked.Increment(ref _writeOps);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[{Name}] AutoReset 写入异常: {ex.Message}");
+                            }
+                        });
                     }
                 }
             }
@@ -263,9 +291,16 @@ public class ModbusTcp : CommAdapterBase
                 case float f: ModbusClient.Write(address, f); break;
                 case double d: ModbusClient.Write(address, (float)d); break; // Modbus 可用float
                 case string str: ModbusClient.Write(address, str); break;
+                // 数组类型支持
                 case bool[] boolArray: ModbusClient.Write(address, boolArray); break;
+                case short[] shortArray: ModbusClient.Write(address, shortArray); break;
                 case int[] intArray: ModbusClient.Write(address, intArray); break;
                 case float[] floatArray: ModbusClient.Write(address, floatArray); break;
+                case double[] doubleArray: 
+                    // Modbus不直接支持double[]，转换为float[]
+                    var floats = doubleArray.Select(d => (float)d).ToArray();
+                    ModbusClient.Write(address, floats); 
+                    break;
                 default: throw new NotSupportedException($"不支持类型 {data.GetType().Name}");
             }
             Interlocked.Increment(ref _writeOps);
@@ -301,6 +336,7 @@ public class ModbusTcp : CommAdapterBase
         config.SetParameter("IpAddress", IpAddress);
         config.SetParameter("Port", Port.ToString());
         config.SetParameter("Station", Station.ToString());
+        config.SetParameter("StringReverse", StringReverse.ToString());
         // 不保存 IsConnected以避免自动重连引起的杂乱日志
         return config;
     }
@@ -319,6 +355,7 @@ public class ModbusTcp : CommAdapterBase
         IpAddress = config.GetParameter("IpAddress", "127.0.0.1");
         if (int.TryParse(config.GetParameter("Port", "502"), out var port)) Port = port;
         if (byte.TryParse(config.GetParameter("Station", "1"), out var station)) Station = station;
+        if (bool.TryParse(config.GetParameter("StringReverse", "false"), out var stringReverse)) StringReverse = stringReverse;
 
         // 不在此处自动连接，交由工厂在 ApplyConfig之后调用 Connect()
     }
@@ -385,7 +422,20 @@ public class ModbusTcp : CommAdapterBase
                 case CommValueType.String:
                 {
                     var r = ModbusClient.ReadString(cell.Address, (ushort)len);
-                    return r.IsSuccess ? r.Content : string.Empty;
+                    if (!r.IsSuccess) return string.Empty;
+                    
+                    // 如果启用字符串反转，则进行字节反转
+                    if (StringReverse && !string.IsNullOrEmpty(r.Content))
+                    {
+                        var chars = r.Content.ToCharArray();
+                        // 每两个字符交换位置（Modbus寄存器为16位，对应两个字符）
+                        for (int i = 0; i < chars.Length - 1; i += 2)
+                        {
+                            (chars[i], chars[i + 1]) = (chars[i + 1], chars[i]);
+                        }
+                        return new string(chars).TrimEnd('\0');
+                    }
+                    return r.Content;
                 }
                 case CommValueType.BoolArray:
                 {
@@ -434,7 +484,23 @@ public class ModbusTcp : CommAdapterBase
     private string ValueToString(object value)
     {
         if (value == null) return string.Empty;
-        if (value is Array arr) return $"[{string.Join(",", arr.Cast<object>().Take(10))}]";
+        
+        // ✅ float/double 保留4位小数，避免科学计数法
+        if (value is float f) return f.ToString("F4");
+        if (value is double d) return d.ToString("F4");
+        
+        // ✅ 数组类型也处理 float/double
+        if (value is Array arr)
+        {
+            var items = arr.Cast<object>().Take(10).Select(v =>
+            {
+                if (v is float fv) return fv.ToString("F4");
+                if (v is double dv) return dv.ToString("F4");
+                return Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture);
+            });
+            return $"[{string.Join(",", items)}]";
+        }
+        
         return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 }

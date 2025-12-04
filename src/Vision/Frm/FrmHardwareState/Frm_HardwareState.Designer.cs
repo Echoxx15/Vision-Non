@@ -28,62 +28,35 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.tablePanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.flowlayoutPanel_HardCamera = new System.Windows.Forms.FlowLayoutPanel();
-            this.flowlayoutPanel_HardComm = new System.Windows.Forms.FlowLayoutPanel();
-            this.tablePanel1.SuspendLayout();
+            this.flowLayoutPanel_Devices = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
             // 
-            // tablePanel1
+            // flowLayoutPanel_Devices
             // 
-            this.tablePanel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.tablePanel1.ColumnCount = 2;
-            this.tablePanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tablePanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tablePanel1.Controls.Add(this.flowlayoutPanel_HardCamera, 0, 0);
-            this.tablePanel1.Controls.Add(this.flowlayoutPanel_HardComm, 1, 0);
-            this.tablePanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tablePanel1.Location = new System.Drawing.Point(0, 0);
-            this.tablePanel1.Name = "tablePanel1";
-            this.tablePanel1.RowCount = 1;
-            this.tablePanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tablePanel1.Size = new System.Drawing.Size(367, 413);
-            this.tablePanel1.TabIndex = 0;
-            // 
-            // flowlayoutPanel_HardCamera
-            // 
-            this.flowlayoutPanel_HardCamera.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowlayoutPanel_HardCamera.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowlayoutPanel_HardCamera.Location = new System.Drawing.Point(3, 3);
-            this.flowlayoutPanel_HardCamera.Name = "flowlayoutPanel_HardCamera";
-            this.flowlayoutPanel_HardCamera.Size = new System.Drawing.Size(177, 407);
-            this.flowlayoutPanel_HardCamera.TabIndex = 1;
-            // 
-            // flowlayoutPanel_HardComm
-            // 
-            this.flowlayoutPanel_HardComm.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowlayoutPanel_HardComm.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowlayoutPanel_HardComm.Location = new System.Drawing.Point(186, 3);
-            this.flowlayoutPanel_HardComm.Name = "flowlayoutPanel_HardComm";
-            this.flowlayoutPanel_HardComm.Size = new System.Drawing.Size(178, 407);
-            this.flowlayoutPanel_HardComm.TabIndex = 0;
+            this.flowLayoutPanel_Devices.AutoScroll = true;
+            this.flowLayoutPanel_Devices.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.flowLayoutPanel_Devices.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel_Devices.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowLayoutPanel_Devices.Location = new System.Drawing.Point(0, 0);
+            this.flowLayoutPanel_Devices.Name = "flowLayoutPanel_Devices";
+            this.flowLayoutPanel_Devices.Padding = new System.Windows.Forms.Padding(5);
+            this.flowLayoutPanel_Devices.Size = new System.Drawing.Size(367, 413);
+            this.flowLayoutPanel_Devices.TabIndex = 0;
+            this.flowLayoutPanel_Devices.WrapContents = false;
             // 
             // Frm_HardwareState
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 22F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.tablePanel1);
+            this.Controls.Add(this.flowLayoutPanel_Devices);
             this.Name = "Frm_HardwareState";
             this.Size = new System.Drawing.Size(367, 413);
-            this.tablePanel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.TableLayoutPanel tablePanel1;
-        private System.Windows.Forms.FlowLayoutPanel flowlayoutPanel_HardCamera;
-        private System.Windows.Forms.FlowLayoutPanel flowlayoutPanel_HardComm;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel_Devices;
     }
 }

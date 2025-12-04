@@ -13,7 +13,7 @@ public sealed class TaskFlowManager : IDisposable
 
     private static readonly Lazy<TaskFlowManager> _instance = new(() => new TaskFlowManager());
     public static TaskFlowManager Instance => _instance.Value;
-    private readonly ConcurrentDictionary<string, WorkFlow.TaskFlow> _taskFlows = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, TaskFlow> _taskFlows = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, (IComm device, EventHandler<object> handler)> _subscriptions = new(StringComparer.OrdinalIgnoreCase);
     private bool _initialized = false;
 
@@ -45,7 +45,7 @@ public sealed class TaskFlowManager : IDisposable
                 if (station == null || string.IsNullOrWhiteSpace(station.Name)) continue;
                 try
                 {
-                    var tf = new WorkFlow.TaskFlow(station);
+                    var tf = new TaskFlow(station);
                     _taskFlows[station.Name] = tf;
                     //订阅该工位的通讯触发
                     TrySubscribeStationDevice(station);
@@ -166,7 +166,7 @@ public sealed class TaskFlowManager : IDisposable
             var station = solution?.Stations?.Find(s => string.Equals(s.Name, stationName, StringComparison.OrdinalIgnoreCase));
             if (station == null)
             { LogHelper.Warn($"[TaskFlowManager] 未找到工位 {stationName} 配置"); return; }
-            var tf = new WorkFlow.TaskFlow(station); _taskFlows[stationName] = tf; TrySubscribeStationDevice(station);
+            var tf = new TaskFlow(station); _taskFlows[stationName] = tf; TrySubscribeStationDevice(station);
         }
         catch (Exception ex)
         { LogHelper.Error(ex, $"[TaskFlowManager] 重载工位 {stationName}失败"); }
@@ -202,7 +202,7 @@ public sealed class TaskFlowManager : IDisposable
         { LogHelper.Error(ex, $"[TaskFlowManager] 移除工位 {stationName}失败"); }
     }
 
-    internal bool TryGetTaskFlow(string stationName, out WorkFlow.TaskFlow flow) => _taskFlows.TryGetValue(stationName, out flow);
+    internal bool TryGetTaskFlow(string stationName, out TaskFlow flow) => _taskFlows.TryGetValue(stationName, out flow);
 
     private void DisposeAll()
     {

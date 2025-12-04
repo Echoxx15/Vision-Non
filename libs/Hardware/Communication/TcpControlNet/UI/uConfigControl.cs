@@ -15,8 +15,6 @@ public partial class uConfigControl : UserControl
 	{
 		InitializeComponent();
 		InitializeEncodingComboBox();
-		// open comm table editor
-		btn_OpenTable.Click += btn_OpenTable_Click;
 	}
 
 	/// <summary>
@@ -25,7 +23,7 @@ public partial class uConfigControl : UserControl
 	private void InitializeEncodingComboBox()
 	{
 		cmb_Encoding.Items.Clear();
-		cmb_Encoding.Items.AddRange(new object[] { "UTF-8", "GBK", "GB2312", "ASCII", "Unicode" });
+		cmb_Encoding.Items.AddRange(["UTF-8", "GBK", "GB2312", "ASCII", "Unicode"]);
 		cmb_Encoding.SelectedIndex = 0;
 	}
 
@@ -34,16 +32,50 @@ public partial class uConfigControl : UserControl
 	/// </summary>
 	public void SetDevice(object device, TcpType type)
 	{
+		// 取消订阅旧设备的事件
+		UnsubscribeDeviceEvents();
+
 		_device = device;
 		_type = type;
 		LoadConfigFromDevice();
 		UpdateUIForDeviceType();
 
-		// ✅ 订阅连接状态变化事件
+		// 订阅连接状态变化事件和原始消息接收事件（用于UI显示）
 		if (_device is IComm comm)
 		{
 			comm.ConnectionStatusChanged += OnConnectionStatusChanged;
 			UpdateConnectButtonState();
+		}
+
+		// 订阅原始消息事件（用于UI接收框显示）
+		if (_device is TcpClientAdapter clientAdapter)
+		{
+			clientAdapter.RawMessageReceived += OnRawMessageReceived;
+		}
+		else if (_device is TcpServerAdapter serverAdapter)
+		{
+			serverAdapter.RawMessageReceived += OnRawMessageReceived;
+		}
+	}
+
+	/// <summary>
+	/// 取消订阅设备事件
+	/// </summary>
+	private void UnsubscribeDeviceEvents()
+	{
+		if (_device is IComm oldComm)
+		{
+			try { oldComm.ConnectionStatusChanged -= OnConnectionStatusChanged; } catch { }
+		}
+
+		// 取消订阅原始消息事件
+		if (_device is TcpClientAdapter clientAdapter)
+		{
+			try { clientAdapter.RawMessageReceived -= OnRawMessageReceived; } catch { }
+		}
+		else if (_device is TcpServerAdapter serverAdapter)
+		{
+			try { serverAdapter.RawMessageReceived -= OnRawMessageReceived; } catch { }
 		}
 	}
 
@@ -62,17 +94,37 @@ public partial class uConfigControl : UserControl
 	}
 
 	/// <summary>
-	/// 更新连接按钮状态
+	/// 原始消息接收事件处理（用于UI显示）
+	/// </summary>
+	private void OnRawMessageReceived(object sender, string message)
+	{
+		if (InvokeRequired)
+		{
+			try { BeginInvoke(new Action<object, string>(OnRawMessageReceived), sender, message); } catch { }
+			return;
+		}
+
+		AppendReceiveText($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
+	}
+
+	/// <summary>
+	/// 追加接收文本
+	/// </summary>
+	private void AppendReceiveText(string text)
+	{
+		if (txt_Receive == null || txt_Receive.IsDisposed) return;
+
+		txt_Receive.AppendText(text + Environment.NewLine);
+		txt_Receive.ScrollToCaret();
+	}
+
+	/// <summary>
+	/// 更新连接状态相关的 UI
 	/// </summary>
 	private void UpdateConnectButtonState()
 	{
 		if (_device is IComm comm)
 		{
-			btn_Connect.Text = comm.IsConnected ? "断开" : "连接";
-			btn_Connect.BackColor = comm.IsConnected
-				? System.Drawing.Color.LightGreen
-				: System.Drawing.Color.LightCoral;
-
 			// ✅ 连接时禁用配置编辑
 			txt_IpAddress.Enabled = !comm.IsConnected;
 			num_Port.Enabled = !comm.IsConnected;
@@ -282,56 +334,53 @@ public partial class uConfigControl : UserControl
 		}
 	}
 
+	#region 收发测试功能
+
 	/// <summary>
-	/// 测试按钮点击事件
-	/// ✅ 仅使用设备，不改变设备状态
+	/// 发送按钮点击
 	/// </summary>
-	private void btn_Test_Click(object sender, EventArgs e)
+	private void btn_Send_Click(object sender, EventArgs e)
 	{
 		if (_device == null)
 		{
-			MessageBox.Show("设备未初始化", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			MessageBox.Show("设备未初始化", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 			return;
 		}
 
-		// ✅ 检查设备连接状态
 		if (!(_device as IComm).IsConnected)
 		{
-			var result = MessageBox.Show(
-				"设备未连接，是否先连接？",
-				"提示",
-				MessageBoxButtons.YesNo,
-				MessageBoxIcon.Question);
-
-			if (result == DialogResult.Yes)
-			{
-				btn_Connect_Click(sender, e);
-				
-				if (!(_device as IComm).IsConnected)
-				{
-					return; // 连接失败，不打开测试窗口
-				}
-			}
-			else
-			{
-				return;
-			}
+			MessageBox.Show("设备未连接，请先连接设备", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			return;
 		}
 
-		// ✅ 打开测试窗口（不改变设备状态）
+		var message = txt_Send.Text;
+		if (string.IsNullOrWhiteSpace(message))
+		{
+			MessageBox.Show("请输入要发送的内容", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			return;
+		}
+
 		try
 		{
-			using var testForm = new Frm_TcpTest(_device as IComm, _type);
-			testForm.ShowDialog();
-
-			// ✅ 测试窗口关闭后，不改变设备连接状态
-			// 设备状态由用户在主界面或配置界面控制
+			// 发送数据（TCP不需要地址，传null），自动追加结束符
+			(_device as IComm).Write(null, message + "\r\n");
+			// 不打印发送内容，只依赖接收方的回复来确认发送成功
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show($"打开测试窗口失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			MessageBox.Show($"发送失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 	}
+
+	/// <summary>
+	/// 清空接收区
+	/// </summary>
+	private void btn_ClearReceive_Click(object sender, EventArgs e)
+	{
+		txt_Receive?.Clear();
+	}
+
+	#endregion
 
 	/// <summary>
 	/// 保存按钮点击事件
@@ -376,76 +425,6 @@ public partial class uConfigControl : UserControl
 		}
 	}
 
-	/// <summary>
-	/// 连接按钮点击事件
-	/// </summary>
-	private void btn_Connect_Click(object sender, EventArgs e)
-	{
-		if (_device == null)
-		{
-			MessageBox.Show("设备未初始化", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			return;
-		}
-
-		try
-		{
-			var comm = _device as IComm;
-			if (comm == null)
-			{
-				MessageBox.Show("设备类型错误", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
-			}
-
-			if (comm.IsConnected)
-			{
-				// ✅ 用户显式点击断开按钮
-				comm.Disconnect();
-				MessageBox.Show("断开成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			}
-			else
-			{
-				// ✅ 连接前先应用配置（但不保存到文件）
-				ApplyConfigToDevice();
-
-				// ✅ 用户显式点击连接按钮
-				comm.Connect();
-
-				if (comm.IsConnected)
-				{
-					// ✅ 连接成功后自动保存配置
-					SaveConfigToDeviceSilent();
-					MessageBox.Show("连接成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				}
-				else
-				{
-					MessageBox.Show("连接失败，请检查配置", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			MessageBox.Show($"操作失败: {ex.Message}", "错误",
-				MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
-	}
-
-	private void btn_OpenTable_Click(object sender, EventArgs e)
-	{
-		try
-		{
-			if (_device is not IComm comm)
-			{
-				MessageBox.Show("设备未初始化", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				return;
-			}
-			using var frm = new Frm_CommTable(comm);
-			frm.ShowDialog(this);
-		}
-		catch (Exception ex)
-		{
-			MessageBox.Show($"打开通讯表失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
-	}
 }
 
 public enum TcpType

@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
@@ -8,217 +8,258 @@ namespace HardwareCommNet;
 
 public abstract class CommAdapterBase : IComm, IRenameableComm, IConfigurableComm
 {
- public CommTable.CommTable Table { get; } = new CommTable.CommTable();
- public string Name { get; private set; }
- public virtual bool IsConnected { get; protected set; }
+    public CommTable.CommTable Table { get; } = new CommTable.CommTable();
+    public string Name { get; private set; }
+    public virtual bool IsConnected { get; protected set; }
 
- public event EventHandler<object> MessageReceived;
- public event EventHandler<bool> ConnectionStatusChanged;
+    public event EventHandler<object> MessageReceived;
+    public event EventHandler<bool> ConnectionStatusChanged;
 
- protected CommAdapterBase(string name)
- {
- if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("…Ë±∏√˚≥∆≤ªƒ‹Œ™ø’", nameof(name));
- Name = name.Trim();
- }
+    protected CommAdapterBase(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("ËÆæÂ§áÂêçÁß∞‰∏çËÉΩ‰∏∫Á©∫", nameof(name));
+        Name = name.Trim();
+    }
 
- public abstract UserControl GetConfigControl();
- public abstract void Connect();
- public abstract void Disconnect();
- public abstract void Write(string address, object data);
- public abstract void Write(string address, object[] data);
+    public abstract UserControl GetConfigControl();
+    public abstract void Connect();
+    public abstract void Disconnect();
+    public abstract void Write(string address, object data);
+    public abstract void Write(string address, object[] data);
 
- public virtual CommConfig GetConfig()
- {
- var attr = GetType().GetCustomAttribute<CommManufacturerAttribute>();
- var config = new CommConfig(Name, attr?.ManufacturerName ?? GetType().Name);
- 
- Console.WriteLine($"[{Name}] GetConfig: ø™ º–Ú¡–ªØ≈‰÷√...");
- 
- if (Table != null)
- {
- var inputCount = Table.Inputs?.Count ?? 0;
- var outputCount = Table.Outputs?.Count ?? 0;
- 
- Console.WriteLine($"[{Name}] Table◊¥Ã¨:  ‰»Î{inputCount}œÓ,  ‰≥ˆ{outputCount}œÓ");
- 
- if (inputCount > 0 || outputCount > 0)
- {
- config.TableConfig = new CommTableConfig();
- 
- foreach (var input in Table.Inputs)
- {
- config.TableConfig.Inputs.Add(new CommCellConfig
- {
- Name = input.Name,
- ValueType = input.ValueType.ToString(),
- StartByte = input.StartByte,
- Length = input.Length,
- Address = input.Address,
- TriggerValues = new List<string>(input.TriggerValues ?? new List<string>()),
- Description = input.Description,
- IsTrigger = input.IsTrigger
- });
- }
- 
- foreach (var output in Table.Outputs)
- {
- config.TableConfig.Outputs.Add(new CommCellConfig
- {
- Name = output.Name,
- ValueType = output.ValueType.ToString(),
- StartByte = output.StartByte,
- Length = output.Length,
- Address = output.Address,
- TriggerValues = new List<string>(output.TriggerValues ?? new List<string>()),
- Description = output.Description,
- IsTrigger = output.IsTrigger
- });
- }
- 
- Console.WriteLine($"[{Name}] ? TableConfig“—¥¥Ω®:  ‰»Î{config.TableConfig.Inputs.Count}œÓ,  ‰≥ˆ{config.TableConfig.Outputs.Count}œÓ");
- }
- else
- {
- Console.WriteLine($"[{Name}] ?? TableŒ™ø’£¨≤ª¥¥Ω®TableConfig");
- }
- }
- else
- {
- Console.WriteLine($"[{Name}] ?? TableŒ™null");
- }
- 
- return config;
- }
+    public virtual CommConfig GetConfig()
+    {
+        var attr = GetType().GetCustomAttribute<CommManufacturerAttribute>();
+        var config = new CommConfig(Name, attr?.ManufacturerName ?? GetType().Name);
 
- public virtual void ApplyConfig(CommConfig config)
- {
- if (config == null)
- {
- Console.WriteLine($"[{Name}] ApplyConfig: configŒ™null");
- return;
- }
- 
- Console.WriteLine($"[{Name}] ø™ º”¶”√≈‰÷√...");
- 
- if (config.TableConfig != null && Table != null)
- {
- Console.WriteLine($"[{Name}] ∑¢œ÷TableConfig£¨ø™ ºº”‘ÿÕ®—∂±Ì...");
- Table.ClearInputs();
- Table.ClearOutputs();
- 
- int inputCount = 0;
- foreach (var cellCfg in config.TableConfig.Inputs ?? new List<CommCellConfig>())
- {
- if (Enum.TryParse<CommTable.CommValueType>(cellCfg.ValueType, out var vt))
- {
- Table.AddOrUpdateInput(new CommTable.CommCell
- {
- Name = cellCfg.Name,
- ValueType = vt,
- StartByte = cellCfg.StartByte,
- Length = cellCfg.Length > 0 ? cellCfg.Length : 1,
- Address = cellCfg.Address,
- TriggerValues = new List<string>(cellCfg.TriggerValues ?? new List<string>()),
- Description = cellCfg.Description,
- IsTrigger = cellCfg.IsTrigger
- });
- inputCount++;
- }
- else
- {
- Console.WriteLine($"[{Name}] æØ∏Ê£∫Œﬁ∑®Ω‚ŒˆValueType: {cellCfg.ValueType}");
- }
- }
- 
- int outputCount = 0;
- foreach (var cellCfg in config.TableConfig.Outputs ?? new List<CommCellConfig>())
- {
- if (Enum.TryParse<CommTable.CommValueType>(cellCfg.ValueType, out var vt))
- {
- Table.AddOrUpdateOutput(new CommTable.CommCell
- {
- Name = cellCfg.Name,
- ValueType = vt,
- StartByte = cellCfg.StartByte,
- Length = cellCfg.Length > 0 ? cellCfg.Length : 1,
- Address = cellCfg.Address,
- TriggerValues = new List<string>(cellCfg.TriggerValues ?? new List<string>()),
- Description = cellCfg.Description,
- IsTrigger = cellCfg.IsTrigger
- });
- outputCount++;
- }
- else
- {
- Console.WriteLine($"[{Name}] æØ∏Ê£∫Œﬁ∑®Ω‚ŒˆValueType: {cellCfg.ValueType}");
- }
- }
- 
- Console.WriteLine($"[{Name}] ? Õ®—∂±Ìº”‘ÿÕÍ≥…:  ‰»Î{inputCount}œÓ,  ‰≥ˆ{outputCount}œÓ");
- }
- else
- {
- if (config.TableConfig == null)
- Console.WriteLine($"[{Name}] config.TableConfigŒ™null");
- if (Table == null)
- Console.WriteLine($"[{Name}] TableŒ™null");
- }
- }
+        Console.WriteLine($"[{Name}] GetConfig: ÂºÄÂßãÂ∫èÂàóÂåñÈÖçÁΩÆ...");
 
- private int ParseByteSpecSize(string spec)
- {
- if (string.IsNullOrWhiteSpace(spec)) return 1;
- var s = spec.Trim();
- if (int.TryParse(s, out var single) && single >= 1) return single;
- var parts = s.Split(new[] { '-', '~' }, StringSplitOptions.RemoveEmptyEntries);
- if (parts.Length == 2 && int.TryParse(parts[0], out var a) && int.TryParse(parts[1], out var b) && a >= 1 && b >= a)
- return b - a + 1;
- return 1;
- }
+        if (Table != null)
+        {
+            var inputCount = Table.Inputs?.Count ?? 0;
+            var outputCount = Table.Outputs?.Count ?? 0;
 
-protected virtual void OnMessageReceived(object message)
-{
- try { MessageReceived?.Invoke(this, message); }
- catch (Exception ex) { Console.WriteLine($"[{Name}] œ˚œ¢Ω” ’ ¬º˛¥¶¿Ì“Ï≥£: {ex.Message}"); }
-}
+            Console.WriteLine($"[{Name}] TableÁä∂ÊÄÅ: ËæìÂÖ•{inputCount}‰∏™, ËæìÂá∫{outputCount}‰∏™");
 
-protected virtual void OnConnectionStatusChanged(bool connected)
-{
- try { ConnectionStatusChanged?.Invoke(this, connected); }
- catch (Exception ex) { Console.WriteLine($"[{Name}] ¡¨Ω”◊¥Ã¨±‰ªØ ¬º˛¥¶¿Ì“Ï≥£: {ex.Message}"); }
-}
+            if (inputCount > 0 || outputCount > 0)
+            {
+                config.TableConfig = new CommTableConfig();
 
-public virtual void SetName(string name)
-{
- if (!string.IsNullOrWhiteSpace(name)) Name = name.Trim();
-}
+                foreach (var input in Table.Inputs)
+                {
+                    config.TableConfig.Inputs.Add(new CommCellConfig
+                    {
+                        Name = input.Name,
+                        ValueType = input.ValueType.ToString(),
+                        StartByte = input.StartByte,
+                        Length = input.Length,
+                        Address = input.Address,
+                        TriggerValues = new List<string>(input.TriggerValues ?? new List<string>()),
+                        Description = input.Description,
+                        IsTrigger = input.IsTrigger,
+                        FieldIndex = input.FieldIndex,
+                        UseRegex = input.UseRegex,
+                        RegexPattern = input.RegexPattern
+                    });
+                }
 
-private bool _disposed = false;
-public void Dispose()
-{
- Dispose(true);
- GC.SuppressFinalize(this);
-}
+                foreach (var output in Table.Outputs)
+                {
+                    config.TableConfig.Outputs.Add(new CommCellConfig
+                    {
+                        Name = output.Name,
+                        ValueType = output.ValueType.ToString(),
+                        StartByte = output.StartByte,
+                        Length = output.Length,
+                        Address = output.Address,
+                        TriggerValues = new List<string>(output.TriggerValues ?? new List<string>()),
+                        Description = output.Description,
+                        IsTrigger = output.IsTrigger,
+                        FieldIndex = output.FieldIndex,
+                        UseRegex = output.UseRegex,
+                        RegexPattern = output.RegexPattern
+                    });
+                }
 
-protected virtual void Dispose(bool disposing)
-{
- if (_disposed) return;
- if (disposing) { try { Disconnect(); } catch { } }
- _disposed = true;
-}
+                Console.WriteLine(
+                    $"[{Name}] ‚úì TableConfigÂ∑≤ÂàõÂª∫: ËæìÂÖ•{config.TableConfig.Inputs.Count}‰∏™, ËæìÂá∫{config.TableConfig.Outputs.Count}‰∏™");
+            }
+            else
+            {
+                Console.WriteLine($"[{Name}] ‚ö† Table‰∏∫Á©∫Ôºå‰∏çÂàõÂª∫TableConfig");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[{Name}] ‚ö† Table‰∏∫null");
+        }
 
-protected void ValidateNotNull(object value, string paramName)
-{
- if (value == null) throw new ArgumentNullException(paramName);
-}
+        return config;
+    }
 
-protected void ValidateNotEmpty(string value, string paramName)
-{
- if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException($"{paramName} ≤ªƒ‹Œ™ø’", paramName);
-}
+    public virtual void ApplyConfig(CommConfig config)
+    {
+        if (config == null)
+        {
+            Console.WriteLine($"[{Name}] ApplyConfig: config‰∏∫null");
+            return;
+        }
 
-protected void ValidateNotEmpty<T>(T[] value, string paramName)
-{
- if (value == null || value.Length == 0) throw new ArgumentException($"{paramName} ≤ªƒ‹Œ™ø’", paramName);
-}
+        Console.WriteLine($"[{Name}] ÂºÄÂßãÂ∫îÁî®ÈÖçÁΩÆ...");
+
+        if (config.TableConfig != null && Table != null)
+        {
+            Console.WriteLine($"[{Name}] ÂèëÁé∞TableConfigÔºåÂºÄÂßãÂä†ËΩΩÈÄöËÆØË°®...");
+            Table.ClearInputs();
+            Table.ClearOutputs();
+
+            int inputCount = 0;
+            foreach (var cellCfg in config.TableConfig.Inputs ?? new List<CommCellConfig>())
+            {
+                if (Enum.TryParse<CommTable.CommValueType>(cellCfg.ValueType, out var vt))
+                {
+                    Table.AddOrUpdateInput(new CommTable.CommCell
+                    {
+                        Name = cellCfg.Name,
+                        ValueType = vt,
+                        StartByte = cellCfg.StartByte,
+                        Length = cellCfg.Length > 0 ? cellCfg.Length : 1,
+                        Address = cellCfg.Address,
+                        TriggerValues = new List<string>(cellCfg.TriggerValues ?? new List<string>()),
+                        Description = cellCfg.Description,
+                        IsTrigger = cellCfg.IsTrigger,
+                        // TCPÁâπÊúâÂ≠óÊÆµ
+                        FieldIndex = cellCfg.FieldIndex,
+                        Delimiter = cellCfg.Delimiter ?? ",",
+                        Terminator = cellCfg.Terminator ?? "\r\n",
+                        TriggerMode = cellCfg.TriggerMode
+                    });
+                    inputCount++;
+                }
+                else
+                {
+                    Console.WriteLine($"[{Name}] Ë≠¶ÂëäÔºöÊó†Ê≥ïËß£ÊûêValueType: {cellCfg.ValueType}");
+                }
+            }
+
+            int outputCount = 0;
+            foreach (var cellCfg in config.TableConfig.Outputs ?? new List<CommCellConfig>())
+            {
+                if (Enum.TryParse<CommTable.CommValueType>(cellCfg.ValueType, out var vt))
+                {
+                    Table.AddOrUpdateOutput(new CommTable.CommCell
+                    {
+                        Name = cellCfg.Name,
+                        ValueType = vt,
+                        StartByte = cellCfg.StartByte,
+                        Length = cellCfg.Length > 0 ? cellCfg.Length : 1,
+                        Address = cellCfg.Address,
+                        TriggerValues = new List<string>(cellCfg.TriggerValues ?? new List<string>()),
+                        Description = cellCfg.Description,
+                        IsTrigger = cellCfg.IsTrigger,
+                        // TCPÁâπÊúâÂ≠óÊÆµ
+                        FieldIndex = cellCfg.FieldIndex,
+                        Delimiter = cellCfg.Delimiter ?? ",",
+                        Terminator = cellCfg.Terminator ?? "\r\n",
+                        TriggerMode = cellCfg.TriggerMode
+                    });
+                    outputCount++;
+                }
+                else
+                {
+                    Console.WriteLine($"[{Name}] Ë≠¶ÂëäÔºöÊó†Ê≥ïËß£ÊûêValueType: {cellCfg.ValueType}");
+                }
+            }
+
+            Console.WriteLine($"[{Name}] ‚úì ÈÄöËÆØË°®Âä†ËΩΩÂÆåÊàê: ËæìÂÖ•{inputCount}‰∏™, ËæìÂá∫{outputCount}‰∏™");
+        }
+        else
+        {
+            if (config.TableConfig == null)
+                Console.WriteLine($"[{Name}] config.TableConfig‰∏∫null");
+            if (Table == null)
+                Console.WriteLine($"[{Name}] Table‰∏∫null");
+        }
+    }
+
+    private int ParseByteSpecSize(string spec)
+    {
+        if (string.IsNullOrWhiteSpace(spec)) return 1;
+        var s = spec.Trim();
+        if (int.TryParse(s, out var single) && single >= 1) return single;
+        var parts = s.Split(new[] { '-', '~' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && int.TryParse(parts[0], out var a) && int.TryParse(parts[1], out var b) && a >= 1 &&
+            b >= a)
+            return b - a + 1;
+        return 1;
+    }
+
+    protected virtual void OnMessageReceived(object message)
+    {
+        try
+        {
+            MessageReceived?.Invoke(this, message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{Name}] Ê∂àÊÅØÊé•Êî∂‰∫ã‰ª∂Â§ÑÁêÜÂºÇÂ∏∏: {ex.Message}");
+        }
+    }
+
+    protected virtual void OnConnectionStatusChanged(bool connected)
+    {
+        try
+        {
+            ConnectionStatusChanged?.Invoke(this, connected);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{Name}] ËøûÊé•Áä∂ÊÄÅÂèòÂåñ‰∫ã‰ª∂Â§ÑÁêÜÂºÇÂ∏∏: {ex.Message}");
+        }
+    }
+
+    public virtual void SetName(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name)) Name = name.Trim();
+    }
+
+    private bool _disposed = false;
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            try
+            {
+                Disconnect();
+            }
+            catch
+            {
+            }
+        }
+
+        _disposed = true;
+    }
+
+    protected void ValidateNotNull(object value, string paramName)
+    {
+        if (value == null) throw new ArgumentNullException(paramName);
+    }
+
+    protected void ValidateNotEmpty(string value, string paramName)
+    {
+        if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException($"{paramName} ‰∏çËÉΩ‰∏∫Á©∫", paramName);
+    }
+
+    protected void ValidateNotEmpty<T>(T[] value, string paramName)
+    {
+        if (value == null || value.Length == 0) throw new ArgumentException($"{paramName} ‰∏çËÉΩ‰∏∫Á©∫", paramName);
+    }
 }

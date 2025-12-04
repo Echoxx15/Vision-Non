@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -24,7 +25,22 @@ public sealed class LightFactory : IDisposable
 
     private readonly object _configLock = new();
 
-    public Form GetConfigForm => new Frm_LightConfig();
+    /// <summary>
+    /// 设备创建事件 (name, type, controller)
+    /// </summary>
+    public event Action<string, LightControllerType, ILightController> DeviceCreated;
+
+    /// <summary>
+    /// 设备移除事件 (name, type)
+    /// </summary>
+    public event Action<string, LightControllerType> DeviceRemoved;
+
+    /// <summary>
+    /// 设备重命名事件 (oldName, newName, type)
+    /// </summary>
+    public event Action<string, string, LightControllerType> DeviceRenamed;
+
+    public UserControl GetConfigControl() => new uLightConfig();
 
     private LightFactory()
     {
@@ -200,6 +216,14 @@ public sealed class LightFactory : IDisposable
 
         // 尝试创建控制器
         TryCreateController(config);
+
+        // 触发设备创建事件
+        var controller = GetController(config.Name);
+        if (controller != null)
+        {
+            DeviceCreated?.Invoke(config.Name, config.Type, controller);
+        }
+
         return config;
     }
 
@@ -210,10 +234,12 @@ public sealed class LightFactory : IDisposable
     {
         if (string.IsNullOrWhiteSpace(name)) return false;
 
+        LightControllerType type;
         lock (_configLock)
         {
             var toRemove = _configs.FindByName(name);
             if (toRemove == null) return false;
+            type = toRemove.Type;
             _configs.Remove(toRemove);
         }
 
@@ -224,6 +250,10 @@ public sealed class LightFactory : IDisposable
         }
 
         SaveConfigs();
+
+        // 触发设备移除事件
+        DeviceRemoved?.Invoke(name, type);
+
         return true;
     }
 
@@ -258,6 +288,53 @@ public sealed class LightFactory : IDisposable
         SaveConfigs();
         
         LogHelper.Info($"光源配置[{updated.Name}]已保存到文件，当前连接状态保持不变");
+        return true;
+    }
+
+    /// <summary>
+    /// 重命名配置（不断开连接，仅更新名称）
+    /// </summary>
+    public bool RenameConfig(string oldName, string newName)
+    {
+        if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName)) return false;
+        if (string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase)) return true;
+
+        LightControllerType type;
+        lock (_configLock)
+        {
+            var existing = _configs.FindByName(oldName);
+            if (existing == null) return false;
+
+            // 检查新名称是否已存在
+            if (_configs.FindByName(newName) != null) return false;
+
+            type = existing.Type;
+
+            // 更新配置名称
+            existing.Name = newName;
+        }
+
+        // 更新控制器字典键名和控制器内部名称（不断开连接）
+        if (_controllers.TryRemove(oldName, out var controller))
+        {
+            try
+            {
+                controller.SetName(newName);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(ex, $"更新控制器[{oldName}]名称失败");
+            }
+            _controllers.TryAdd(newName, controller);
+        }
+
+        // 保存配置
+        SaveConfigs();
+
+        // 触发重命名事件
+        DeviceRenamed?.Invoke(oldName, newName, type);
+
+        LogHelper.Info($"光源配置重命名成功: [{oldName}] -> [{newName}]");
         return true;
     }
 
@@ -322,6 +399,22 @@ public sealed class LightFactory : IDisposable
     public void ApplyConfigs()
     {
         InitializeFromConfigs(Configs);
+    }
+
+    /// <summary>
+    /// 获取所有控制器
+    /// </summary>
+    public IEnumerable<ILightController> GetAllControllers()
+    {
+        return _controllers.Values.ToList();
+    }
+
+    /// <summary>
+    /// 获取所有支持的控制器类型
+    /// </summary>
+    public IEnumerable<LightControllerType> GetAllManufacturers()
+    {
+        return Enum.GetValues(typeof(LightControllerType)).Cast<LightControllerType>();
     }
 
     #endregion

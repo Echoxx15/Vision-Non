@@ -17,8 +17,6 @@ public partial class Frm_CommTable : Form
         // 绑定输入输出表
         uInputOutputTable1.Bind(_device.Table, isInput: true);
         uOutputTable1.Bind(_device.Table); // ✅ 启用输出表
- 
-        btn_Cancel.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
     }
 
     private void btn_Confirm_Click(object sender, EventArgs e)
@@ -29,10 +27,18 @@ public partial class Frm_CommTable : Form
  
             // ✅ 第1步：将两个控件的更改写回设备的 CommTable
             Console.WriteLine($"[{_device.Name}] 正在保存输入表...");
-            uInputOutputTable1.SaveToTable();
+            if (!uInputOutputTable1.SaveToTable())
+            {
+                Console.WriteLine($"[{_device.Name}] ❌ 输入表校验失败，取消保存");
+                return; // 校验失败，不关闭窗体
+            }
  
             Console.WriteLine($"[{_device.Name}] 正在保存输出表...");
-            uOutputTable1.SaveToTable(); // ✅ 保存输出表
+            if (!uOutputTable1.SaveToTable())
+            {
+                Console.WriteLine($"[{_device.Name}] ❌ 输出表校验失败，取消保存");
+                return; // 校验失败，不关闭窗体
+            }
  
             // ✅ 验证：输出当前 Table 的状态
             var inputCount = _device.Table.Inputs?.Count ?? 0;
@@ -51,8 +57,7 @@ public partial class Frm_CommTable : Form
             Console.WriteLine($"[{_device.Name}] ✅ 通讯表保存完成");
             MessageBox.Show("通讯表已保存", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
  
-            DialogResult = DialogResult.OK;
-            Close();
+            // ✅ 不再关闭窗体，让用户手动关闭
         }
         catch (Exception ex)
         {

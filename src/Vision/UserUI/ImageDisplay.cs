@@ -2,9 +2,8 @@
 using System.ComponentModel;
 using System.Windows.Forms;
 using Cognex.VisionPro;
-using Vision.UserControlLibrary;
 
-namespace Vision.UI;
+namespace Vision.UserUI;
 
 [Description("视图窗体")]
 public partial class ImageDisplay : UserControl

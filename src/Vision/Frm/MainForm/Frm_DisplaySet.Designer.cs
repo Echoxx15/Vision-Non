@@ -1,6 +1,4 @@
-﻿using Vision.UI;
-
-namespace Vision.Frm.MainForm
+﻿namespace Vision.Frm.MainForm
 {
     partial class Frm_DisplaySet
     {

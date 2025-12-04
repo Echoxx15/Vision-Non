@@ -1,20 +1,20 @@
-using System;
+ï»¿using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
-using Vision.Manager.CameraManager;
+using HardwareCameraNet;
 
 namespace Vision.Solutions.Models;
 
 /// <summary>
-/// Ïà»úĞòÁĞºÅÏÂÀ­ÁĞ±í×ª»»Æ÷
-/// ÏÔÊ¾¸ñÊ½£º×¢ÊÍ£¨ĞòÁĞºÅ£©
-/// ´æ´¢Öµ£ºĞòÁĞºÅ
+/// ç›¸æœºåºåˆ—å·ä¸‹æ‹‰åˆ—è¡¨è½¬æ¢å™¨
+/// æ˜¾ç¤ºæ ¼å¼ï¼šæ³¨é‡Šï¼ˆåºåˆ—å·ï¼‰
+/// å­˜å‚¨å€¼ï¼šåºåˆ—å·
 /// 
-/// Ê¹ÓÃÊ¾Àı£º
-/// - ÏÂÀ­ÏÔÊ¾£º"ÉÏÁÏÏà»ú£¨AA11BB22CC33£©"
-/// - Êµ¼Ê±£´æ£º"AA11BB22CC33"
+/// ä½¿ç”¨ç¤ºä¾‹ï¼š
+/// - ä¸‹æ‹‰æ˜¾ç¤ºï¼š"ä¸Šæ–™ç›¸æœºï¼ˆAA11BB22CC33ï¼‰"
+/// - å®é™…ä¿å­˜ï¼š"AA11BB22CC33"
 /// </summary>
 internal sealed class SnStandardValuesConverter : TypeConverter
 {
@@ -29,8 +29,8 @@ internal sealed class SnStandardValuesConverter : TypeConverter
     }
 
     /// <summary>
-    /// ´ÓÏÔÊ¾Öµ×ª»»ÎªĞòÁĞºÅ
-    /// ÊäÈë£º"ÉÏÁÏÏà»ú£¨A1B2C3D4£©" ¡ú Êä³ö£º"A1B2C3D4"
+    /// ä»æ˜¾ç¤ºå€¼è½¬æ¢ä¸ºåºåˆ—å·
+    /// è¾“å…¥ï¼š"ä¸Šæ–™ç›¸æœºï¼ˆA1B2C3D4ï¼‰" â†’ è¾“å‡ºï¼š"A1B2C3D4"
     /// </summary>
     public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
     {
@@ -40,26 +40,26 @@ internal sealed class SnStandardValuesConverter : TypeConverter
         if (string.IsNullOrWhiteSpace(str))
             return string.Empty;
 
-        // ³¢ÊÔ´ÓÏÔÊ¾¸ñÊ½ÖĞÌáÈ¡ĞòÁĞºÅ
-        // ¸ñÊ½1£º"×¢ÊÍ£¨ĞòÁĞºÅ£©" ¡ú ÌáÈ¡ĞòÁĞºÅ
-        // ¸ñÊ½2£º"ĞòÁĞºÅ" ¡ú Ö±½Ó·µ»Ø
-        var startIdx = str.LastIndexOf('£¨');
-        var endIdx = str.LastIndexOf('£©');
+        // å°è¯•ä»æ˜¾ç¤ºæ ¼å¼ä¸­æå–åºåˆ—å·
+        // æ ¼å¼1ï¼š"æ³¨é‡Šï¼ˆåºåˆ—å·ï¼‰" â†’ æå–åºåˆ—å·
+        // æ ¼å¼2ï¼š"åºåˆ—å·" â†’ ç›´æ¥è¿”å›
+        var startIdx = str.LastIndexOf('ï¼ˆ');
+        var endIdx = str.LastIndexOf('ï¼‰');
 
         if (startIdx >= 0 && endIdx > startIdx)
         {
-// ÌáÈ¡À¨ºÅÄÚµÄĞòÁĞºÅ
+// æå–æ‹¬å·å†…çš„åºåˆ—å·
             var sn = str.Substring(startIdx + 1, endIdx - startIdx - 1).Trim();
             return string.IsNullOrWhiteSpace(sn) ? str.Trim() : sn;
         }
 
-        // Ã»ÓĞÕÒµ½À¨ºÅ¸ñÊ½£¬Ö±½Ó·µ»ØÔ­Öµ£¨¿ÉÄÜ¾ÍÊÇĞòÁĞºÅ£©
+        // æ²¡æœ‰æ‰¾åˆ°æ‹¬å·æ ¼å¼ï¼Œç›´æ¥è¿”å›åŸå€¼ï¼ˆå¯èƒ½å°±æ˜¯åºåˆ—å·ï¼‰
         return str.Trim();
     }
 
     /// <summary>
-    /// ´ÓĞòÁĞºÅ×ª»»ÎªÏÔÊ¾Öµ
-    /// ÊäÈë:"A1B2C3D4" ¡ú Êä³ö£º"ÉÏÁÏÏà»ú£¨A1B2C3D4£©"
+    /// ä»åºåˆ—å·è½¬æ¢ä¸ºæ˜¾ç¤ºå€¼
+    /// è¾“å…¥:"A1B2C3D4" â†’ è¾“å‡ºï¼š"ä¸Šæ–™ç›¸æœºï¼ˆA1B2C3D4ï¼‰"
     /// </summary>
     public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value,
         Type destinationType)
@@ -67,28 +67,28 @@ internal sealed class SnStandardValuesConverter : TypeConverter
         if (destinationType != typeof(string) || value is not string sn)
             return base.ConvertTo(context, culture, value, destinationType);
 
-        // Èç¹ûĞòÁĞºÅÎª¿Õ£¬·µ»Ø¿Õ×Ö·û´®
+        // å¦‚æœåºåˆ—å·ä¸ºç©ºï¼Œè¿”å›ç©ºå­—ç¬¦ä¸²
         if (string.IsNullOrWhiteSpace(sn))
             return string.Empty;
 
         try
         {
-            // ´ÓÏà»ú¹ÜÀíÆ÷ÖĞ²éÕÒ¶ÔÓ¦µÄÏà»úÅäÖÃ
-            var config = CameraManager.Instance.GetAllCameraConfigs()
+            // ä»ç›¸æœºç®¡ç†å™¨ä¸­æŸ¥æ‰¾å¯¹åº”çš„ç›¸æœºé…ç½®
+            var config = CameraFactory.Instance.GetAllConfigs()
                 .FirstOrDefault(c => string.Equals(c.SerialNumber, sn, StringComparison.OrdinalIgnoreCase));
 
             if (config != null && !string.IsNullOrWhiteSpace(config.Expain))
             {
-                // ÓĞ×¢ÊÍ£ºÏÔÊ¾Îª "×¢ÊÍ£¨ĞòÁĞºÅ£©"
-                return $"{config.Expain}£¨{sn}£©";
+                // æœ‰æ³¨é‡Šï¼šæ˜¾ç¤ºä¸º "æ³¨é‡Šï¼ˆåºåˆ—å·ï¼‰"
+                return $"{config.Expain}ï¼ˆ{sn}ï¼‰";
             }
         }
         catch
         {
-            // ºöÂÔÒì³££¨¿ÉÄÜÏà»ú¹ÜÀíÆ÷Î´³õÊ¼»¯£©
+            // å¿½ç•¥å¼‚å¸¸ï¼ˆå¯èƒ½ç›¸æœºç®¡ç†å™¨æœªåˆå§‹åŒ–ï¼‰
         }
 
-        // Ã»ÓĞÕÒµ½ÅäÖÃ»ò×¢ÊÍÎª¿Õ£¬Ö±½ÓÏÔÊ¾ĞòÁĞºÅ
+        // æ²¡æœ‰æ‰¾åˆ°é…ç½®æˆ–æ³¨é‡Šä¸ºç©ºï¼Œç›´æ¥æ˜¾ç¤ºåºåˆ—å·
         return sn;
     }
 
@@ -100,20 +100,20 @@ internal sealed class SnStandardValuesConverter : TypeConverter
     {
         try
         {
-            var configs = CameraManager.Instance.GetAllCameraConfigs();
+            var configs = CameraFactory.Instance.GetAllConfigs();
             if (configs.Count == 0)
             {
                 return new StandardValuesCollection(new[] { string.Empty });
             }
 
-            // ·µ»ØĞòÁĞºÅÁĞ±í£¨ÏÔÊ¾ÓÉConvertTo´¦Àí£©
+            // è¿”å›åºåˆ—å·åˆ—è¡¨ï¼ˆæ˜¾ç¤ºç”±ConvertToå¤„ç†ï¼‰
             var values = configs
                 .Where(c => !string.IsNullOrWhiteSpace(c.SerialNumber))
                 .Select(c => c.SerialNumber)
                 .OrderBy(sn => sn)
                 .ToList();
 
-            // Ìí¼Ó¿ÕÑ¡Ïî
+            // æ·»åŠ ç©ºé€‰é¡¹
             values.Insert(0, string.Empty);
 
             return new StandardValuesCollection(values);
@@ -126,18 +126,18 @@ internal sealed class SnStandardValuesConverter : TypeConverter
 }
 
 /// <summary>
-/// ÎÄ¼ş¼ĞÂ·¾¶Ñ¡ÔñÆ÷×ª»»Æ÷£¬Ö§³Öµã»÷Ê¡ÂÔºÅ°´Å¥Ñ¡ÔñÎÄ¼ş¼Ğ
+/// æ–‡ä»¶å¤¹è·¯å¾„é€‰æ‹©å™¨è½¬æ¢å™¨ï¼Œæ”¯æŒç‚¹å‡»çœç•¥å·æŒ‰é’®é€‰æ‹©æ–‡ä»¶å¤¹
 /// </summary>
 internal sealed class FolderPathConverter : StringConverter
 {
     public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => false;
 
-    // ÖØÒª£º·µ»Ø true ±íÊ¾¿ÉÒÔÍ¨¹ı UITypeEditor ±à¼­£¨½«ÔÚ ProcessStation ÖĞÍ¨¹ı Editor ÌØĞÔ¹ØÁª£©
-    // µ«ÓÉÓÚ .NET Framework 4.8.1 PropertyGrid µÄÏŞÖÆ£¬ÎÒÃÇÖ±½ÓÍ¨¹ı×Ô¶¨Òå±à¼­Æ÷ÊµÏÖ
+    // é‡è¦ï¼šè¿”å› true è¡¨ç¤ºå¯ä»¥é€šè¿‡ UITypeEditor ç¼–è¾‘ï¼ˆå°†åœ¨ ProcessStation ä¸­é€šè¿‡ Editor ç‰¹æ€§å…³è”ï¼‰
+    // ä½†ç”±äº .NET Framework 4.8.1 PropertyGrid çš„é™åˆ¶ï¼Œæˆ‘ä»¬ç›´æ¥é€šè¿‡è‡ªå®šä¹‰ç¼–è¾‘å™¨å®ç°
 }
 
 /// <summary>
-/// ÎÄ¼ş¼ĞÂ·¾¶±à¼­Æ÷£¨ÓÃÓÚ PropertyGrid£©
+/// æ–‡ä»¶å¤¹è·¯å¾„ç¼–è¾‘å™¨ï¼ˆç”¨äº PropertyGridï¼‰
 /// </summary>
 internal sealed class FolderPathEditor : System.Drawing.Design.UITypeEditor
 {
@@ -150,10 +150,10 @@ internal sealed class FolderPathEditor : System.Drawing.Design.UITypeEditor
     {
         using (var dialog = new FolderBrowserDialog())
         {
-            dialog.Description = "ÇëÑ¡ÔñÉî¶ÈÑ§Ï°Ä£ĞÍÎÄ¼ş¼Ğ";
+            dialog.Description = "è¯·é€‰æ‹©æ·±åº¦å­¦ä¹ æ¨¡å‹æ–‡ä»¶å¤¹";
             dialog.ShowNewFolderButton = false;
 
-            // ÉèÖÃ³õÊ¼Â·¾¶
+            // è®¾ç½®åˆå§‹è·¯å¾„
             if (value is string currentPath && !string.IsNullOrWhiteSpace(currentPath) &&
                 System.IO.Directory.Exists(currentPath))
             {
@@ -173,12 +173,19 @@ internal sealed class FolderPathEditor : System.Drawing.Design.UITypeEditor
 [TypeConverter(typeof(ExpandableObjectConverter))]
 public class StationCameraParams
 {
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("æ›å…‰")]
     public double Exposure { get; set; }
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("å¢ç›Š")]
     public double Gain { get; set; }
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("é‡‡é›†è¶…æ—¶æ—¶é—´")]
     public int TimeoutMs { get; set; } = 3000;
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("å›¾åƒå®½åº¦")]
     public int Width { get; set; }
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("å›¾åƒé«˜åº¦")]
     public int Height { get; set; }
-    public TriggerMode TriggerMode { get; set; } = TriggerMode.Èí´¥·¢;
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("è§¦å‘æ¨¡å¼")]
+    public TriggerMode TriggerMode { get; set; } = TriggerMode.è½¯è§¦å‘;
+    [Category("é‡‡é›†å‚æ•°"), DisplayName("è§¦å‘æ¬¡æ•°")]
     public int TriggerCount { get; set; } = 1;
-    public override string ToString() => $"Exp={Exposure}, Gain={Gain}, Trig={TriggerMode}, Cnt={TriggerCount},Wid={Width},Hght={Height}";
+    public override string ToString() => $"æ›å…‰={Exposure}, å¢ç›Š={Gain}, è§¦å‘æ¨¡å¼={TriggerMode}, è§¦å‘æ¬¡æ•°={TriggerCount}, å›¾åƒå®½åº¦={Width}, å›¾åƒé«˜åº¦={Height}";
 }

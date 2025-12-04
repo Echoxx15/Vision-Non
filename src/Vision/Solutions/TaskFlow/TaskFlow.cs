@@ -1,19 +1,19 @@
-﻿using Cognex.VisionPro;
-using Logger;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Cognex.VisionPro;
+using Logger;
 using Vision.LightSource;
-using Vision.Manager.CameraManager;
+using HardwareCameraNet;
 using Vision.SaveImage;
 using Vision.Settings;
 using Vision.Solutions.Models;
 
-namespace Vision.Solutions.WorkFlow;
+namespace Vision.Solutions.TaskFlow;
 
 public sealed class ImageFrame
 {
@@ -80,7 +80,7 @@ internal sealed class TaskFlow : IDisposable
 
     private void TriggerCamera(string clientId)
     {
-        var cameras = CameraManager.Instance.GetAllCameras();
+        var cameras = CameraFactory.Instance.GetAllCameras();
         var camera = cameras.FirstOrDefault(c => string.Equals(c.SN, _station.SN, StringComparison.OrdinalIgnoreCase));
         if (camera == null)
         {
@@ -229,7 +229,7 @@ internal sealed class TaskFlow : IDisposable
         if (_station.DetectionTool?.ToolBlock == null) return;
         var tool = _station.DetectionTool.ToolBlock;
         _station.DetectionTool.ApplyVarsToInputs();
-        bool result;
+        bool result = false;
         ICogRecord record = null;
         try
         {
@@ -245,6 +245,7 @@ internal sealed class TaskFlow : IDisposable
             if (_station.bCalibCheckboardTool && _station.CheckerboardTool?.ToolBlock != null)
             {
                 var t = _station.CheckerboardTool.ToolBlock;
+                _station.CheckerboardTool.ApplyVarsToInputs();
                 t.Inputs["Image"].Value = cogImg;
                 t.Run();
                 cogImg = (ICogImage)t.Outputs["Image"].Value;
@@ -253,6 +254,7 @@ internal sealed class TaskFlow : IDisposable
             if (_station.bCalibNPointTool && _station.NPointTool?.ToolBlock != null)
             {
                 var t = _station.NPointTool.ToolBlock;
+                _station.NPointTool.ApplyVarsToInputs();
                 t.Inputs["Image"].Value = cogImg;
                 t.Run();
                 cogImg = (ICogImage)t.Outputs["Image"].Value;
@@ -266,10 +268,19 @@ internal sealed class TaskFlow : IDisposable
             {
             }
 
-            tool.Inputs["Image"].Value = cogImg;
-            tool.Run();
-            result = (bool)tool.Outputs["Result"].Value;
-            LogHelper.Info($"[{StationName}]检测完成，结果【{(result ? "OK" : "NG")}】");
+            try
+            {
+                tool.Inputs["Image"].Value = cogImg;
+                tool.Inputs["ImageIndex"].Value = frame.ImageIndex;
+                tool.Run();
+                result = (bool)tool.Outputs["Result"].Value;
+                LogHelper.Info($"[{StationName}]检测完成，结果[{(result ? "OK" : "NG")}]");
+            }
+            catch (Exception e)
+            {
+                LogHelper.Warn($"[{StationName}]工具执行异常:{e}");
+            }
+
             if (tool.RunStatus.Result != CogToolResultConstants.Accept)
             {
                 LogHelper.Warn($"[{StationName}]工具运行错误:{tool.RunStatus.Message}");
@@ -288,22 +299,22 @@ internal sealed class TaskFlow : IDisposable
                 }
             }
 
-            // ✅ 步骤3：工具执行完成后写入输出到通讯设备
-            WriteToolOutputsToComm(tool);
+            // ✅ 步骤3：根据每个映射的 SendEveryTime 配置决定是否写入输出到通讯设备
+            HandleResultSend(frame.ImageIndex);
 
             // 保存工具输出到 LastOutputs
             try
             {
-                var sol = Vision.Solutions.Models.SolutionManager.Instance.Current;
+                var sol = SolutionManager.Instance.Current;
                 if (sol != null)
                 {
                     sol.LastOutputs ??=
                         new System.Collections.Generic.Dictionary<string,
-                            System.Collections.Generic.Dictionary<string, object>>(System.StringComparer
+                            System.Collections.Generic.Dictionary<string, object>>(StringComparer
                             .OrdinalIgnoreCase);
                     if (!sol.LastOutputs.TryGetValue(StationName, out var dict) || dict == null)
                     {
-                        dict = new System.Collections.Generic.Dictionary<string, object>(System.StringComparer
+                        dict = new System.Collections.Generic.Dictionary<string, object>(StringComparer
                             .OrdinalIgnoreCase);
                         sol.LastOutputs[StationName] = dict;
                     }
@@ -335,10 +346,44 @@ internal sealed class TaskFlow : IDisposable
     }
 
     /// <summary>
-    /// 将工具输出端子的值写入通讯设备的输出表
-    /// 支持类型自动转换（如 int -> short）
+    /// 根据 ToolType 获取对应的工具
     /// </summary>
-    private void WriteToolOutputsToComm(Cognex.VisionPro.ToolBlock.CogToolBlock tool)
+    private Cognex.VisionPro.ToolBlock.CogToolBlock GetToolByType(string toolType)
+    {
+        switch (toolType)
+        {
+            case "Detection":
+                return _station.DetectionTool?.ToolBlock;
+            case "Checkerboard":
+                return _station.CheckerboardTool?.ToolBlock;
+            case "NPoint":
+                return _station.NPointTool?.ToolBlock;
+            default:
+                return _station.DetectionTool?.ToolBlock; // 默认使用检测工具（兼容旧配置）
+        }
+    }
+
+    /// <summary>
+    /// 根据每个映射的配置决定是否发送
+    /// </summary>
+    /// <param name="imageIndex">当前拍照序号</param>
+    private void HandleResultSend(int imageIndex)
+    {
+        // 获取触发次数配置
+        int triggerCount = _station.CameraParams?.TriggerCount ?? 1;
+        bool isLastShot = (imageIndex >= triggerCount);
+        
+        // 调用带条件的写入方法
+        WriteToolOutputsToComm(imageIndex, isLastShot);
+    }
+
+    /// <summary>
+    /// 将工具输出端子的值写入通讯设备的输出表
+    /// 根据每个映射的 SendEveryTime 属性决定是否发送
+    /// </summary>
+    /// <param name="imageIndex">当前拍照序号</param>
+    /// <param name="isLastShot">是否为最后一次拍照</param>
+    private void WriteToolOutputsToComm(int imageIndex, bool isLastShot)
     {
         // 检查前置条件
         if (_station.OutputMappings == null || _station.OutputMappings.Count == 0)
@@ -364,24 +409,41 @@ internal sealed class TaskFlow : IDisposable
         {
             try
             {
+                // ✅ 根据 SendEveryTime 属性决定是否发送
+                // SendEveryTime = true: 每次拍照都发送
+                // SendEveryTime = false: 仅在最后一次拍照（ImageIndex == TriggerCount）时发送
+                if (!mapping.SendEveryTime && !isLastShot)
+                {
+                    // 不是最后一次拍照，且该映射配置为仅最后发送，跳过
+                    continue;
+                }
+
+                // 0. 根据 ToolType 获取对应的工具
+                var tool = GetToolByType(mapping.ToolType);
+                if (tool == null)
+                {
+                    LogHelper.Warn($"[{StationName}] 工具类型[{mapping.ToolType}]对应的工具未加载，跳过");
+                    continue;
+                }
+
                 // 1. 从工具输出端子获取值
                 if (!tool.Outputs.Contains(mapping.ToolOutputName))
                 {
-                    LogHelper.Warn($"[{StationName}] 工具输出端子[{mapping.ToolOutputName}]不存在，跳过");
+                    LogHelper.Warn($"[{StationName}] 工具[{mapping.ToolType}]输出端子[{mapping.ToolOutputName}]不存在，跳过");
                     continue;
                 }
 
                 var toolOutput = tool.Outputs[mapping.ToolOutputName];
                 if (toolOutput == null)
                 {
-                    LogHelper.Warn($"[{StationName}] 工具输出端子[{mapping.ToolOutputName}]为null，跳过");
+                    LogHelper.Warn($"[{StationName}] 工具[{mapping.ToolType}]输出端子[{mapping.ToolOutputName}]为null，跳过");
                     continue;
                 }
 
                 var value = toolOutput.Value;
                 if (value == null)
                 {
-                    LogHelper.Warn($"[{StationName}] 工具输出端子[{mapping.ToolOutputName}]值为null，跳过");
+                    LogHelper.Warn($"[{StationName}] 工具[{mapping.ToolType}]输出端子[{mapping.ToolOutputName}]值为null，跳过");
                     continue;
                 }
 
@@ -407,20 +469,22 @@ internal sealed class TaskFlow : IDisposable
                 // 4. 写入通讯设备
                 device.Write(commOutput.Address, convertedValue);
 
+                string sendMode = mapping.SendEveryTime ? "每次" : "最后";
                 LogHelper.Info(
-                 $"[{StationName}] 输出映射成功: {mapping.ToolOutputName}({value.GetType().Name}={value}) => {mapping.CommOutputName}({commOutput.ValueType}@{commOutput.Address})");
+                 $"[{StationName}] 输出映射成功({sendMode}): [{mapping.ToolType}]{mapping.ToolOutputName}({value.GetType().Name}={value}) => {mapping.CommOutputName}({commOutput.ValueType}@{commOutput.Address})");
             }
             catch (Exception ex)
             {
                 LogHelper.Error(ex,
-                 $"[{StationName}] 输出映射失败: {mapping.ToolOutputName} => {mapping.CommOutputName}");
+                 $"[{StationName}] 输出映射失败: [{mapping.ToolType}]{mapping.ToolOutputName} => {mapping.CommOutputName}");
             }
         }
     }
 
     /// <summary>
     /// 将工具输出值转换为通讯输出所需的类型
-    /// 支持常见的数值类型转换（如 int -> short, double -> float）
+    /// 优先直接使用端子实际值，仅在类型不兼容时才进行转换
+    /// 通讯适配器会根据实际值类型自行处理写入
     /// </summary>
     private object ConvertValueForCommOutput(object value, HardwareCommNet.CommTable.CommValueType targetType,
      string toolOutputName, string commOutputName)
@@ -429,75 +493,35 @@ internal sealed class TaskFlow : IDisposable
         {
             var sourceType = value.GetType();
 
-            // 相同类型直接返回
+            // 相同类型或兼容类型直接返回，让通讯适配器处理
             if (IsCompatibleType(sourceType, targetType))
             {
                 return value;
             }
 
-            // 数值类型转换
-            switch (targetType)
+            // 常见兼容类型直接返回（通讯适配器支持这些类型）
+            // 例如: double可以直接发给Float目标（适配器会转换）
+            //       int可以直接发给Short目标（适配器会转换）
+            if (IsCommonNumericType(sourceType) && IsNumericTargetType(targetType))
             {
-                case HardwareCommNet.CommTable.CommValueType.Bool:
-                    return Convert.ToBoolean(value);
-
-                case HardwareCommNet.CommTable.CommValueType.Short:
-                    // int -> short 需要检查范围
-                    if (sourceType == typeof(int))
-                    {
-                        var intValue = (int)value;
-                        if (intValue < short.MinValue || intValue > short.MaxValue)
-                        {
-                            LogHelper.Warn(
-                             $"[{StationName}] 输出映射: {toolOutputName}({intValue})超出short范围，将截断");
-                        }
-
-                        return (short)intValue;
-                    }
-
-                    return Convert.ToInt16(value);
-
-                case HardwareCommNet.CommTable.CommValueType.Int:
-                    return Convert.ToInt32(value);
-
-                case HardwareCommNet.CommTable.CommValueType.Float:
-                    // double -> float
-                    if (sourceType == typeof(double))
-                    {
-                        var doubleValue = (double)value;
-                        if (Math.Abs(doubleValue) > float.MaxValue)
-                        {
-                            LogHelper.Warn(
-                             $"[{StationName}] 输出映射: {toolOutputName}({doubleValue})超出float范围，将截断");
-                        }
-
-                        return (float)doubleValue;
-                    }
-
-                    return Convert.ToSingle(value);
-
-                case HardwareCommNet.CommTable.CommValueType.Double:
-                    return Convert.ToDouble(value);
-
-                case HardwareCommNet.CommTable.CommValueType.String:
-                    return value.ToString();
-
-                // 数组类型转换（简单处理，实际可能需要更复杂的逻辑）
-                case HardwareCommNet.CommTable.CommValueType.BoolArray:
-                case HardwareCommNet.CommTable.CommValueType.ShortArray:
-                case HardwareCommNet.CommTable.CommValueType.IntArray:
-                case HardwareCommNet.CommTable.CommValueType.FloatArray:
-                case HardwareCommNet.CommTable.CommValueType.DoubleArray:
-                case HardwareCommNet.CommTable.CommValueType.StringArray:
-                    LogHelper.Warn(
-                     $"[{StationName}] 输出映射: 数组类型转换暂不支持 {toolOutputName} => {commOutputName}");
-                    return null;
-
-                default:
-                    LogHelper.Warn(
-                     $"[{StationName}] 输出映射: 未知目标类型 {targetType} for {toolOutputName} => {commOutputName}");
-                    return null;
+                // 数值类型直接返回，让通讯适配器处理实际写入
+                return value;
             }
+
+            // 数组类型：如果源是数组且目标也是数组类型，直接返回
+            if (sourceType.IsArray && IsArrayTargetType(targetType))
+            {
+                return value;
+            }
+
+            // 字符串类型直接返回
+            if (targetType == HardwareCommNet.CommTable.CommValueType.String)
+            {
+                return value.ToString();
+            }
+
+            // 其他情况直接返回原值，交给通讯适配器处理
+            return value;
         }
         catch (Exception ex)
         {
@@ -505,6 +529,44 @@ internal sealed class TaskFlow : IDisposable
              $"[{StationName}] 输出映射类型转换失败: {toolOutputName}({value.GetType().Name}) => {commOutputName}({targetType})");
             return null;
         }
+    }
+
+    /// <summary>
+    /// 判断是否为常见数值类型
+    /// </summary>
+    private bool IsCommonNumericType(Type type)
+    {
+        return type == typeof(bool) ||
+               type == typeof(short) || type == typeof(ushort) ||
+               type == typeof(int) || type == typeof(uint) ||
+               type == typeof(long) || type == typeof(ulong) ||
+               type == typeof(float) || type == typeof(double) ||
+               type == typeof(decimal) || type == typeof(byte) || type == typeof(sbyte);
+    }
+
+    /// <summary>
+    /// 判断目标类型是否为数值类型
+    /// </summary>
+    private bool IsNumericTargetType(HardwareCommNet.CommTable.CommValueType targetType)
+    {
+        return targetType == HardwareCommNet.CommTable.CommValueType.Bool ||
+               targetType == HardwareCommNet.CommTable.CommValueType.Short ||
+               targetType == HardwareCommNet.CommTable.CommValueType.Int ||
+               targetType == HardwareCommNet.CommTable.CommValueType.Float ||
+               targetType == HardwareCommNet.CommTable.CommValueType.Double;
+    }
+
+    /// <summary>
+    /// 判断目标类型是否为数组类型
+    /// </summary>
+    private bool IsArrayTargetType(HardwareCommNet.CommTable.CommValueType targetType)
+    {
+        return targetType == HardwareCommNet.CommTable.CommValueType.BoolArray ||
+               targetType == HardwareCommNet.CommTable.CommValueType.ShortArray ||
+               targetType == HardwareCommNet.CommTable.CommValueType.IntArray ||
+               targetType == HardwareCommNet.CommTable.CommValueType.FloatArray ||
+               targetType == HardwareCommNet.CommTable.CommValueType.DoubleArray ||
+               targetType == HardwareCommNet.CommTable.CommValueType.StringArray;
     }
 
     /// <summary>

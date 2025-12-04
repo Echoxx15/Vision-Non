@@ -48,11 +48,10 @@
             this.btn_CreateVar = new System.Windows.Forms.ToolStripButton();
             this.btn_Station = new System.Windows.Forms.ToolStripButton();
             this.btn_HardwareCamera = new System.Windows.Forms.ToolStripButton();
-            this.tsm_Comm = new System.Windows.Forms.ToolStripSplitButton();
-            this.tsm_HardwareComm = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsm_ModbusConfig = new System.Windows.Forms.ToolStripMenuItem();
-            this.btn_UI = new System.Windows.Forms.ToolStripButton();
+            this.tsm_Comm = new System.Windows.Forms.ToolStripButton();
             this.tsm_LightControl = new System.Windows.Forms.ToolStripButton();
+            this.tsm_DLModel = new System.Windows.Forms.ToolStripButton();
+            this.btn_UI = new System.Windows.Forms.ToolStripButton();
             this.statusMain = new System.Windows.Forms.StatusStrip();
             this.tsl_SystemState = new System.Windows.Forms.ToolStripStatusLabel();
             this.barStaticItem1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -102,7 +101,7 @@
             this.btn_Permission});
             this.btn_User.Image = global::Vision.Properties.Resources.用户;
             this.btn_User.Name = "btn_User";
-            this.btn_User.Size = new System.Drawing.Size(111, 32);
+            this.btn_User.Size = new System.Drawing.Size(111, 28);
             this.btn_User.Text = "用户(U)";
             // 
             // btn_Login
@@ -140,7 +139,7 @@
             this.tsm_SystemState});
             this.btn_System.Image = global::Vision.Properties.Resources.系统配置;
             this.btn_System.Name = "btn_System";
-            this.btn_System.Size = new System.Drawing.Size(108, 32);
+            this.btn_System.Size = new System.Drawing.Size(108, 28);
             this.btn_System.Text = "系统(S)";
             // 
             // barButtonItem1
@@ -171,7 +170,7 @@
             // 
             this.barSubItem3.Image = global::Vision.Properties.Resources.帮助;
             this.barSubItem3.Name = "barSubItem3";
-            this.barSubItem3.Size = new System.Drawing.Size(139, 32);
+            this.barSubItem3.Size = new System.Drawing.Size(139, 28);
             this.barSubItem3.Text = "帮助(Help)";
             // 
             // barSubItem4
@@ -181,7 +180,7 @@
             this.btn_English});
             this.barSubItem4.Image = global::Vision.Properties.Resources.语言;
             this.barSubItem4.Name = "barSubItem4";
-            this.barSubItem4.Size = new System.Drawing.Size(107, 32);
+            this.barSubItem4.Size = new System.Drawing.Size(107, 28);
             this.barSubItem4.Text = "语言(L)";
             // 
             // btn_Chinese
@@ -209,8 +208,9 @@
             this.btn_Station,
             this.btn_HardwareCamera,
             this.tsm_Comm,
-            this.btn_UI,
-            this.tsm_LightControl});
+            this.tsm_LightControl,
+            this.tsm_DLModel,
+            this.btn_UI});
             this.toolMain.Location = new System.Drawing.Point(0, 36);
             this.toolMain.Name = "toolMain";
             this.toolMain.Size = new System.Drawing.Size(1212, 57);
@@ -264,40 +264,13 @@
             // 
             // tsm_Comm
             // 
-            this.tsm_Comm.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsm_HardwareComm,
-            this.tsm_ModbusConfig});
             this.tsm_Comm.Image = global::Vision.Properties.Resources.通讯配置;
             this.tsm_Comm.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsm_Comm.Name = "tsm_Comm";
-            this.tsm_Comm.Size = new System.Drawing.Size(103, 52);
+            this.tsm_Comm.Size = new System.Drawing.Size(86, 52);
             this.tsm_Comm.Text = "通讯硬件";
             this.tsm_Comm.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            // 
-            // tsm_HardwareComm
-            // 
-            this.tsm_HardwareComm.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.tsm_HardwareComm.Name = "tsm_HardwareComm";
-            this.tsm_HardwareComm.Size = new System.Drawing.Size(218, 34);
-            this.tsm_HardwareComm.Text = "通讯配置";
-            this.tsm_HardwareComm.Click += new System.EventHandler(this.tsm_HardwareComm_Click);
-            // 
-            // tsm_ModbusConfig
-            // 
-            this.tsm_ModbusConfig.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.tsm_ModbusConfig.Name = "tsm_ModbusConfig";
-            this.tsm_ModbusConfig.Size = new System.Drawing.Size(218, 34);
-            this.tsm_ModbusConfig.Text = "Modbus通讯";
-            this.tsm_ModbusConfig.Click += new System.EventHandler(this.tsm_ModbusConfig_Click);
-            // 
-            // btn_UI
-            // 
-            this.btn_UI.Image = global::Vision.Properties.Resources.显示布局;
-            this.btn_UI.Name = "btn_UI";
-            this.btn_UI.Size = new System.Drawing.Size(86, 52);
-            this.btn_UI.Text = "显示设置";
-            this.btn_UI.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btn_UI.Click += new System.EventHandler(this.btn_UI_ItemClick);
+            this.tsm_Comm.Click += new System.EventHandler(this.tsm_Comm_Click);
             // 
             // tsm_LightControl
             // 
@@ -308,6 +281,25 @@
             this.tsm_LightControl.Text = "光源配置";
             this.tsm_LightControl.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tsm_LightControl.Click += new System.EventHandler(this.tsm_LightControl_Click);
+            // 
+            // tsm_DLModel
+            // 
+            this.tsm_DLModel.Image = ((System.Drawing.Image)(resources.GetObject("tsm_DLModel.Image")));
+            this.tsm_DLModel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsm_DLModel.Name = "tsm_DLModel";
+            this.tsm_DLModel.Size = new System.Drawing.Size(86, 52);
+            this.tsm_DLModel.Text = "深度学习";
+            this.tsm_DLModel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsm_DLModel.Click += new System.EventHandler(this.tsm_DLModel_Click);
+            // 
+            // btn_UI
+            // 
+            this.btn_UI.Image = global::Vision.Properties.Resources.显示布局;
+            this.btn_UI.Name = "btn_UI";
+            this.btn_UI.Size = new System.Drawing.Size(86, 52);
+            this.btn_UI.Text = "显示设置";
+            this.btn_UI.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btn_UI.Click += new System.EventHandler(this.btn_UI_ItemClick);
             // 
             // statusMain
             // 
@@ -393,18 +385,18 @@
             this.tlp_Display.Name = "tlp_Display";
             this.tlp_Display.RowCount = 1;
             this.tlp_Display.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 85.06224F));
-            this.tlp_Display.Size = new System.Drawing.Size(1212, 336);
+            this.tlp_Display.Size = new System.Drawing.Size(1212, 335);
             this.tlp_Display.TabIndex = 6;
             // 
             // grb_State
             // 
             this.grb_State.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.grb_State.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.grb_State.Location = new System.Drawing.Point(920, 2);
+            this.grb_State.Location = new System.Drawing.Point(1033, 2);
             this.grb_State.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.grb_State.Name = "grb_State";
             this.grb_State.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.grb_State.Size = new System.Drawing.Size(289, 173);
+            this.grb_State.Size = new System.Drawing.Size(176, 174);
             this.grb_State.TabIndex = 2;
             this.grb_State.TabStop = false;
             this.grb_State.Text = "硬件状态";
@@ -417,7 +409,7 @@
             this.grb_Log.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.grb_Log.Name = "grb_Log";
             this.grb_Log.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.grb_Log.Size = new System.Drawing.Size(911, 173);
+            this.grb_Log.Size = new System.Drawing.Size(1024, 174);
             this.grb_Log.TabIndex = 1;
             this.grb_Log.TabStop = false;
             this.grb_Log.Text = "日志";
@@ -438,15 +430,15 @@
             // 
             this.split_Main.Panel2.Controls.Add(this.tableLayoutPanel2);
             this.split_Main.Size = new System.Drawing.Size(1212, 516);
-            this.split_Main.SplitterDistance = 336;
+            this.split_Main.SplitterDistance = 335;
             this.split_Main.SplitterWidth = 3;
             this.split_Main.TabIndex = 11;
             // 
             // tableLayoutPanel2
             // 
             this.tableLayoutPanel2.ColumnCount = 2;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 75.74258F));
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.25743F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 85F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel2.Controls.Add(this.grb_State, 1, 0);
             this.tableLayoutPanel2.Controls.Add(this.grb_Log, 0, 0);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -455,7 +447,7 @@
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 1;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(1212, 177);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(1212, 178);
             this.tableLayoutPanel2.TabIndex = 0;
             // 
             // Frm_Main
@@ -531,8 +523,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsm_SystemState;
         private System.Windows.Forms.ToolStripStatusLabel tsl_SystemState;
         private System.Windows.Forms.ToolStripButton tsm_LightControl;
-    private System.Windows.Forms.ToolStripSplitButton tsm_Comm;
-    private System.Windows.Forms.ToolStripMenuItem tsm_HardwareComm;
-    private System.Windows.Forms.ToolStripMenuItem tsm_ModbusConfig;
-  }
+        private System.Windows.Forms.ToolStripButton tsm_DLModel;
+        private System.Windows.Forms.ToolStripButton tsm_Comm;
+    }
 }

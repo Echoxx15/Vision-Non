@@ -188,6 +188,14 @@ public sealed class CameraManager
         DeviceStateChanged?.Invoke(sn, expain, isConnected);
     }
 
+    /// <summary>
+    /// 外部通知设备状态变化（用于手动连接/断开时更新主界面状态）
+    /// </summary>
+    public void NotifyDeviceStateChanged(string sn, string expain, bool isConnected)
+    {
+        UpdateDeviceState(sn, expain, isConnected);
+    }
+
     public IReadOnlyDictionary<string, (string expain, bool isConnected)> GetAllDeviceStates()
     {
         return _deviceStates;
@@ -346,6 +354,39 @@ public sealed class CameraManager
     }
 
     /// <summary>
+    /// 根据厂商和序列号获取或创建相机实例（不会重新枚举设备）
+    /// </summary>
+    public ICamera? GetOrCreateCamera(string manufacturerName, string serialNumber)
+    {
+        if (string.IsNullOrEmpty(manufacturerName) || string.IsNullOrEmpty(serialNumber))
+        {
+            Console.WriteLine("厂商名称和序列号不能为空");
+            return null;
+        }
+
+        // 先检查缓存：存在则直接返回（避免重复创建）
+        if (_temCameraInstances.TryGetValue(serialNumber, out var cachedCamera))
+        {
+            Console.WriteLine($"复用缓存的相机实例：{serialNumber}");
+            return cachedCamera;
+        }
+
+        // 检查厂商是否支持
+        if (!_manufacturerPluginMap.TryGetValue(manufacturerName, out var item))
+        {
+            Console.WriteLine($"未支持的厂商：{manufacturerName}");
+            return null;
+        }
+
+        // 直接创建实例（不检查是否已枚举，因为SN已经是从下拉列表中选择的，必然是有效的）
+        var newCamera = (ICamera)Activator.CreateInstance(item.PluginType, serialNumber)!;
+        // 添加到线程安全缓存
+        _temCameraInstances.TryAdd(serialNumber, newCamera);
+        Console.WriteLine($"创建新相机实例并缓存：{serialNumber}");
+        return newCamera;
+    }
+
+    /// <summary>
     /// 获取所有相机实例
     /// </summary>
     public List<ICamera?> GetAllCameras()
@@ -372,30 +413,35 @@ public sealed class CameraManager
 
     public void UnInitialize()
     {
+        // 收集所有唯一的相机实例（避免重复释放）
+        var allCameras = new HashSet<ICamera>();
+        
         foreach (var item in _cameraInstances.Values)
         {
-            try
-            {
-                if (item == null) continue;
-                item.DisConnetEvent -= DisConnectedEventHandler;
-                item.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
+            if (item != null)
+                allCameras.Add(item);
         }
         foreach (var item in _temCameraInstances.Values)
         {
+            if (item != null)
+                allCameras.Add(item);
+        }
+        
+        // 统一释放所有相机
+        foreach (var cam in allCameras)
+        {
             try
             {
-                item.DisConnetEvent -= DisConnectedEventHandler;
-                item.Close();
+                cam.DisConnetEvent -= DisConnectedEventHandler;
+                cam.Close();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
+        
+        _cameraInstances.Clear();
+        _temCameraInstances.Clear();
     }
 }

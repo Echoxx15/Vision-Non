@@ -1,4 +1,4 @@
-﻿namespace Vision.Frm.Process
+﻿namespace Vision.Frm.Station
 {
     partial class Frm_StationConfig
     {
@@ -132,6 +132,7 @@
             this.safePropertyGrid1.BlockDoubleClickToggle = true;
             this.safePropertyGrid1.BlockMouseWheelOnDropDown = true;
             this.safePropertyGrid1.CategorySplitterColor = System.Drawing.SystemColors.ActiveCaption;
+            this.safePropertyGrid1.ContextMenuStrip = this.contextMenuStrip2;
             this.safePropertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.safePropertyGrid1.HelpBackColor = System.Drawing.SystemColors.ActiveCaption;
             this.safePropertyGrid1.LineColor = System.Drawing.SystemColors.ActiveCaption;

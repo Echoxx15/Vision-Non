@@ -81,10 +81,11 @@ public static class TypeValueUtil
 {
     /// <summary>
     /// 类型转换为名称字符串（用于序列化）
-    /// 支持：bool, short, int, float, double, string 及其数组
+    /// 支持：bool, short, int, float, double, string 及其数组，以及其他类型
     /// </summary>
     public static string TypeToName(Type t)
     {
+        if (t == null) return string.Empty;
         if (t == typeof(bool)) return "bool";
         if (t == typeof(short)) return "short";
         if (t == typeof(int)) return "int";
@@ -97,15 +98,19 @@ public static class TypeValueUtil
         if (t == typeof(float[])) return "float[]";
         if (t == typeof(double[])) return "double[]";
         if (t == typeof(string[])) return "string[]";
-        return t?.Name ?? string.Empty;
+        
+        // 对于其他类型，返回完整类型名（含命名空间）以便反序列化时能找到
+        return t.FullName ?? t.Name;
     }
 
     /// <summary>
     /// 名称字符串转换为类型（用于反序列化）
-    /// 支持：bool, short, int, float, double, string 及其数组
+    /// 支持：bool, short, int, float, double, string 及其数组，以及动态加载的类型
     /// </summary>
     public static Type ResolveType(string name)
     {
+        if (string.IsNullOrEmpty(name)) return null;
+        
         switch (name)
         {
             case "bool": return typeof(bool);
@@ -120,8 +125,38 @@ public static class TypeValueUtil
             case "float[]": return typeof(float[]);
             case "double[]": return typeof(double[]);
             case "string[]": return typeof(string[]);
-            default: return null;
         }
+        
+        // 尝试从已加载的程序集中解析类型（支持深度学习模型等动态类型）
+        try
+        {
+            // 尝试直接获取类型
+            var type = Type.GetType(name);
+            if (type != null) return type;
+            
+            // 遍历所有已加载的程序集查找类型
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    type = assembly.GetType(name);
+                    if (type != null) return type;
+                    
+                    // 尝试只用类名匹配（不含命名空间）
+                    if (!name.Contains("."))
+                    {
+                        foreach (var t in assembly.GetExportedTypes())
+                        {
+                            if (t.Name == name) return t;
+                        }
+                    }
+                }
+                catch { }
+            }
+        }
+        catch { }
+        
+        return null;
     }
 
     /// <summary>

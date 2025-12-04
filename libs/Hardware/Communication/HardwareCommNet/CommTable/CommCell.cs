@@ -38,6 +38,44 @@ public sealed class CommCell
     /// </summary>
     public DateTime CachedTime { get; set; }
     
+    #region TCP 专用字段
+    
+    /// <summary>
+    /// TCP字段索引（按分隔符拆分后的索引，从0开始）
+    /// -1 表示不使用字段索引，使用整个消息
+    /// </summary>
+    public int FieldIndex { get; set; } = -1;
+    
+    /// <summary>
+    /// TCP消息分隔符（用于拆分字段）
+    /// </summary>
+    public string Delimiter { get; set; } = ",";
+    
+    /// <summary>
+    /// TCP消息结束符
+    /// </summary>
+    public string Terminator { get; set; } = "\r\n";
+    
+    /// <summary>
+    /// 触发模式
+    /// 0 = 值匹配触发（默认）：当值等于TriggerValues中的任意值时触发
+    /// 1 = 值变化触发：当值发生变化时触发
+    /// 2 = 任意非空触发：当收到任意非空消息时触发
+    /// </summary>
+    public int TriggerMode { get; set; } = 0;
+    
+    /// <summary>
+    /// 是否使用正则表达式匹配
+    /// </summary>
+    public bool UseRegex { get; set; } = false;
+    
+    /// <summary>
+    /// 正则表达式模式（当 UseRegex=true 时使用）
+    /// </summary>
+    public string RegexPattern { get; set; } = string.Empty;
+    
+    #endregion
+    
     /// <summary>实际的.NET类型（根据TypeValueUtil转换，或根据ValueType自动生成）</summary>
     public Type RealType
     {

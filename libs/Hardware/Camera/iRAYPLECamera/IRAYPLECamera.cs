@@ -15,7 +15,7 @@ namespace iRAYPLECamera;
 
 // 标记支持的品牌名称
 [CameraManufacturer("华睿面阵相机")]
-public class IRAYPLECamera : ICamera
+public class IRAYPLECamera : ICamera, IDisposable
 {
 
     #region 相机属性
@@ -35,6 +35,10 @@ public class IRAYPLECamera : ICamera
     /// ch: 异步处理线程退出标志 false 不退出 | en: Flag to notify the  processing thread to exit
     /// </summary>
     private volatile bool _processThreadExit;
+    /// <summary>
+    /// 标记是否已释放，防止多次释放
+    /// </summary>
+    private bool _disposed;
     #endregion
 
     #region 属性
@@ -48,8 +52,11 @@ public class IRAYPLECamera : ICamera
     public event EventHandler<bool> DisConnetEvent;
     
     public string SN { get; }
-    public CameraType Type => CameraType.AreaScan;
+    public CameraType Type => CameraType.面阵相机;
+
     public bool IsConnected => device.IMV_IsOpen();
+
+    
     public IParameters Parameters { get; }
     #endregion
 
@@ -242,20 +249,10 @@ public class IRAYPLECamera : ICamera
         return IMVDefine.IMV_OK;
     }
 
-    public void DisConnet()
-    {
-        //关闭相机
-        //Close camera 
-        StopGrabbing();
-        var res = device.IMV_Close();
-        if (res != IMVDefine.IMV_OK)
-        {
-            Console.WriteLine("Close camera failed! ErrorCode:[{0}]", res);
-        }
-    }
-
     public void Close()
     {
+        if (_disposed) return;
+        _disposed = true;
         //关闭相机
         //Close camera 
         //ch: 通知异步处理线程退出 | en: Notify the thread to exit
@@ -274,6 +271,15 @@ public class IRAYPLECamera : ICamera
         {
             Console.WriteLine("Destroy camera failed! ErrorCode[{0}]", res);
         }
+    }
+
+    /// <summary>
+    /// 实现IDisposable接口，释放资源时自动调用Close
+    /// </summary>
+    public void Dispose()
+    {
+        Close();
+        GC.SuppressFinalize(this);
     }
     #endregion
 

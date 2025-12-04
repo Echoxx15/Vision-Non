@@ -11,17 +11,17 @@ using Logger;
 namespace TcpControlNet;
 
 /// <summary>
-/// TCP ·şÎñÆ÷Í¨Ñ¶ÊÊÅäÆ÷£¨IComm ÊµÏÖ£©
+/// TCP æœåŠ¡å™¨é€šè®¯é€‚é…å™¨ï¼ˆIComm å®ç°ï¼‰
 /// </summary>
 [CommManufacturer("TcpServer")]
 public class TcpServerAdapter : CommAdapterBase
 {
-    #region ÊôĞÔ
+    #region å­—æ®µ
 
     private NetTcpServer _server;
     private readonly List<string> _connectedClients = new List<string>();
 
-    // ÅäÖÃ²ÎÊı
+    // é…ç½®å‚æ•°
     public string IpAddress { get; set; } = "0.0.0.0";
     public int Port { get; set; } = 5000;
     public string EncodingName { get; set; } = "UTF-8";
@@ -29,22 +29,27 @@ public class TcpServerAdapter : CommAdapterBase
     public int MaxConnections { get; set; } = 100;
 
     /// <summary>
-    /// ÊÇ·ñÒÑÁ¬½Ó£¨ÖØĞ´»ùÀàÊôĞÔ£©
+    /// æ˜¯å¦å·²è¿æ¥ï¼ˆé‡å†™åŸºç±»å±æ€§ï¼‰
     /// </summary>
     public override bool IsConnected { get; protected set; }
 
+    /// <summary>
+    /// åŸå§‹æ¶ˆæ¯æ¥æ”¶äº‹ä»¶ï¼ˆç”¨äºUIç›´æ¥æ˜¾ç¤ºï¼Œæœªç»å¤„ç†çš„æ¶ˆæ¯ï¼‰
+    /// </summary>
+    public event EventHandler<string> RawMessageReceived;
+
     #endregion
 
-    #region Ë½ÓĞ×Ö¶Î
+    #region ç§æœ‰å­—æ®µ
 
     private uConfigControl _configControl;
 
     #endregion
 
-    #region ¹¹Ôìº¯Êı
+    #region æ„é€ å‡½æ•°
 
     /// <summary>
-    /// ³õÊ¼»¯ TCP ·şÎñÆ÷ÊÊÅäÆ÷
+    /// åˆå§‹åŒ– TCP æœåŠ¡å™¨é€‚é…å™¨
     /// </summary>
     public TcpServerAdapter(string name = "TcpServer") : base(name)
     {
@@ -52,10 +57,10 @@ public class TcpServerAdapter : CommAdapterBase
 
     #endregion
 
-    #region ÖØĞ´»ùÀà·½·¨
+    #region é‡å†™åŸºç±»æ–¹æ³•
 
     /// <summary>
-    /// »ñÈ¡ÅäÖÃ¿Ø¼ş
+    /// è·å–é…ç½®æ§ä»¶
     /// </summary>
     public override UserControl GetConfigControl()
     {
@@ -69,7 +74,7 @@ public class TcpServerAdapter : CommAdapterBase
     }
 
     /// <summary>
-    /// Á¬½ÓÉè±¸£¨Æô¶¯·şÎñÆ÷£©
+    /// è¿æ¥è®¾å¤‡ï¼ˆå¯åŠ¨æœåŠ¡å™¨ï¼‰
     /// </summary>
     public override void Connect()
     {
@@ -77,7 +82,7 @@ public class TcpServerAdapter : CommAdapterBase
 
         try
         {
-            // »ñÈ¡±àÂë
+            // è·å–ç¼–ç 
             Encoding encoding;
             try
             {
@@ -88,39 +93,38 @@ public class TcpServerAdapter : CommAdapterBase
                 encoding = Encoding.UTF8;
             }
 
-            // ´´½¨µ×²ã·şÎñÆ÷
+            // åˆ›å»ºåº•å±‚æœåŠ¡å™¨
             _server = new NetTcpServer(IpAddress, Port)
             {
                 TextEncoding = encoding,
                 FrameByNewLine = FrameByNewLine
             };
 
-            // ? Ìí¼Óµ÷ÊÔÈÕÖ¾
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷ÅäÖÃ: FrameByNewLine={FrameByNewLine}, Encoding={encoding.EncodingName}");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨é…ç½®: FrameByNewLine={FrameByNewLine}, Encoding={encoding.EncodingName}");
 
-            // ? ¶©ÔÄµ×²ã·şÎñÆ÷ÊÂ¼ş
+            // è®¢é˜…åº•å±‚æœåŠ¡å™¨äº‹ä»¶
             _server.ClientConnected += OnServerClientConnected;
             _server.ClientDisconnected += OnServerClientDisconnected;
             _server.TextReceived += OnServerTextReceived;
 
-            // NetTcpServer ÔÚ¹¹Ôìº¯ÊıÖĞÒÑ¾­×Ô¶¯Æô¶¯¼àÌı
+            // NetTcpServer åœ¨æ„é€ å‡½æ•°ä¸­å·²ç»è‡ªåŠ¨å¯åŠ¨ç›‘å¬
             IsConnected = true;
 
-            // ? Ê¹ÓÃ»ùÀà·½·¨´¥·¢ÊÂ¼ş
+            // ä½¿ç”¨åŸºç±»æ–¹æ³•å‘é€äº‹ä»¶
             OnConnectionStatusChanged(true);
 
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷ÒÑÆô¶¯: {IpAddress}:{Port}");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨å·²å¯åŠ¨: {IpAddress}:{Port}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷Æô¶¯Ê§°Ü: {ex.Message}");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨å¯åŠ¨å¤±è´¥: {ex.Message}");
             IsConnected = false;
             OnConnectionStatusChanged(false);
         }
     }
 
     /// <summary>
-    /// ¶Ï¿ªÁ¬½Ó£¨Í£Ö¹·şÎñÆ÷£©
+    /// æ–­å¼€è¿æ¥ï¼ˆåœæ­¢æœåŠ¡å™¨ï¼‰
     /// </summary>
     public override void Disconnect()
     {
@@ -140,30 +144,30 @@ public class TcpServerAdapter : CommAdapterBase
             _connectedClients.Clear();
             IsConnected = false;
 
-            // ? Ê¹ÓÃ»ùÀà·½·¨´¥·¢ÊÂ¼ş
+            // ä½¿ç”¨åŸºç±»æ–¹æ³•å‘é€äº‹ä»¶
             OnConnectionStatusChanged(false);
 
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷ÒÑÍ£Ö¹");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨å·²åœæ­¢");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷Í£Ö¹Ê§°Ü: {ex.Message}");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨åœæ­¢å¤±è´¥: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Ğ´ÈëÊı¾İ
+    /// å†™å…¥æ•°æ®
     /// </summary>
-    /// <param name="address">¿Í»§¶ËID£¨Îª¿ÕÊ±¹ã²¥¸øËùÓĞ¿Í»§¶Ë£©</param>
-    /// <param name="data">Òª·¢ËÍµÄÊı¾İ</param>
+    /// <param name="address">å®¢æˆ·ç«¯IDï¼ˆä¸ºç©ºæ—¶å¹¿æ’­ç»™æ‰€æœ‰å®¢æˆ·ç«¯ï¼‰</param>
+    /// <param name="data">è¦å‘é€çš„æ•°æ®</param>
     public override void Write(string address, object data)
     {
-        // ? Ê¹ÓÃ»ùÀàµÄÑéÖ¤·½·¨
+        // ä½¿ç”¨åŸºç±»éªŒè¯æ•°æ®
         ValidateNotNull(data, nameof(data));
 
         if (!IsConnected || _server == null)
         {
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷Î´Æô¶¯£¬ÎŞ·¨·¢ËÍÊı¾İ");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨æœªå¯åŠ¨ï¼Œæ— æ³•å‘é€æ•°æ®");
             return;
         }
 
@@ -171,43 +175,45 @@ public class TcpServerAdapter : CommAdapterBase
         {
             string message = data.ToString();
 
-            // Èç¹ûÖ¸¶¨ÁËµØÖ·£¨¿Í»§¶ËID£©£¬Ôò·¢ËÍ¸øÖ¸¶¨¿Í»§¶Ë
-            // ·ñÔò¹ã²¥¸øËùÓĞ¿Í»§¶Ë
+            // å¦‚æœæŒ‡å®šäº†åœ°å€ï¼ˆå®¢æˆ·ç«¯IDï¼‰ï¼Œå‘é€ç»™æŒ‡å®šå®¢æˆ·ç«¯
+            // å¦åˆ™å¹¿æ’­ç»™æ‰€æœ‰å®¢æˆ·ç«¯
             if (!string.IsNullOrEmpty(address))
             {
                 _server.Send(address, message);
-                Console.WriteLine($"[{Name}] ·¢ËÍÏûÏ¢µ½¿Í»§¶Ë[{address}]: {message}");
+                Console.WriteLine($"[{Name}] å‘é€æ¶ˆæ¯åˆ°å®¢æˆ·ç«¯[{address}]: {message}");
             }
             else
             {
                 _server.Broadcast(message);
-                Console.WriteLine($"[{Name}] ¹ã²¥ÏûÏ¢: {message}");
+                Console.WriteLine($"[{Name}] å¹¿æ’­æ¶ˆæ¯: {message}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[{Name}] TCP·şÎñÆ÷·¢ËÍÊ§°Ü: {ex.Message}");
+            Console.WriteLine($"[{Name}] TCPæœåŠ¡å™¨å‘é€å¤±è´¥: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Ğ´ÈëÊı×éÊı¾İ
+    /// å†™å…¥å¤šä¸ªæ•°æ®
     /// </summary>
     public override void Write(string address, object[] data)
     {
-        // ? Ê¹ÓÃ»ùÀàµÄÑéÖ¤·½·¨
+        // ä½¿ç”¨åŸºç±»éªŒè¯æ•°æ®
         ValidateNotEmpty(data, nameof(data));
 
-        // TCP²»ĞèÒªµØÖ·£¬½«Êı×é×ª»»Îª×Ö·û´®·¢ËÍ
+        // TCPä¸éœ€è¦åœ°å€ï¼Œå°†æ•°æ®è½¬æ¢ä¸ºå­—ç¬¦ä¸²å‘é€
         Write(address, string.Join("", data));
     }
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°ÅäÖÃ
+    /// è·å–å½“å‰é…ç½®
     /// </summary>
     public override CommConfig GetConfig()
     {
-        var config = new CommConfig(Name, "TcpServer");
+        // å…ˆè®©åŸºç±»åºåˆ—åŒ–é€šè®¯è¡¨
+        var config = base.GetConfig();
+        // å†å†™å…¥æœ¬è®¾å¤‡ç‰¹æœ‰å‚æ•°
         config.SetParameter("IpAddress", IpAddress);
         config.SetParameter("Port", Port.ToString());
         config.SetParameter("Encoding", EncodingName);
@@ -218,12 +224,16 @@ public class TcpServerAdapter : CommAdapterBase
     }
 
     /// <summary>
-    /// Ó¦ÓÃÅäÖÃ
+    /// åº”ç”¨é…ç½®
     /// </summary>
     public override void ApplyConfig(CommConfig config)
     {
         if (config == null) return;
 
+        // å…ˆè®©åŸºç±»æ¢å¤é€šè®¯è¡¨
+        base.ApplyConfig(config);
+
+        // åº”ç”¨æœ¬è®¾å¤‡å‚æ•°
         IpAddress = config.GetParameter("IpAddress", "0.0.0.0");
 
         if (int.TryParse(config.GetParameter("Port", "5000"), out var port))
@@ -237,21 +247,11 @@ public class TcpServerAdapter : CommAdapterBase
         if (int.TryParse(config.GetParameter("MaxConnections", "100"), out var maxConnections))
             MaxConnections = maxConnections;
 
-        // Èç¹ûÖ®Ç°ÊÇÁ¬½Ó×´Ì¬£¬³¢ÊÔ×Ô¶¯Æô¶¯
-        if (bool.TryParse(config.GetParameter("IsConnected", "false"), out var wasConnected) && wasConnected)
-        {
-            try
-            {
-                Connect();
-            }
-            catch
-            {
-            }
-        }
+        // ä¸åœ¨æ­¤å¤„è‡ªåŠ¨è¿æ¥ï¼Œäº¤ç”±å·¥å‚åœ¨ ApplyConfig ä¹‹åè°ƒç”¨ Connect()
     }
 
     /// <summary>
-    /// ÊÍ·Å×ÊÔ´
+    /// é‡Šæ”¾èµ„æº
     /// </summary>
     protected override void Dispose(bool disposing)
     {
@@ -275,10 +275,10 @@ public class TcpServerAdapter : CommAdapterBase
 
     #endregion
 
-    #region ÊÂ¼ş´¦Àí
+    #region äº‹ä»¶å¤„ç†
 
     /// <summary>
-    /// ¿Í»§¶ËÁ¬½ÓÊÂ¼ş´¦Àí
+    /// å®¢æˆ·ç«¯è¿æ¥äº‹ä»¶å¤„ç†
     /// </summary>
     private void OnServerClientConnected(string clientId)
     {
@@ -290,11 +290,11 @@ public class TcpServerAdapter : CommAdapterBase
             }
         }
 
-        Console.WriteLine($"[{Name}] ¿Í»§¶ËÒÑÁ¬½Ó: {clientId}");
+        Console.WriteLine($"[{Name}] å®¢æˆ·ç«¯å·²è¿æ¥: {clientId}");
     }
 
     /// <summary>
-    /// ¿Í»§¶Ë¶Ï¿ªÊÂ¼ş´¦Àí
+    /// å®¢æˆ·ç«¯æ–­å¼€äº‹ä»¶å¤„ç†
     /// </summary>
     private void OnServerClientDisconnected(string clientId)
     {
@@ -303,34 +303,48 @@ public class TcpServerAdapter : CommAdapterBase
             _connectedClients.Remove(clientId);
         }
 
-        Console.WriteLine($"[{Name}] ¿Í»§¶ËÒÑ¶Ï¿ª: {clientId}");
+        Console.WriteLine($"[{Name}] å®¢æˆ·ç«¯å·²æ–­å¼€: {clientId}");
     }
 
     /// <summary>
-    /// ·şÎñÆ÷ÏûÏ¢½ÓÊÕÊÂ¼ş´¦Àí
+    /// æ”¶åˆ°æ–‡æœ¬æ¶ˆæ¯çš„äº‹ä»¶å¤„ç†
     /// </summary>
     private void OnServerTextReceived(string clientId, string text)
     {
-        // ? ÏêÏ¸ÈÕÖ¾£º´òÓ¡½ÓÊÕµ½µÄÏûÏ¢
-        LogHelper.Info($"?? [TcpServerAdapter] ·şÎñÆ÷ÊÕµ½ÏûÏ¢");
-        LogHelper.Info($"   ©À©¤ ÊÊÅäÆ÷Ãû³Æ: {Name}");
-        LogHelper.Info($"   ©À©¤ ¿Í»§¶ËID: {clientId}");
-        LogHelper.Info($"   ©À©¤ ÏûÏ¢ÄÚÈİ: {text}");
-        LogHelper.Info($"   ©¸©¤ ×¼±¸·¢²¼ MessageReceived ÊÂ¼ş...");
+        // è¯¦ç»†æ—¥å¿—ï¼šæ‰“å°æ¥æ”¶åˆ°çš„æ¶ˆæ¯
+        LogHelper.Info($"ğŸ“¥ [TcpServerAdapter] æœåŠ¡å™¨æ”¶åˆ°æ¶ˆæ¯");
+        LogHelper.Info($"   â”œâ”€ é€‚é…å™¨åç§°: {Name}");
+        LogHelper.Info($"   â”œâ”€ å®¢æˆ·ç«¯ID: {clientId}");
+        LogHelper.Info($"   â”œâ”€ æ¶ˆæ¯å†…å®¹: {text}");
+        LogHelper.Info($"   â””â”€ å‡†å¤‡å¤„ç†æ¶ˆæ¯...");
 
-        // ? Ê¹ÓÃ»ùÀà·½·¨´¥·¢ MessageReceived ÊÂ¼ş
-        // ÖØÒª£º´«µİÏûÏ¢ÎÄ±¾£¬¶ø²»ÊÇÄäÃû¶ÔÏó
-        OnMessageReceived(text);  // ¸ÄÎª´«µİ×Ö·û´®¶ø²»ÊÇÄäÃû¶ÔÏó
+        // è§¦å‘åŸå§‹æ¶ˆæ¯äº‹ä»¶ï¼ˆç”¨äºUIæ˜¾ç¤ºï¼‰
+        try
+        {
+            RawMessageReceived?.Invoke(this, $"[{clientId}] {text}");
+        }
+        catch
+        {
+            // äº‹ä»¶å¤„ç†å¼‚å¸¸ä¸å½±å“æ¶ˆæ¯å¤„ç†
+        }
 
-        LogHelper.Info($"   ? ÊÂ¼şÒÑ·¢²¼");
+        // ä½¿ç”¨TcpMessageHelperå¤„ç†æ¶ˆæ¯ï¼ˆæ—¥å¿—å·²åœ¨Helperä¸­ç²¾ç®€ï¼‰
+        var result = TcpMessageHelper.ProcessMessage(text, Table, Name);
+
+        // å¦‚æœæœ‰è§¦å‘ï¼Œå‘é€MessageReceivedäº‹ä»¶
+        if (result.HasTrigger)
+        {
+            var payload = TcpMessageHelper.CreateTriggerPayload(result);
+            OnMessageReceived(payload);
+        }
     }
 
     #endregion
 
-    #region ¹«¹²·½·¨
+    #region è¾…åŠ©æ–¹æ³•
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°Á¬½ÓµÄ¿Í»§¶ËÁĞ±í
+    /// è·å–å½“å‰è¿æ¥çš„å®¢æˆ·ç«¯åˆ—è¡¨
     /// </summary>
     public string[] GetConnectedClients()
     {

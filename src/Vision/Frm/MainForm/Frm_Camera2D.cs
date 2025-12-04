@@ -3,8 +3,6 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using HardwareCameraNet;
-using Vision.Manager.CameraManager;
-using Vision.Manager.PluginServer;
 
 namespace Vision.Frm.MainForm;
 
@@ -12,6 +10,9 @@ public partial class Frm_Camera2D : Form
 {
     // 维护当前选中的相机实例，用于切换时取消订阅以防重复订阅
     private ICamera currentSelectedCamera;
+    
+    // 标记是否正在处理行选择，避免重复触发
+    private bool _isProcessingRowSelection;
 
 
     public Frm_Camera2D()
@@ -22,12 +23,17 @@ public partial class Frm_Camera2D : Form
     }
     private void Frm_Camera2D_Load(object sender, EventArgs e)
     {
-        var mans = CameraManager.Instance.GetAllManufacturers().Cast<object>().ToArray();
+        var mans = CameraFactory.Instance.GetAllManufacturers().Cast<object>().ToArray();
         cmb_Manufacturers.Items.AddRange(mans);
 
         DgvUpdate();
 
         SetControlState();
+        
+        // 订阅DGV行选择事件（点击行时选中对应相机）
+        dgv_CameraConfig.SelectionChanged += dgv_CameraConfig_SelectionChanged;
+        // 设置DGV为单选模式，防止多选
+        dgv_CameraConfig.MultiSelect = false;
     }
 
 
@@ -37,7 +43,7 @@ public partial class Frm_Camera2D : Form
         dgv_CameraConfig.AutoGenerateColumns = false;
         // 重新绑定数据源，避免对绑定到非 IBindingList 的 DataGridView 直接删行
         dgv_CameraConfig.DataSource = null;
-        dgv_CameraConfig.DataSource = CameraManager.Instance.GetAllCameraConfigs();
+        dgv_CameraConfig.DataSource = CameraFactory.Instance.GetAllConfigs();
     }
     private void dgv_CameraConfig_CellValueChanged(object sender, DataGridViewCellEventArgs e)
     {
@@ -49,11 +55,11 @@ public partial class Frm_Camera2D : Form
         var expain = dgv_CameraConfig.Rows[e.RowIndex].Cells["col_Expain"].Value?.ToString();
 
         if (string.IsNullOrEmpty(sn)) return;
-        var configs = CameraManager.Instance.GetAllCameraConfigs();
+        var configs = CameraFactory.Instance.GetAllConfigs();
         var config = configs.FirstOrDefault(cfg => cfg.SerialNumber == sn);
         if (config == null) return;
         config.Expain = expain ?? "";
-        CameraManager.Instance.AddOrUpdateCameraConfig(config);
+        CameraFactory.Instance.AddOrUpdateConfig(config);
 
         // 刷新界面
         DgvUpdate();
@@ -63,16 +69,21 @@ public partial class Frm_Camera2D : Form
     {
         SetControlText();
 
+        // 参数控件需要相机已连接
         txt_Exposure.Enabled = connect;
         txt_Gain.Enabled = connect;
         chk_HardTrigger.Enabled = connect;
         
+        // 采集控件需要相机已连接
         btn_TriggerOnce.Enabled = connect;
         btn_DisConnect.Enabled = connect;
         btn_Continuous.Enabled = connect;
-        btn_Add.Enabled = connect;
+        
+        // 添加按钮：只要选择了SN就可以添加（不需要连接）
+        btn_Add.Enabled = !string.IsNullOrEmpty(cmb_SnList.Text);
 
-        btn_Connect.Enabled = cmb_SnList.SelectedItem != null && !connect;
+        // 连接按钮：选择了SN且未连接时可用
+        btn_Connect.Enabled = !string.IsNullOrEmpty(cmb_SnList.Text) && !connect;
     }
     private void SetControlText()
     {
@@ -123,8 +134,8 @@ public partial class Frm_Camera2D : Form
             var selectedManufacturer = cmb_Manufacturers.Text;
             var selectedSerial = snText.Trim();
 
-            // 通过CameraManager获取相机实例（缓存中存在则直接返回）
-            var newCamera = CameraManager.Instance.CreateCamera(selectedManufacturer, selectedSerial);
+            // 通过CameraManager获取相机实例（不再枚举，直接从缓存获取或创建）
+            var newCamera = CameraFactory.Instance.GetOrCreateCamera(selectedManufacturer, selectedSerial);
             if (newCamera == null)
             {
                 MessageBox.Show($"获取相机{selectedSerial}失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -146,11 +157,96 @@ public partial class Frm_Camera2D : Form
         }
     }
 
+    /// <summary>
+    /// DGV行选择变化事件 - 点击行时选中对应相机
+    /// </summary>
+    private void dgv_CameraConfig_SelectionChanged(object sender, EventArgs e)
+    {
+        if (_isProcessingRowSelection) return;
+        if (dgv_CameraConfig.SelectedRows.Count == 0) return;
+        
+        try
+        {
+            _isProcessingRowSelection = true;
+            
+            var row = dgv_CameraConfig.SelectedRows[0];
+            var sn = row.Cells["col_SerialNumber"].Value?.ToString();
+            var manufacturer = row.Cells["col_Manufacturer"].Value?.ToString();
+            
+            if (string.IsNullOrEmpty(sn) || string.IsNullOrEmpty(manufacturer))
+                return;
+            
+            // 如果已经是当前相机，不重复处理
+            if (currentSelectedCamera != null && currentSelectedCamera.SN == sn)
+                return;
+            
+            // 设置厂商下拉框（不触发枚举）
+            _isProcessingRowSelection = true;
+            var manufacturerIndex = cmb_Manufacturers.Items.IndexOf(manufacturer);
+            if (manufacturerIndex >= 0 && cmb_Manufacturers.SelectedIndex != manufacturerIndex)
+            {
+                // 临时取消事件，设置厂商后恢复
+                cmb_Manufacturers.SelectedIndexChanged -= cmb_Manufacturers_SelectedIndexChanged;
+                cmb_Manufacturers.SelectedIndex = manufacturerIndex;
+                cmb_Manufacturers.SelectedIndexChanged += cmb_Manufacturers_SelectedIndexChanged;
+                
+                // 手动填充SN列表（不触发枚举）
+                cmb_SnList.Items.Clear();
+                var list = CameraFactory.Instance.EnumerateDevices(manufacturer) ?? new System.Collections.Generic.List<string>();
+                cmb_SnList.Items.AddRange(list.Cast<object>().ToArray());
+            }
+            
+            // 设置SN下拉框
+            var snIndex = cmb_SnList.Items.IndexOf(sn);
+            if (snIndex >= 0)
+            {
+                cmb_SnList.SelectedIndex = snIndex;
+            }
+            else
+            {
+                // SN不在列表中（可能是离线的相机），直接设置文本并选中
+                cmb_SnList.Text = sn;
+                SelectCameraDirectly(manufacturer, sn);
+            }
+        }
+        finally
+        {
+            _isProcessingRowSelection = false;
+        }
+    }
+
+    /// <summary>
+    /// 直接选中相机（不通过下拉框事件）
+    /// </summary>
+    private void SelectCameraDirectly(string manufacturer, string sn)
+    {
+        try
+        {
+            UnsubscribeCurrentCameraEvent();
+            
+            var newCamera = CameraFactory.Instance.GetOrCreateCamera(manufacturer, sn);
+            if (newCamera == null)
+            {
+                currentSelectedCamera = null;
+                SetControlState(connect: false);
+                return;
+            }
+            
+            SubscribeNewCameraEvent(newCamera);
+            currentSelectedCamera = newCamera;
+            SetControlState(currentSelectedCamera.IsConnected);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+    }
+
     private void cmb_Manufacturers_SelectedIndexChanged(object sender, EventArgs e)
     {
         cmb_SnList.Text = "";
         cmb_SnList.Items.Clear();
-        var list = CameraManager.Instance.EnumerateDevices(cmb_Manufacturers.Text) ?? new System.Collections.Generic.List<string>();
+        var list = CameraFactory.Instance.EnumerateDevices(cmb_Manufacturers.Text) ?? new System.Collections.Generic.List<string>();
         cmb_SnList.Items.AddRange(list.Cast<object>().ToArray());
     }
     /// <summary>
@@ -215,6 +311,10 @@ public partial class Frm_Camera2D : Form
 
     private void txt_Exposure_ValueChanged(object sender, EventArgs e)
     {
+        // 检查相机是否存在且已连接
+        if (currentSelectedCamera == null || !currentSelectedCamera.IsConnected)
+            return;
+        
         try
         {
             var val = (double)txt_Exposure.Value;
@@ -234,6 +334,10 @@ public partial class Frm_Camera2D : Form
      
     private void txt_Gain_ValueChanged(object sender, EventArgs e)
     {
+        // 检查相机是否存在且已连接
+        if (currentSelectedCamera == null || !currentSelectedCamera.IsConnected)
+            return;
+        
         try
         {
             double val = (double)txt_Gain.Value;
@@ -253,6 +357,10 @@ public partial class Frm_Camera2D : Form
     }
     private void cmb_TriggerSource_SelectedIndexChanged(object sender, EventArgs e)
     {
+        // 检查相机是否存在且已连接
+        if (currentSelectedCamera == null || !currentSelectedCamera.IsConnected)
+            return;
+        
         currentSelectedCamera.Parameters.TriggerSoure = cmb_TriggerSource.Text;
     }
 
@@ -268,7 +376,7 @@ public partial class Frm_Camera2D : Form
                 return;
             }
 
-            var configs = CameraManager.Instance.GetAllCameraConfigs();
+            var configs = CameraFactory.Instance.GetAllConfigs();
             var existConfig = configs.FirstOrDefault(cfg => cfg.SerialNumber == selectedSerial);
 
             string expain;
@@ -298,21 +406,25 @@ public partial class Frm_Camera2D : Form
                 expain = existConfig.Expain;
             }
 
-            var fullName = currentSelectedCamera.GetType().FullName;
-            if (fullName != null)
+            // 获取插件信息（通过厂商获取，不需要相机已连接）
+            var pluginInfo = CameraPluginServer.Instance.GetPluginInfoByManufacturer(selectedManufacturer);
+            if (pluginInfo == null)
             {
-                var cfg = new CameraConfig(selectedSerial, selectedManufacturer,
-                    CameraPluginServer.Instance.GetPluginInfo(fullName))
-                {
-                    Expain = expain
-                };
-                CameraManager.Instance.AddOrUpdateCameraConfig(cfg);
+                MessageBox.Show($"未找到厂商{selectedManufacturer}对应的插件");
+                return;
             }
+            
+            var cfg = new CameraConfig(selectedSerial, selectedManufacturer, pluginInfo)
+            {
+                Expain = expain
+            };
+            CameraFactory.Instance.AddOrUpdateConfig(cfg);
             DgvUpdate();
         }
         catch (Exception exception)
         {
             Console.WriteLine(exception);
+            MessageBox.Show($"添加配置失败：{exception.Message}");
         }
     }
 
@@ -335,14 +447,47 @@ public partial class Frm_Camera2D : Form
             return;
         }
         if(DialogResult.Yes != MessageBox.Show("是否移除相机配置！","",MessageBoxButtons.YesNoCancel))return;
+        
+        // 如果移除的是当前选中的相机，先清空当前相机
+        if (currentSelectedCamera != null && currentSelectedCamera.SN == sn)
+        {
+            UnsubscribeCurrentCameraEvent();
+            currentSelectedCamera = null;
+        }
+        
         // 先删除管理器中的配置，再整体刷新数据源（不要直接对绑定的 DataGridView 调用 Rows.Remove）
-        if (CameraManager.Instance.RemoveCameraConfig(sn))
+        if (CameraFactory.Instance.RemoveConfig(sn))
         {
             DgvUpdate();
+            
+            // 刷新整个界面状态
+            ResetUIAfterRemove();
         }
         else
         {
             MessageBox.Show("移除失败，未找到该序列号的配置！");
+        }
+    }
+
+    /// <summary>
+    /// 移除配置后重置UI状态
+    /// </summary>
+    private void ResetUIAfterRemove()
+    {
+        // 如果还有配置，选中第一个
+        if (dgv_CameraConfig.Rows.Count > 0)
+        {
+            dgv_CameraConfig.Rows[0].Selected = true;
+            // SelectionChanged 事件会自动处理选中逻辑
+        }
+        else
+        {
+            // 没有配置了，清空当前相机状态，但保留SN下拉框（枚举出来的设备列表）
+            currentSelectedCamera = null;
+            SetControlState(false);
+            
+            // 清空显示的图像
+            pictureEdit_Display.Image = null;
         }
     }
     private void btn_Connect_Click(object sender, EventArgs e)
@@ -352,6 +497,17 @@ public partial class Frm_Camera2D : Form
             currentSelectedCamera.Open();
             SetControlState(currentSelectedCamera.IsConnected);
             currentSelectedCamera.DisConnetEvent += DisConnectEvent;
+            
+            // 通知CameraManager更新设备状态（主界面硬件状态会更新）
+            if (currentSelectedCamera.IsConnected)
+            {
+                var config = CameraFactory.Instance.GetAllConfigs()
+                    .FirstOrDefault(c => c.SerialNumber == currentSelectedCamera.SN);
+                if (config != null)
+                {
+                    CameraFactory.Instance.NotifyDeviceStateChanged(currentSelectedCamera.SN, config.Expain, true);
+                }
+            }
         }
         catch (Exception)
         {
@@ -362,9 +518,19 @@ public partial class Frm_Camera2D : Form
     {
         try
         {
+            // 先获取配置信息
+            var config = CameraFactory.Instance.GetAllConfigs()
+                .FirstOrDefault(c => c.SerialNumber == currentSelectedCamera.SN);
+            
             currentSelectedCamera.Close();
             SetControlState(currentSelectedCamera.IsConnected);
             currentSelectedCamera.DisConnetEvent -= DisConnectEvent;
+            
+            // 通知CameraManager更新设备状态（主界面硬件状态会更新）
+            if (config != null)
+            {
+                CameraFactory.Instance.NotifyDeviceStateChanged(currentSelectedCamera.SN, config.Expain, false);
+            }
         }
         catch (Exception exception)
         {

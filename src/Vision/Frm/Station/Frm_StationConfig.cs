@@ -1,19 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Windows.Forms;
-using Cognex.VisionPro;
-using Vision.Manager.CameraManager;
-using Vision.Solutions.Models;
-using Logger;
-using Vision.Frm.Solution;
-using Vision.Solutions.WorkFlow;
-using System.Collections.Generic;
 using System.Xml.Serialization;
+using Cognex.VisionPro;
+using Logger;
+using HardwareCameraNet;
+using Vision.Solutions.Models;
 using Vision.Solutions.TaskFlow;
-using Vision.Frm.Station; // ✅ 添加输出映射窗体的命名空间
 
-namespace Vision.Frm.Process;
+// ✅ 添加输出映射窗体的命名空间
+
+namespace Vision.Frm.Station;
 
 public partial class Frm_StationConfig : Form
 {
@@ -68,28 +67,28 @@ public partial class Frm_StationConfig : Form
   }
 
   var label = gi.Label?.Trim();
-  if (string.Equals(label, "检测工具", StringComparison.OrdinalIgnoreCase))
+  if (string.Equals(label, "检测工具启用", StringComparison.OrdinalIgnoreCase))
   {
    tsm_OpenForm.Enabled = true;
    tsm_OpenForm.Text = "检测工具配置";
    tsm_OpenForm.Tag = "Detect";
   }
-  else if (string.Equals(label, "棋盘格标定工具配置", StringComparison.OrdinalIgnoreCase))
+  else if (string.Equals(label, "棋盘格标定启用", StringComparison.OrdinalIgnoreCase))
   {
    tsm_OpenForm.Enabled = true;
    tsm_OpenForm.Text = "棋盘格标定工具配置";
    tsm_OpenForm.Tag = "Checkerboard";
   }
-  else if (string.Equals(label, "九点标定工具配置", StringComparison.OrdinalIgnoreCase))
+  else if (string.Equals(label, "九点标定工具启用", StringComparison.OrdinalIgnoreCase))
   {
    tsm_OpenForm.Enabled = true;
    tsm_OpenForm.Text = "九点标定工具配置";
    tsm_OpenForm.Tag = "NPoint";
   }
-  else if (string.Equals(label, "输出映射配置", StringComparison.OrdinalIgnoreCase))
+  else if (string.Equals(label, "通讯输出配置", StringComparison.OrdinalIgnoreCase))
   {
    tsm_OpenForm.Enabled = true;
-   tsm_OpenForm.Text = "输出映射配置";
+   tsm_OpenForm.Text = "通讯输出配置";
    tsm_OpenForm.Tag = "OutputMapping";
   }
   else
@@ -112,7 +111,7 @@ public partial class Frm_StationConfig : Form
   }
   else if (label == "SN" || label == "相机序列号")
   {
-   var cam = CameraManager.Instance.GetAllCameras().Find(c => c.SN == st.SN);
+   var cam = CameraFactory.Instance.GetAllCameras().Find(c => c.SN == st.SN);
    st.CameraType = cam == null ? string.Empty : cam.Type.ToString();
 
    if (!string.IsNullOrWhiteSpace(st.SN))
@@ -135,12 +134,6 @@ public partial class Frm_StationConfig : Form
    }
 
    safePropertyGrid1.Refresh();
-  }
-  else if (label == "ModelPath" || label == "模型文件夹路径" ||
-           label == "RuntimeType" || label == "运行时类型" ||
-           label == "bLoadModel" || label == "是否加载模型")
-  {
-   HandleModelConfigChanged(st, label);
   }
   // ✅ 监听通讯配置变化，自动重新绑定触发
   else if (label == "CommDeviceName" || label == "通讯设备" ||
@@ -179,94 +172,8 @@ public partial class Frm_StationConfig : Form
   }
  }
 
- private void HandleModelConfigChanged(StationConfig st, string changedProperty)
- {
-  if (!st.bLoadModel)
-  {
-   if (st.DLModel != null)
-   {
-    DLModelLoader.UnloadModel(st);
-    MessageBox.Show($"工位[{st.Name}] 模型已卸载", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-   }
-
-   return;
-  }
-
-  if (string.IsNullOrWhiteSpace(st.ModelPath))
-  {
-   MessageBox.Show("请先选择模型文件夹路径", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-   return;
-  }
-
-  if (!Directory.Exists(st.ModelPath))
-  {
-   MessageBox.Show($"模型路径不存在:\n{st.ModelPath}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-   return;
-  }
-
-  var result = MessageBox.Show(
-   $"检测到模型配置变更：{changedProperty}\n\n" +
-   $"工位: {st.Name}\n" +
-   $"模型: {st.ModelFolderName}\n" +
-   $"运行时: {GetRuntimeDisplayName(st.RuntimeType)}\n\n" +
-   "是否立即加载模型？\n\n" +
-   "（加载过程可能需要几秒钟，TensorRT首次加载可能较慢）",
-   "确认加载模型",
-   MessageBoxButtons.YesNo,
-   MessageBoxIcon.Question);
-
-  if (result != DialogResult.Yes) return;
-
-  UseWaitCursor = true;
-  Application.DoEvents();
-
-  try
-  {
-   var success = DLModelLoader.LoadModel(st);
-
-   if (success)
-   {
-    MessageBox.Show(
-     $"✓ 模型加载成功！\n\n" +
-     $"工位: {st.Name}\n" +
-     $"模型: {st.ModelFolderName}\n" +
-     $"运行时: {GetRuntimeDisplayName(st.RuntimeType)}",
-     "成功",
-     MessageBoxButtons.OK,
-     MessageBoxIcon.Information);
-   }
-   else
-   {
-    MessageBox.Show(
-     $"✗ 模型加载失败\n\n" +
-     "请查看日志窗口了解详细错误信息。\n\n" +
-     "常见问题：\n" +
-     "• 模型文件不完整\n" +
-     "•运行时与硬件不匹配\n" +
-     "• 缺少必要的驱动或库",
-     "失败",
-     MessageBoxButtons.OK,
-     MessageBoxIcon.Warning);
-   }
-  }
-  finally
-  {
-   UseWaitCursor = false;
-  }
-
-  safePropertyGrid1.Refresh();
- }
-
- private static string GetRuntimeDisplayName(DLRuntime runtime)
- {
-  return runtime switch
-  {
-   DLRuntime.GC => "GPU运行时",
-   DLRuntime.OpenVINO => "OpenVINO 加速",
-   DLRuntime.TensorRT => "TensorRT 加速",
-   _ => runtime.ToString()
-  };
- }
+ // ✅ 深度学习模型已移至 DnnInterfaceNet.DnnModelFactory 统一管理
+ // 模型配置通过「深度学习模型配置」窗口进行，不再在工位级别配置
 
  private void Tsm_LoadImageRun_Click(object sender, EventArgs e)
  {
@@ -484,34 +391,27 @@ public partial class Frm_StationConfig : Form
    {
     using var frm = new Frm_Tool();
     frm.Text = "检测工具配置";
-    frm.ToolBlock = st.DetectionTool?.ToolBlock;
-    // ✅ 修复：传递当前工位配置
     frm.LoadDetection(st.DetectionTool, st);
     frm.ShowDialog(this);
-    try
-    {
-     SaveToolVpp(st, st.DetectionTool);
-    }
-    catch
-    {
-    }
-
+    try { SaveToolVpp(st, st.DetectionTool); } catch { }
     break;
    }
    case "Checkerboard":
    {
     using var frm = new Frm_Tool();
     frm.Text = "棋盘格标定工具配置";
-    frm.ToolBlock = st.CheckerboardTool.ToolBlock;
+    frm.LoadDetection(st.CheckerboardTool, st);
     frm.ShowDialog(this);
+    try { SaveToolVpp(st, st.CheckerboardTool); } catch { }
     break;
    }
    case "NPoint":
    {
     using var frm = new Frm_Tool();
     frm.Text = "九点标定工具配置";
-    frm.ToolBlock = st.NPointTool.ToolBlock;
+    frm.LoadDetection(st.NPointTool, st);
     frm.ShowDialog(this);
+    try { SaveToolVpp(st, st.NPointTool); } catch { }
     break;
    }
    case "OutputMapping":
@@ -547,7 +447,7 @@ public partial class Frm_StationConfig : Form
   return name;
  }
 
- private void SaveToolVpp(StationConfig st, StationConfig.ToolBase tool)
+ private void SaveToolVpp(StationConfig st, StationConfig.Tools tool)
  {
   try
   {

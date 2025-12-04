@@ -24,9 +24,16 @@ public partial class uInputTable : UserControl
 		public string 地址 { get; set; }
 		public string 编辑值 { get; set; }
 		public string 描述 { get; set; }
-		public bool 触发信号 { get; set; } // ✅ 新增：是否为触发信号
+		public bool 触发信号 { get; set; } // 是否为触发信号
+		
+		// TCP专用字段
+		public int 字段索引 { get; set; } = -1; // -1表示使用整个消息
+		public string 分隔符 { get; set; } = ",";
+		public string 触发模式 { get; set; } = "值匹配"; // 值匹配、值变化、任意非空
+		
 		public CommValueType RealType { get; set; }
 		public List<string> TriggerValuesList { get; set; } = new List<string>();
+		public int TriggerModeValue { get; set; } = 0; // 0=值匹配, 1=值变化, 2=任意非空
 	}
 
 	public uInputTable()
@@ -52,28 +59,58 @@ public partial class uInputTable : UserControl
 		dgv_Data.Columns.Clear();
 		
 		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.序号), HeaderText = "序号", Width = 60, ReadOnly = true });
-		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.名称), HeaderText = "名称", Width = 160 });
-		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.类型), HeaderText = "类型", Width = 80, ReadOnly = true });
-		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.起始字节), HeaderText = "起始字节", Width = 80 });
-		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.长度), HeaderText = "长度", Width = 60 });
-		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.地址), HeaderText = "地址", Width = 120 });
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.名称), HeaderText = "名称", Width = 140 });
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.类型), HeaderText = "类型", Width = 70, ReadOnly = true });
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.起始字节), HeaderText = "起始字节", Width = 65 });
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.长度), HeaderText = "长度", Width = 50 });
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = nameof(Row.地址), HeaderText = "地址", Width = 100 });
 		
-		// ✅ 新增：触发信号勾选列
+		// TCP专用列：字段索引（-1表示使用整个消息）
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn 
+		{ 
+			DataPropertyName = nameof(Row.字段索引), 
+			HeaderText = "字段索引", 
+			Width = 65,
+			ToolTipText = "TCP消息按分隔符拆分后的字段索引，-1表示使用整个消息"
+		});
+		
+		// TCP专用列：分隔符
+		dgv_Data.Columns.Add(new DataGridViewTextBoxColumn 
+		{ 
+			DataPropertyName = nameof(Row.分隔符), 
+			HeaderText = "分隔符", 
+			Width = 60,
+			ToolTipText = "TCP消息的字段分隔符，如逗号(,)、分号(;)等"
+		});
+		
+		// ✅ 触发信号勾选列
 		dgv_Data.Columns.Add(new DataGridViewCheckBoxColumn 
 		{ 
 			DataPropertyName = nameof(Row.触发信号), 
 			HeaderText = "触发信号", 
-			Width = 80,
+			Width = 70,
 			TrueValue = true,
 			FalseValue = false
 		});
+		
+		// TCP专用列：触发模式下拉框
+		var triggerModeCol = new DataGridViewComboBoxColumn
+		{
+			DataPropertyName = nameof(Row.触发模式),
+			HeaderText = "触发模式",
+			Width = 85,
+			FlatStyle = FlatStyle.Flat,
+			ToolTipText = "值匹配：仅当值在触发值列表中时触发\n值变化：值发生变化时触发\n任意非空：收到非空值就触发"
+		};
+		triggerModeCol.Items.AddRange("值匹配", "值变化", "任意非空");
+		dgv_Data.Columns.Add(triggerModeCol);
 		
 		// 触发值按钮列
 		var btnCol = new DataGridViewButtonColumn
 		{
 			DataPropertyName = nameof(Row.编辑值),
 			HeaderText = "触发值",
-			Width = 200,
+			Width = 120,
 			Text = "编辑...",
 			UseColumnTextForButtonValue = false
 		};
@@ -137,13 +174,7 @@ public partial class uInputTable : UserControl
 					dgv_Data.Refresh();
 				}
 			}
-			else if (colName == nameof(Row.地址))
-			{
-				if (string.IsNullOrWhiteSpace(row.地址))
-				{
-					MessageBox.Show("地址不能为空", "校验", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				}
-			}
+			// 地址允许为空，运行时检查
 			else if (colName == nameof(Row.起始字节))
 			{
 				if (row.起始字节 < 0) row.起始字节 = 0;
@@ -154,46 +185,55 @@ public partial class uInputTable : UserControl
 				if (row.长度 < 1) row.长度 = 1;
 				dgv_Data.Refresh();
 			}
+			else if (colName == nameof(Row.字段索引))
+			{
+				// 字段索引可以为-1（使用整个消息）或>=0（使用指定字段）
+				if (row.字段索引 < -1) row.字段索引 = -1;
+				dgv_Data.Refresh();
+			}
+			else if (colName == nameof(Row.触发模式))
+			{
+				// 将触发模式文本转换为数值
+				row.TriggerModeValue = TextToTriggerMode(row.触发模式);
+			}
 		};
 	}
 
-	public void SaveToTable()
+	/// <summary>
+	/// 保存到通讯表
+	/// </summary>
+	/// <returns>保存成功返回true，校验失败返回false</returns>
+	public bool SaveToTable()
 	{
 		if (_table == null)
 		{
 			Console.WriteLine("❌ SaveToTable: _table 为 null");
-			return;
+			return false;
 		}
 		
 		Console.WriteLine($"SaveToTable: 开始保存，isInput={_isInput}, 行数={_rows.Count}");
 		
-		// 校验：名称唯一、地址必填、长度>=1
+		// 校验：名称唯一、长度>=1、起始字节>=0（地址允许为空，运行时检查）
 		for (int i = 0; i < _rows.Count; i++)
 		{
 			var r = _rows[i];
 			if (!IsUniqueName(r.名称, i))
 			{
 				Console.WriteLine($"❌ 第{i+1}行校验失败：名称重复");
-				MessageBox.Show($"第{i+1}行名称重复", "校验", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
-			}
-			if (string.IsNullOrWhiteSpace(r.地址))
-			{
-				Console.WriteLine($"❌ 第{i+1}行校验失败：地址为空");
-				MessageBox.Show($"第{i+1}行地址不能为空", "校验", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
+				MessageBox.Show($"第{i+1}行名称重复", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				return false;
 			}
 			if (r.长度 < 1)
 			{
 				Console.WriteLine($"❌ 第{i+1}行校验失败：长度必须>=1");
-				MessageBox.Show($"第{i+1}行长度必须>=1", "校验", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
+				MessageBox.Show($"第{i+1}行长度必须>=1", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				return false;
 			}
 			if (r.起始字节 < 0)
 			{
 				Console.WriteLine($"❌ 第{i+1}行校验失败：起始字节不能为负");
-				MessageBox.Show($"第{i+1}行起始字节不能为负", "校验", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
+				MessageBox.Show($"第{i+1}行起始字节不能为负", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				return false;
 			}
 		}
 		
@@ -223,7 +263,11 @@ public partial class uInputTable : UserControl
 				Address = r.地址,
 				TriggerValues = new List<string>(r.TriggerValuesList),
 				Description = r.描述,
-				IsTrigger = r.触发信号 // ✅ 保存触发信号标志
+				IsTrigger = r.触发信号,
+				// TCP专用字段
+				FieldIndex = r.字段索引,
+				Delimiter = r.分隔符 ?? ",",
+				TriggerMode = r.TriggerModeValue
 			};
 			
 			if (_isInput)
@@ -235,16 +279,40 @@ public partial class uInputTable : UserControl
 				_table.AddOrUpdateOutput(cell);
 			}
 			savedCount++;
-			Console.WriteLine($"  已添加: {cell.Name} ({cell.ValueType}) @ {cell.Address}, 起始={cell.StartByte}, 长度={cell.Length}, 触发信号={cell.IsTrigger}");
+			Console.WriteLine($"  已添加: {cell.Name} ({cell.ValueType}) @ {cell.Address}, 起始={cell.StartByte}, 长度={cell.Length}, 触发信号={cell.IsTrigger}, 字段索引={cell.FieldIndex}, 分隔符={cell.Delimiter}, 触发模式={cell.TriggerMode}");
 		}
 		
 		Console.WriteLine($"✅ SaveToTable 完成: 共保存 {savedCount} 项到 {(_isInput ? "输入" : "输出")}表");
+		return true;
 	}
 
 	private bool IsUniqueName(string name, int currentIndex)
 	{ return !_rows.Where((_, idx) => idx != currentIndex).Any(r => string.Equals(r.名称?.Trim(), name?.Trim(), System.StringComparison.OrdinalIgnoreCase)); }
 	private string MakeUnique(string baseName)
 	{ string n = (baseName ?? "Var").Trim(); int i =1; while (_rows.Any(r => string.Equals(r.名称, n, System.StringComparison.OrdinalIgnoreCase))) n = baseName + i++; return n; }
+
+	// TCP专用：触发模式文本与数值转换
+	private static string TriggerModeToText(int mode)
+	{
+		return mode switch
+		{
+			0 => "值匹配",
+			1 => "值变化",
+			2 => "任意非空",
+			_ => "值匹配"
+		};
+	}
+	
+	private static int TextToTriggerMode(string text)
+	{
+		return text switch
+		{
+			"值匹配" => 0,
+			"值变化" => 1,
+			"任意非空" => 2,
+			_ => 0
+		};
+	}
 
 	private static bool TryParseByteSpec(string spec, out int size, out string reason)
 	{
@@ -280,7 +348,12 @@ public partial class uInputTable : UserControl
 				地址 = c.Address,
 				编辑值 = triggerList.Count > 0 ? $"共 {triggerList.Count} 项" : "无",
 				描述 = c.Description,
-				触发信号 = c.IsTrigger, // ✅ 加载触发信号标志
+				触发信号 = c.IsTrigger,
+				// TCP专用字段
+				字段索引 = c.FieldIndex,
+				分隔符 = c.Delimiter ?? ",",
+				触发模式 = TriggerModeToText(c.TriggerMode),
+				TriggerModeValue = c.TriggerMode,
 				RealType = c.ValueType,
 				TriggerValuesList = triggerList
 			});
@@ -304,6 +377,12 @@ public partial class uInputTable : UserControl
 			地址 = string.Empty,
 			编辑值 = "无",
 			描述 = string.Empty,
+			触发信号 = false,
+			// TCP专用字段默认值
+			字段索引 = -1,       // -1表示使用整个消息
+			分隔符 = ",",        // 默认逗号分隔
+			触发模式 = "值匹配", // 默认值匹配模式
+			TriggerModeValue = 0,
 			RealType = type,
 			TriggerValuesList = new List<string>()
 		});

@@ -1,7 +1,7 @@
 namespace HardwareCommNet.CommTable;
 
 /// <summary>
-/// Í¨Ñ¶±íÊıÖµÀàĞÍ£¨¶ÔÓ¦½çÃæÓÒ²àÌí¼Ó°´Å¥£©
+/// é€šè®¯å˜é‡å€¼ç±»å‹ï¼Œå¯¹åº”ç•Œé¢å³ä¾§çš„æ·»åŠ æŒ‰é’®ã€‚
 /// </summary>
 public enum CommValueType
 {

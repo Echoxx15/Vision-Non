@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
 using Cognex.VisionPro;
 
-namespace Vision.UserControlLibrary;
+namespace Vision.UserUI;
 
 public partial class MaxDisplay : Form
 {

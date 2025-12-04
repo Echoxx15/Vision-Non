@@ -1,4 +1,4 @@
-﻿namespace Vision.UserControlLibrary
+﻿namespace Vision.UserUI
 {
     partial class MaxDisplay
     {

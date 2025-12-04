@@ -1,21 +1,20 @@
-using System;
+锘縰sing System;
 using System.ComponentModel;
 using System.Linq;
 using HardwareCommNet;
-using Vision.Solutions.Models;
 
-namespace Vision.Frm.Process;
+namespace Vision.Solutions.Models;
 
 public class StationTriggerValueConverter : StringConverter
 {
  public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
- public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) => true; //只允许下拉选择
+ public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) => true; //只锟斤拷锟斤拷锟斤拷锟斤拷选锟斤拷
 
  public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
  {
   try
   {
-   // 直接从ProcessStation实例获取
+   // 直锟接达拷ProcessStation实锟斤拷锟斤拷取
    if (context?.Instance is StationConfig st && !string.IsNullOrWhiteSpace(st.CommDeviceName) &&
        !string.IsNullOrWhiteSpace(st.TriggerVariableName))
    {

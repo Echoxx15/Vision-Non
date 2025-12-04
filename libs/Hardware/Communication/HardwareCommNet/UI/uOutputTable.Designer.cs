@@ -140,7 +140,6 @@
             // 
             this.btn_ShortArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_ShortArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_ShortArray.Enabled = false;
             this.btn_ShortArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_ShortArray.Location = new System.Drawing.Point(105, 183);
             this.btn_ShortArray.Name = "btn_ShortArray";
@@ -165,7 +164,6 @@
             // 
             this.btn_FLoatArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_FLoatArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_FLoatArray.Enabled = false;
             this.btn_FLoatArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_FLoatArray.Location = new System.Drawing.Point(105, 138);
             this.btn_FLoatArray.Name = "btn_FLoatArray";
@@ -226,7 +224,6 @@
             // 
             this.btn_BoolArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_BoolArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_BoolArray.Enabled = false;
             this.btn_BoolArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_BoolArray.Location = new System.Drawing.Point(105, 284);
             this.btn_BoolArray.Name = "btn_BoolArray";
@@ -251,7 +248,6 @@
             // 
             this.btn_StringArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_StringArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_StringArray.Enabled = false;
             this.btn_StringArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_StringArray.Location = new System.Drawing.Point(105, 229);
             this.btn_StringArray.Name = "btn_StringArray";
@@ -276,7 +272,6 @@
             // 
             this.btn_DoubleArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_DoubleArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_DoubleArray.Enabled = false;
             this.btn_DoubleArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_DoubleArray.Location = new System.Drawing.Point(105, 90);
             this.btn_DoubleArray.Name = "btn_DoubleArray";
@@ -301,7 +296,6 @@
             // 
             this.btn_IntArray.BackColor = System.Drawing.Color.LightSeaGreen;
             this.btn_IntArray.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btn_IntArray.Enabled = false;
             this.btn_IntArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_IntArray.Location = new System.Drawing.Point(105, 40);
             this.btn_IntArray.Name = "btn_IntArray";

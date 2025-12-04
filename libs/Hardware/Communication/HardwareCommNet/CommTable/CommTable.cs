@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,7 +6,7 @@ using System.Threading;
 namespace HardwareCommNet.CommTable;
 
 /// <summary>
-///�豸ͨѶ����ά������/����в��ṩ�̰߳�ȫ��������ѯ������ڡ�
+/// 设备通讯表，维护输入/输出变量，提供线程安全的增删查改操作。
 /// </summary>
 public sealed class CommTable
 {
@@ -202,6 +202,11 @@ public sealed class CommTable
   Description = c.Description,
   IsTrigger = c.IsTrigger,
   CachedValue = c.CachedValue,
-  CachedTime = c.CachedTime
+  CachedTime = c.CachedTime,
+  // TCP特有字段
+  FieldIndex = c.FieldIndex,
+  Delimiter = c.Delimiter,
+  Terminator = c.Terminator,
+  TriggerMode = c.TriggerMode
  };
 }

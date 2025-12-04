@@ -3,18 +3,18 @@ using System.Windows.Forms;
 namespace HardwareCommNet;
 
 /// <summary>
-/// �����õ�ͨѶ�豸�ӿڣ���ѡʵ�֣�
-/// ���ڻ�ȡ��Ӧ���豸���ò���
+/// 可配置的通讯设备接口（可选实现）
+/// 用于获取对应的设备配置参数
 /// </summary>
 public interface IConfigurableComm
 {
     /// <summary>
-    /// ��ȡ��ǰ�豸�����ò���
+    /// 获取当前设备的配置参数
     /// </summary>
     CommConfig GetConfig();
 
     /// <summary>
-    /// Ӧ�����ò������豸
+    /// 应用配置参数到设备
     /// </summary>
     void ApplyConfig(CommConfig config);
 }

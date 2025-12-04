@@ -6,50 +6,50 @@ using HardwareCommNet.CommTable;
 namespace HardwareCommNet;
 
 /// <summary>
-/// Í¨Ñ¶Éè±¸ÅäÖÃÄ£ĞÍ
+/// é€šè®¯è®¾å¤‡é…ç½®æ¨¡å‹
 /// </summary>
 [Serializable]
 public class CommConfig
 {
     /// <summary>
-    /// Éè±¸Ãû³Æ
+    /// è®¾å¤‡åç§°
     /// </summary>
     [XmlElement("Name")]
     public string Name { get; set; }
 
     /// <summary>
-    /// Éè±¸ÀàĞÍ£¨³§ÉÌÃû³Æ£¬Èç ModbusTcp£©
+    /// è®¾å¤‡ç±»å‹ï¼ˆåˆ¶é€ å•†åç§°ï¼Œå¦‚ ModbusTcpï¼‰
     /// </summary>
     [XmlElement("Type")]
     public string Type { get; set; }
 
     /// <summary>
-    /// ÊÇ·ñÆôÓÃ
+    /// æ˜¯å¦å¯ç”¨
     /// </summary>
   [XmlElement("Enabled")]
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// ÅäÖÃ²ÎÊı£¨¼üÖµ¶ÔĞÎÊ½´æ´¢£¬Èç IP¡¢Port µÈ£©
+    /// é…ç½®å‚æ•°ï¼ˆé”®å€¼å¯¹å½¢å¼å­˜å‚¨ï¼Œå¦‚ IPã€Port ç­‰ï¼‰
     /// </summary>
     [XmlArray("Parameters")]
     [XmlArrayItem("Parameter")]
     public List<CommParameter> Parameters { get; set; } = new List<CommParameter>();
 
     /// <summary>
-    /// Í¨Ñ¶±íÅäÖÃ£¨ÊäÈë/Êä³ö±íµÄ³Ö¾Ã»¯£©
+    /// é€šè®¯è¡¨é…ç½®ï¼ˆè¾“å…¥/è¾“å‡ºå˜é‡çš„æŒä¹…åŒ–ï¼‰
     /// </summary>
     [XmlElement("CommTableConfig")]
     public CommTableConfig TableConfig { get; set; }
 
     /// <summary>
-    /// ´´½¨Ê±¼ä
+    /// åˆ›å»ºæ—¶é—´
     /// </summary>
     [XmlElement("CreateTime")]
     public DateTime CreateTime { get; set; } = DateTime.Now;
 
   /// <summary>
-    /// ×îºóĞŞ¸ÄÊ±¼ä
+    /// æœ€åä¿®æ”¹æ—¶é—´
     /// </summary>
     [XmlElement("LastModifyTime")]
  public DateTime LastModifyTime { get; set; } = DateTime.Now;
@@ -65,7 +65,7 @@ public class CommConfig
     }
 
     /// <summary>
-    /// »ñÈ¡²ÎÊıÖµ
+    /// è·å–å‚æ•°å€¼
     /// </summary>
     public string GetParameter(string key, string defaultValue = "")
     {
@@ -74,7 +74,7 @@ public class CommConfig
     }
 
     /// <summary>
-    /// ÉèÖÃ²ÎÊıÖµ
+    /// è®¾ç½®å‚æ•°å€¼
     /// </summary>
     public void SetParameter(string key, string value)
     {
@@ -95,7 +95,7 @@ public class CommConfig
 }
 
 /// <summary>
-/// Í¨Ñ¶²ÎÊı¼üÖµ¶Ô
+/// é€šè®¯å‚æ•°é”®å€¼å¯¹
 /// </summary>
 [Serializable]
 public class CommParameter
@@ -108,7 +108,7 @@ public class CommParameter
 }
 
 /// <summary>
-/// Í¨Ñ¶±íÅäÖÃ£¨ÓÃÓÚĞòÁĞ»¯£©
+/// é€šè®¯è¡¨é…ç½®ï¼ˆå¯åºåˆ—åŒ–ï¼‰
 /// </summary>
 [Serializable]
 public class CommTableConfig
@@ -123,7 +123,7 @@ public class CommTableConfig
 }
 
 /// <summary>
-/// CommCell µÄ¿ÉĞòÁĞ»¯°æ±¾
+/// CommCell çš„å¯åºåˆ—åŒ–ç‰ˆæœ¬
 /// </summary>
 [Serializable]
 public class CommCellConfig
@@ -151,14 +151,58 @@ public class CommCellConfig
     public string Description { get; set; }
     
     /// <summary>
-    /// ÊÇ·ñÎª´¥·¢ĞÅºÅ£¨ÓÃÓÚ×Ô¶¯¸´Î»£©
+    /// æ˜¯å¦ä¸ºè§¦å‘ä¿¡å·ï¼ˆæ”¯æŒè‡ªåŠ¨å¤ä½ï¼‰
     /// </summary>
     [XmlElement("IsTrigger")]
     public bool IsTrigger { get; set; } = false;
+    
+    #region TCP ä¸“ç”¨å­—æ®µ
+    
+    /// <summary>
+    /// TCPå­—æ®µç´¢å¼•ï¼ˆæŒ‰åˆ†éš”ç¬¦æ‹†åˆ†åçš„ç´¢å¼•ï¼Œä»0å¼€å§‹ï¼‰
+    /// -1 è¡¨ç¤ºä¸ä½¿ç”¨å­—æ®µç´¢å¼•ï¼Œä½¿ç”¨æ•´ä¸ªæ¶ˆæ¯
+    /// </summary>
+    [XmlElement("FieldIndex")]
+    public int FieldIndex { get; set; } = -1;
+    
+    /// <summary>
+    /// TCPæ¶ˆæ¯åˆ†éš”ç¬¦
+    /// </summary>
+    [XmlElement("Delimiter")]
+    public string Delimiter { get; set; } = ",";
+    
+    /// <summary>
+    /// TCPæ¶ˆæ¯ç»“æŸç¬¦
+    /// </summary>
+    [XmlElement("Terminator")]
+    public string Terminator { get; set; } = "\r\n";
+    
+    /// <summary>
+    /// è§¦å‘æ¨¡å¼
+    /// 0 = å€¼åŒ¹é…è§¦å‘ï¼ˆé»˜è®¤ï¼‰
+    /// 1 = å€¼å˜åŒ–è§¦å‘
+    /// 2 = ä»»æ„éç©ºè§¦å‘
+    /// </summary>
+    [XmlElement("TriggerMode")]
+    public int TriggerMode { get; set; } = 0;
+    
+    /// <summary>
+    /// æ˜¯å¦ä½¿ç”¨æ­£åˆ™è¡¨è¾¾å¼åŒ¹é…
+    /// </summary>
+    [XmlElement("UseRegex")]
+    public bool UseRegex { get; set; } = false;
+    
+    /// <summary>
+    /// æ­£åˆ™è¡¨è¾¾å¼æ¨¡å¼
+    /// </summary>
+    [XmlElement("RegexPattern")]
+    public string RegexPattern { get; set; } = string.Empty;
+    
+    #endregion
 }
 
 /// <summary>
-/// Í¨Ñ¶ÅäÖÃ¼¯ºÏ£¨ÓÃÓÚ XML ĞòÁĞ»¯£©
+/// é€šè®¯é…ç½®é›†åˆï¼ˆç”¨äº XML åºåˆ—åŒ–ï¼‰
 /// </summary>
 [Serializable]
 [XmlRoot("CommConfigs")]

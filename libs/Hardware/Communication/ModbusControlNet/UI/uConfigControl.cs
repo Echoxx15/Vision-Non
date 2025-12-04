@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using HardwareCommNet;
-using HardwareCommNet.UI; // Frm_CommTable
+
 
 namespace ModbusControlNet.UI;
 
@@ -13,25 +13,6 @@ public partial class uConfigControl : UserControl
 	{
 		InitializeComponent();
 		cmbDataFormat.SelectedIndex = 1; // 默认选择CDAB
-		btn_OpenTable.Click += Btn_OpenTable_Click;
-	}
-
-	private void Btn_OpenTable_Click(object sender, EventArgs e)
-	{
-		if (_device == null)
-		{
-			MessageBox.Show("设备未绑定", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			return;
-		}
-		try
-		{
-			using var frm = new Frm_CommTable(_device);
-			frm.ShowDialog(this);
-		}
-		catch (Exception ex)
-		{
-			MessageBox.Show($"打开通讯表失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
 	}
 
 	/// <summary>
@@ -85,6 +66,10 @@ public partial class uConfigControl : UserControl
 				
 				if (byte.TryParse(config.GetParameter("Station", "1"), out var station))
 					numStation.Value = station;
+				
+				// 加载字符串反转属性
+				if (bool.TryParse(config.GetParameter("StringReverse", "false"), out var stringReverse))
+					chkStringReverse.Checked = stringReverse;
 
 				chkEnabled.Checked = true; // 默认启用
 			}
@@ -104,23 +89,28 @@ public partial class uConfigControl : UserControl
 
 		try
 		{
-			if (_device is ModbusTcp modbus && !_device.IsConnected)
+			if (_device is ModbusTcp modbus)
 			{
 				// ⚠️ 只有在未连接状态下才能修改配置
+				if (_device.IsConnected)
+				{
+					MessageBox.Show("设备已连接，无法修改配置。请先断开连接。", "提示",
+						MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				
 				var config = new CommConfig(modbus.Name, "ModbusTcp");
 				config.SetParameter("IpAddress", txtIpAddress.Text);
 				config.SetParameter("Port", numPort.Value.ToString());
 				config.SetParameter("Station", numStation.Value.ToString());
+				config.SetParameter("StringReverse", chkStringReverse.Checked.ToString());
 				
 				modbus.ApplyConfig(config);
 
 				// 保存到 CommunicationFactory
 				CommunicationFactory.Instance.SaveConfigs();
-			}
-			else if (_device.IsConnected)
-			{
-				MessageBox.Show("设备已连接，无法修改配置。请先断开连接。", "提示",
-					MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				
+				MessageBox.Show("配置已保存", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
 		}
 		catch (Exception ex)
@@ -128,6 +118,14 @@ public partial class uConfigControl : UserControl
 			MessageBox.Show($"保存配置失败: {ex.Message}", "错误",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
+	}
+
+	/// <summary>
+	/// 保存按钮点击事件
+	/// </summary>
+	private void btn_Save_Click(object sender, EventArgs e)
+	{
+		SaveConfigToDevice();
 	}
 
 	/// <summary>
@@ -146,65 +144,61 @@ public partial class uConfigControl : UserControl
 	}
 
 	/// <summary>
-	/// 更新连接按钮状态
+	/// 更新连接状态相关的 UI
 	/// </summary>
 	private void UpdateConnectButtonState()
 	{
 		if (_device != null)
 		{
-			btnConnect.Text = _device.IsConnected ? "断开" : "连接";
-			btnConnect.BackColor =
-				_device.IsConnected ? System.Drawing.Color.LightGreen : System.Drawing.Color.LightCoral;
-			
 			// ✅ 连接时禁用配置编辑
 			txtIpAddress.Enabled = !_device.IsConnected;
 			numPort.Enabled = !_device.IsConnected;
 			numStation.Enabled = !_device.IsConnected;
+			chkStringReverse.Enabled = !_device.IsConnected;
 		}
 	}
 
 	/// <summary>
-	/// 连接按钮点击事件
-	/// ✅ 用户显式操作：连接/断开
+	/// 尝试连接设备
 	/// </summary>
-	private void btnConnect_Click(object sender, EventArgs e)
+	/// <returns>连接是否成功</returns>
+	private bool TryConnectDevice()
 	{
 		if (_device == null)
 		{
 			MessageBox.Show("设备未绑定", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			return;
+			return false;
+		}
+
+		if (_device.IsConnected)
+		{
+			return true;
 		}
 
 		try
 		{
+			// 连接前保存配置
+			SaveConfigToDevice();
+			
+			// 尝试连接
+			_device.Connect();
+			
 			if (_device.IsConnected)
 			{
-				// ✅ 用户显式点击断开按钮
-				_device.Disconnect();
-				MessageBox.Show("断开成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show("连接成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				return true;
 			}
 			else
 			{
-				// ✅ 连接前保存配置
-				SaveConfigToDevice();
-				
-				// ✅ 用户显式点击连接按钮
-				_device.Connect();
-				
-				if (_device.IsConnected)
-				{
-					MessageBox.Show("连接成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				}
-				else
-				{
-					MessageBox.Show("连接失败，请检查配置", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
+				MessageBox.Show("连接失败，请检查配置", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return false;
 			}
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show($"操作失败: {ex.Message}", "错误",
+			MessageBox.Show($"连接失败: {ex.Message}", "错误",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);
+			return false;
 		}
 	}
 
@@ -230,9 +224,7 @@ public partial class uConfigControl : UserControl
 			
 			if (result == DialogResult.Yes)
 			{
-				btnConnect_Click(sender, e);
-				
-				if (!_device.IsConnected)
+				if (!TryConnectDevice())
 				{
 					return; // 连接失败，不打开测试窗口
 				}
@@ -278,6 +270,9 @@ public partial class uConfigControl : UserControl
 		
 		if (byte.TryParse(config.GetParameter("Station", "1"), out var station))
 			numStation.Value = station;
+		
+		if (bool.TryParse(config.GetParameter("StringReverse", "false"), out var stringReverse))
+			chkStringReverse.Checked = stringReverse;
 
 		chkEnabled.Checked = true;
 	}

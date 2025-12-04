@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,13 +17,18 @@ namespace HikCamera;
 /// </summary>
 // 标记支持的品牌名称
 [CameraManufacturer("海康面阵相机")]
-public class HikCamera : ICamera
+public class HikCamera : ICamera, IDisposable
 {
   /// <summary>
   /// 海康支持的设备类型
   /// </summary>
   const DeviceTLayerType devLayerType = DeviceTLayerType.MvGigEDevice | DeviceTLayerType.MvUsbDevice;// | DeviceTLayerType.MvGenTLCameraLinkDevice
                                                                                                      //| DeviceTLayerType.MvGenTLCXPDevice | DeviceTLayerType.MvGenTLXoFDevice;
+
+  /// <summary>
+  /// 标记是否已释放，防止多次释放
+  /// </summary>
+  private bool _disposed;
 
 
   #region ICamera接口属性
@@ -38,7 +43,7 @@ public class HikCamera : ICamera
   public event EventHandler<bool> DisConnetEvent;
   public string SN { get; }
 
-  public CameraType Type => CameraType.AreaScan;
+  public CameraType Type => CameraType.面阵相机;
 
   public bool IsConnected => device is { IsConnected: true };
 
@@ -248,21 +253,12 @@ public class HikCamera : ICamera
     return 0;
   }
 
-  public void DisConnet()
-  {
-
-    // ch:关闭设备 | en:Close device
-    if (device == null) return;
-    StopGrabbing();
-    int ret = device.Close();
-    if (ret != MvError.MV_OK)
-    {
-      Console.WriteLine("Close device failed:{0:x8}", ret);
-    }
-  }
-
   public void Close()
   {
+    // 防止多次释放
+    if (_disposed) return;
+    _disposed = true;
+    
     // ch:关闭设备 | en:Close device
     if (device == null) return;
     //ch: 通知异步处理线程退出 | en: Notify the thread to exit
@@ -271,6 +267,23 @@ public class HikCamera : ICamera
       device.Close();
     device.Dispose();
     device = null;
+  }
+
+  /// <summary>
+  /// 实现IDisposable接口，释放资源时自动调用Close
+  /// </summary>
+  public void Dispose()
+  {
+    Close();
+    GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// 析构函数，确保资源被释放
+  /// </summary>
+  ~HikCamera()
+  {
+    Close();
   }
 
   //public CameraConfig GetConfig()

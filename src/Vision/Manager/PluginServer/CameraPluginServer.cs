@@ -70,6 +70,27 @@ public sealed class CameraPluginServer
         return null;
     }
 
+    /// <summary>
+    /// 根据厂商名称获取插件信息
+    /// </summary>
+    public PluginInfo? GetPluginInfoByManufacturer(string manufacturerName)
+    {
+        if (string.IsNullOrEmpty(manufacturerName))
+            return null;
+        
+        foreach (var kvp in _pluginTypes)
+        {
+            var type = kvp.Value;
+            var manufacturerAttr = type.GetCustomAttribute<CameraManufacturerAttribute>();
+            if (manufacturerAttr != null && 
+                string.Equals(manufacturerAttr.ManufacturerName, manufacturerName, StringComparison.OrdinalIgnoreCase))
+            {
+                return _pluginInfos.TryGetValue(kvp.Key, out var info) ? info : null;
+            }
+        }
+        return null;
+    }
+
     public Type? GetPluginType(string typeName)
     {
         _pluginTypes.TryGetValue(typeName, out var type);

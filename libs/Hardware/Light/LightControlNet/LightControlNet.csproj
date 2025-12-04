@@ -56,6 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LightControllerBase.cs" />
     <Compile Include="LightManufacturerAttribute.cs" />
     <Compile Include="LightPluginServer.cs" />
     <Compile Include="LightManager.cs" />
@@ -73,13 +74,22 @@
     <Compile Include="UI\Frm_LightConfig.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UI\Frm_LightConfig.Designer.cs">
-      <DependentUpon>Frm_LightConfig.cs</DependentUpon>
+    <Compile Include="UI\uLightConfig.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\uLightConfig.Designer.cs">
+      <DependentUpon>uLightConfig.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\uLightDeviceItem.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\uLightDeviceItem.Designer.cs">
+      <DependentUpon>uLightDeviceItem.cs</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="UI\Frm_LightConfig.resx">
-      <DependentUpon>Frm_LightConfig.cs</DependentUpon>
+    <EmbeddedResource Include="UI\uLightConfig.resx">
+      <DependentUpon>uLightConfig.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

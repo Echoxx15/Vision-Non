@@ -151,16 +151,12 @@
     <Compile Include="Auth\Storage\SqliteDb.cs" />
     <Compile Include="Auth\UserManager.cs" />
     <Compile Include="Common\TypeValueUtil.cs" />
-    <Compile Include="Controls\Form1.cs">
+    <Compile Include="Frm\DLModel\FrmSelectItem.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Controls\Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\SafePropertyGrid.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Frm\FormComm\CommDeviceModel.cs" />
     <Compile Include="Frm\FrmHardwareState\Frm_HardwareState.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -185,11 +181,11 @@
     <Compile Include="Frm\Link\Frm_LinkValue.Designer.cs">
       <DependentUpon>Frm_LinkValue.cs</DependentUpon>
     </Compile>
-    <Compile Include="Frm\MainForm\Frm_Camera2D.cs">
+    <Compile Include="Frm\DLModel\Frm_DLModelConfig.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Frm\MainForm\Frm_Camera2D.Designer.cs">
-      <DependentUpon>Frm_Camera2D.cs</DependentUpon>
+    <Compile Include="Frm\DLModel\Frm_DLModelConfig.Designer.cs">
+      <DependentUpon>Frm_DLModelConfig.cs</DependentUpon>
     </Compile>
     <Compile Include="Frm\MainForm\Frm_DisplaySet.cs">
       <SubType>Form</SubType>
@@ -214,12 +210,6 @@
     </Compile>
     <Compile Include="Frm\MainForm\Frm_Splash.Designer.cs">
       <DependentUpon>Frm_Splash.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Frm\FormComm\Frm_Comm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Frm\FormComm\Frm_Comm.Designer.cs">
-      <DependentUpon>Frm_Comm.cs</DependentUpon>
     </Compile>
     <Compile Include="Frm\Station\Frm_OutputMapping.cs">
       <SubType>Form</SubType>
@@ -269,18 +259,13 @@
     <Compile Include="LightSource\LightModels.cs" />
     <Compile Include="LightSource\LightSourceManager.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
-    <Compile Include="Manager\CameraManager\CameraConfig.cs" />
-    <Compile Include="Manager\CameraManager\CameraManager.cs" />
-    <Compile Include="Manager\PluginServer\CameraPluginServer.cs" />
-    <Compile Include="Manager\PluginServer\PluginInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SaveImage\ImageSaver.cs" />
     <Compile Include="Settings\FileSettings.cs" />
     <Compile Include="Solutions\Models\CameraModels.cs" />
     <Compile Include="Solutions\Models\DisplayModels.cs" />
-    <Compile Include="Solutions\Models\DLModelLoader.cs" />
-    <Compile Include="Solutions\Models\DLRuntime.cs" />
+    <Compile Include="Solutions\Models\LinkablePropertyAttribute.cs" />
     <Compile Include="Solutions\Models\StationConfig.cs" />
     <Compile Include="Solutions\Models\SolutionModels.cs" />
     <Compile Include="Solutions\TaskFlow\TaskFlowManager.cs" />
@@ -304,9 +289,6 @@
     <Compile Include="UserUI\uAddValueCollection.Designer.cs">
       <DependentUpon>uAddValueCollection.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Controls\Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Frm\FrmHardwareState\Frm_HardwareState.resx">
       <DependentUpon>Frm_HardwareState.cs</DependentUpon>
     </EmbeddedResource>
@@ -315,9 +297,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Frm\Link\Frm_GlobalVal.resx">
       <DependentUpon>Frm_GlobalVal.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Frm\MainForm\Frm_Camera2D.resx">
-      <DependentUpon>Frm_Camera2D.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Frm\MainForm\Frm_DisplaySet.resx">
       <DependentUpon>Frm_DisplaySet.cs</DependentUpon>
@@ -335,8 +314,8 @@
     <EmbeddedResource Include="Frm\MainForm\Frm_Splash.resx">
       <DependentUpon>Frm_Splash.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Frm\FormComm\Frm_Comm.resx">
-      <DependentUpon>Frm_Comm.cs</DependentUpon>
+    <EmbeddedResource Include="Frm\Station\Frm_OutputMapping.resx">
+      <DependentUpon>Frm_OutputMapping.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Frm\Station\Frm_StationConfig.resx">
       <DependentUpon>Frm_StationConfig.cs</DependentUpon>
@@ -404,11 +383,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\深度学习1.png" />
     <Content Include="YZZN.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Hardware\Camera\HardwareCameraNet\HardwareCameraNet.csproj">
       <Project>{02d11c38-cc51-4ba5-ac42-c5091b86abbb}</Project>
@@ -421,6 +399,10 @@
     <ProjectReference Include="..\..\libs\Hardware\Light\LightControlNet\LightControlNet.csproj">
       <Project>{575aa0d3-08f5-44df-ade1-6ed39ada9e1e}</Project>
       <Name>LightControlNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libs\Deep Learning\DnnInterfaceNet\DnnInterfaceNet.csproj">
+      <Project>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</Project>
+      <Name>DnnInterfaceNet</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

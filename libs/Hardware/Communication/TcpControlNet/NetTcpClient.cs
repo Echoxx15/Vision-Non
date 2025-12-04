@@ -8,355 +8,366 @@ using Logger;
 namespace TcpControlNet;
 
 /// <summary>
-/// TCP ¿Í»§¶Ë£¨Í³Ò»Ê¹ÓÃ IComm ½Ó¿ÚÊÂ¼ş£©
-/// - async/await ¼Ü¹¹
-/// - ×Ô¶¯ÖØÁ¬£¨¿É¹Ø±Õ£©
-/// - Í³Ò»Í¨¹ı MessageReceived ·¢²¼ÏûÏ¢
-/// - Í³Ò»Í¨¹ı ConnectionStatusChanged ·¢²¼Á¬½Ó×´Ì¬
-/// - ¼òµ¥¿É¿ØµÄ»»ĞĞ·ÖÖ¡£¨¿ÉÑ¡£©
+/// TCP å®¢æˆ·ç«¯ï¼Œç»Ÿä¸€ä½¿ç”¨ IComm æ¥å£äº‹ä»¶ã€‚
+/// - async/await æ¶æ„
+/// - è‡ªåŠ¨é‡è¿ï¼ˆå¯å…³é—­ï¼‰
+/// - ç»Ÿä¸€é€šè¿‡ MessageReceived åˆ†å‘æ¶ˆæ¯
+/// - ç»Ÿä¸€é€šè¿‡ ConnectionStatusChanged æŠ¥å‘Šè¿æ¥çŠ¶æ€
+/// - ç®€å•å¯æ§çš„æ¢è¡Œåˆ†å¸§ï¼ˆå¯é€‰ï¼‰
 /// </summary>
 public sealed class NetTcpClient : IDisposable
 {
-  private readonly string _ip;
-  private readonly int _port;
-  private Encoding _encoding;
-  private TcpClient _client;
-  private NetworkStream _stream;
-  private CancellationTokenSource _cts;
-  private Task _runTask;
-  private volatile bool _connected;
+    private readonly string _ip;
+    private readonly int _port;
+    private Encoding _encoding;
+    private TcpClient _client;
+    private NetworkStream _stream;
+    private CancellationTokenSource _cts;
+    private Task _runTask;
+    private volatile bool _connected;
 
-  private readonly byte[] _rxBuf = new byte[8192];
-  private readonly StringBuilder _lineAcc = new StringBuilder();
+    private readonly byte[] _rxBuf = new byte[8192];
+    private readonly StringBuilder _lineAcc = new StringBuilder();
 
-  // Á¬½ÓÓëÖØÁ¬
-  /// <summary>ÊÇ·ñ×Ô¶¯ÖØÁ¬£¨Ä¬ÈÏ true£©¡£</summary>
-  public bool AutoReconnect { get; set; } = true;
+    // é…ç½®å±æ€§
+    /// <summary>æ˜¯å¦è‡ªåŠ¨é‡è¿ï¼ˆé»˜è®¤ trueï¼‰</summary>
+    public bool AutoReconnect { get; set; } = true;
 
-  /// <summary>ÖØÁ¬¼ä¸ô£¨ºÁÃë£©¡£</summary>
-  public int ReconnectDelayMs { get; set; } = 3000;
+    /// <summary>é‡è¿é—´éš”ï¼ˆæ¯«ç§’ï¼‰</summary>
+    public int ReconnectDelayMs { get; set; } = 3000;
 
-  /// <summary>Á¬½Ó³¬Ê±£¨ºÁÃë£©¡£</summary>
-  public int ConnectTimeoutMs { get; set; } = 5000;
+    /// <summary>è¿æ¥è¶…æ—¶ï¼ˆæ¯«ç§’ï¼‰</summary>
+    public int ConnectTimeoutMs { get; set; } = 5000;
 
-  // ½âÎö
-  /// <summary>ÊÇ·ñ°´»»ĞĞ·û·ÖÖ¡£¨true Ê±°´"\n"²ğ°ü´¥·¢ÏûÏ¢ÊÂ¼ş£©¡£</summary>
-  public bool FrameByNewLine { get; set; }
+    // åˆ†å¸§
+    /// <summary>æ˜¯å¦æŒ‰æ¢è¡Œç¬¦åˆ†å¸§ï¼ˆtrue æ—¶æŒ‰"\n"åˆ†å‰²ä¸ŠæŠ¥æ¶ˆæ¯äº‹ä»¶ï¼‰</summary>
+    public bool FrameByNewLine { get; set; }
 
-  // ? Í³Ò»Ê¹ÓÃ IComm ½Ó¿ÚÊÂ¼ş
-  /// <summary>ÏûÏ¢½ÓÊÕÊÂ¼ş£¨Í³Ò»½Ó¿Ú£©</summary>
-  public event EventHandler<object> MessageReceived;
+    // ç»Ÿä¸€ä½¿ç”¨ IComm æ¥å£äº‹ä»¶
+    /// <summary>æ¶ˆæ¯æ¥æ”¶äº‹ä»¶ï¼ˆç»Ÿä¸€æ¥å£ï¼‰</summary>
+    public event EventHandler<object> MessageReceived;
 
-  /// <summary>Á¬½Ó×´Ì¬±ä»¯ÊÂ¼ş£¨Í³Ò»½Ó¿Ú£©</summary>
-  public event EventHandler<bool> ConnectionStatusChanged;
+    /// <summary>è¿æ¥çŠ¶æ€å˜åŒ–äº‹ä»¶ï¼ˆç»Ÿä¸€æ¥å£ï¼‰</summary>
+    public event EventHandler<bool> ConnectionStatusChanged;
 
-  /// <summary>Ô­Ê¼×Ö½Ú½ÓÊÕÊÂ¼ş£¨±£ÁôÓÃÓÚÌØÊâ³¡¾°£©</summary>
-  public event Action<byte[], int> BytesReceived;
+    /// <summary>åŸå§‹å­—èŠ‚æ¥æ”¶äº‹ä»¶ï¼ˆä¾›ç‰¹æ®Šè°ƒè¯•åœºæ™¯ï¼‰</summary>
+    public event Action<byte[], int> BytesReceived;
 
-  public string Name { get; }
+    /// <summary>åŸå§‹æ–‡æœ¬æ¶ˆæ¯æ¥æ”¶äº‹ä»¶ï¼ˆæœªç»å¤„ç†çš„åŸå§‹æ¶ˆæ¯ï¼Œç”¨äºUIæ˜¾ç¤ºï¼‰</summary>
+    public event EventHandler<string> RawMessageReceived;
 
-  /// <summary>µ±Ç°ÊÇ·ñ´¦ÓÚÁ¬½Ó×´Ì¬¡£</summary>
-  public bool IsConnected => _connected;
+    public string Name { get; }
 
-  /// <summary>
-  /// ÎÄ±¾±à½âÂë·½Ê½£¨Ä¬ÈÏ UTF8£©£¬¿ÉÔÚÔËĞĞÊ±ĞŞ¸Ä¡£
-  /// </summary>
-  public Encoding TextEncoding
-  {
-    get => _encoding;
-    set => _encoding = value ?? Encoding.UTF8;
-  }
+    /// <summary>å½“å‰æ˜¯å¦å¤„äºè¿æ¥çŠ¶æ€</summary>
+    public bool IsConnected => _connected;
 
-  /// <summary>
-  /// ¹¹Ôì TCP ¿Í»§¶Ë¡£
-  /// </summary>
-  /// <param name="ip">·şÎñÆ÷IPµØÖ·</param>
-  /// <param name="port">·şÎñÆ÷¶Ë¿Ú</param>
-  /// <param name="encoding">ÎÄ±¾±àÂë£¨Ä¬ÈÏUTF8£©</param>
-  /// <param name="name">¿Í»§¶ËÃû³Æ£¨ÓÃÓÚÈÕÖ¾±êÊ¶£©</param>
-  public NetTcpClient(string ip, int port, Encoding encoding = null, string name = null)
-  {
-    _ip = ip;
-    _port = port;
-    _encoding = encoding ?? Encoding.UTF8;
-    Name = name ?? $"TcpClient_{ip}:{port}";
-    // ?? ²»ÔÚ¹¹Ôìº¯ÊıÖĞÆô¶¯Á¬½Ó£¬ÓÉÍâ²¿ÏÔÊ½µ÷ÓÃ Start()
-    // ÕâÑù¿ÉÒÔ±ÜÃâÔÚ³õÊ¼»¯½×¶Î×èÈûÖ÷Ïß³Ì
-  }
-
-  /// <summary>
-  /// ¿ªÊ¼Á¬½Ó²¢½øÈë½ÓÊÕÑ­»·£¨Èç¶Ï¿ªÇÒ AutoReconnect=true ½«×Ô¶¯ÖØÁ¬£©¡£
-  /// </summary>
-  public void Start()
-  {
-    if (_runTask != null) return; // ÒÑÆô¶¯ÔòºöÂÔ
-    _cts = new CancellationTokenSource();
-    _runTask = RunAsync(_cts.Token); // Æô¶¯ºóÌ¨Á¬½Ó/½ÓÊÕÑ­»·
-  }
-
-  /// <summary>
-  /// Í£Ö¹²¢¶Ï¿ªÁ¬½Ó£¨È¡ÏûºóÌ¨Ñ­»·£©¡£
-  /// </summary>
-  public void Stop()
-  {
-    var cts = _cts;
-    _cts = null;
-    try
+    /// <summary>
+    /// æ›´æ”¹ç¼–ç æ–¹å¼ï¼ˆé»˜è®¤ UTF8ï¼‰ã€‚å¯åœ¨è¿è¡Œæ—¶ä¿®æ”¹ã€‚
+    /// </summary>
+    public Encoding TextEncoding
     {
-      cts?.Cancel();
-    }
-    catch
-    {
+        get => _encoding;
+        set => _encoding = value ?? Encoding.UTF8;
     }
 
-    try
+    /// <summary>
+    /// åˆ›å»º TCP å®¢æˆ·ç«¯ã€‚
+    /// </summary>
+    /// <param name="ip">æœåŠ¡å™¨IPåœ°å€</param>
+    /// <param name="port">æœåŠ¡å™¨ç«¯å£</param>
+    /// <param name="encoding">æ–‡æœ¬ç¼–ç ï¼ˆé»˜è®¤UTF8ï¼‰</param>
+    /// <param name="name">å®¢æˆ·ç«¯åç§°ï¼ˆç”¨äºæ—¥å¿—æ ‡è¯†ï¼‰</param>
+    public NetTcpClient(string ip, int port, Encoding encoding = null, string name = null)
     {
-      _runTask?.Wait(1000);
+        _ip = ip;
+        _port = port;
+        _encoding = encoding ?? Encoding.UTF8;
+        Name = name ?? $"TcpClient_{ip}:{port}";
+        // ä¸åœ¨æ„é€ å‡½æ•°ä¸­å¯åŠ¨è¿æ¥ï¼Œç”±å¤–éƒ¨æ˜¾å¼è°ƒç”¨ Start()
+        // è¿™æ ·å¯ä»¥é¿å…åœ¨åˆå§‹åŒ–é˜¶æ®µå¯åŠ¨å¼‚æ­¥çº¿ç¨‹
     }
-    catch
+
+    /// <summary>
+    /// å¼€å§‹è¿æ¥å¹¶å¯åŠ¨æ¥æ”¶å¾ªç¯ã€‚å¦‚æœæ–­å¼€ä¸” AutoReconnect=true ä¼šè‡ªåŠ¨é‡è¿ã€‚
+    /// </summary>
+    public void Start()
     {
+        if (_runTask != null) return; // é˜²æ­¢é‡å¤å¯åŠ¨
+        _cts = new CancellationTokenSource();
+        _runTask = RunAsync(_cts.Token); // å¯åŠ¨åå°è¿æ¥/æ¥æ”¶å¾ªç¯
     }
 
-    _runTask = null;
-    Cleanup(); // ¹Ø±Õµ×²ãÁ÷ÓëÌ×½Ó×Ö
-    SetConnected(false);
-  }
-
-  /// <summary>
-  /// ºóÌ¨ÔËĞĞÖ÷Ñ­»·£ºÁ¬½Ó -> ½ÓÊÕ -> Òì³£/¶Ï¿ª -> £¨¿ÉÑ¡£©ÖØÁ¬¡£
-  /// </summary>
-  private async Task RunAsync(CancellationToken token)
-  {
-    while (!token.IsCancellationRequested)
+    /// <summary>
+    /// åœæ­¢è¿æ¥ï¼Œæ–­å¼€è¿æ¥å¹¶å–æ¶ˆåå°å¾ªç¯ã€‚
+    /// </summary>
+    public void Stop()
     {
-      try
-      {
-        await ConnectOnceAsync(token).ConfigureAwait(false);
-        await ReceiveLoopAsync(token).ConfigureAwait(false);
-      }
-      catch (OperationCanceledException)
-      {
-        break;
-      }
-      catch
-      {
-        /* ±£³ÖÑ­»·£¬½øÈëÖØÁ¬ */
-      }
-
-      SetConnected(false);
-      Cleanup();
-      if (!AutoReconnect) break; // ¹Ø±Õ×Ô¶¯ÖØÁ¬ÔòÍË³ö
-      try
-      {
-        await Task.Delay(ReconnectDelayMs, token).ConfigureAwait(false);
-      }
-      catch
-      {
-        break;
-      }
-    }
-  }
-
-  /// <summary>
-  /// Ö´ĞĞÒ»´ÎÁ¬½Ó£¨´ø³¬Ê±£©¡£³É¹¦ºó»ñÈ¡ NetworkStream¡£
-  /// </summary>
-  private async Task ConnectOnceAsync(CancellationToken token)
-  {
-    Cleanup();
-    _client = new TcpClient();
-    var connectTask = _client.ConnectAsync(_ip, _port);
-    var timeout = Task.Delay(ConnectTimeoutMs, token);
-    var done = await Task.WhenAny(connectTask, timeout).ConfigureAwait(false);
-    if (done != connectTask) throw new TimeoutException("TCP Á¬½Ó³¬Ê±"); // Á¬½Ó³¬Ê±
-    _stream = _client.GetStream(); // »ñÈ¡ÍøÂçÁ÷
-    SetConnected(true);
-  }
-
-  /// <summary>
-  /// ½ÓÊÕÑ­»·£ºReadAsync -> ÉÏ±¨Ô­Ê¼×Ö½Ú -> ×ª»»ÎÄ±¾ -> ´¥·¢ MessageReceived
-  /// </summary>
-  private async Task ReceiveLoopAsync(CancellationToken token)
-  {
-    while (!token.IsCancellationRequested && _client != null && _client.Connected)
-    {
-      int n;
-      try
-      {
-        n = await _stream.ReadAsync(_rxBuf, 0, _rxBuf.Length, token).ConfigureAwait(false);
-      }
-      catch (OperationCanceledException)
-      {
-        break;
-      }
-      catch
-      {
-        break;
-      } // ¶ÁÒì³££¬ÈÏÎª¶Ï¿ª
-
-      if (n <= 0) break; // Ô¶¶ËÓÅÑÅ¶Ï¿ª
-
-      // ? ¿ÉÑ¡£º´¥·¢Ô­Ê¼×Ö½ÚÊÂ¼ş£¨ÓÃÓÚÌØÊâ³¡¾°£¬Èç¶ş½øÖÆĞ­Òé£©
-      try
-      {
-        BytesReceived?.Invoke(_rxBuf, n);
-      }
-      catch
-      {
-        // ÓÃ»§ÊÂ¼ş´¦ÀíÒì³£²»Ó°Ïì½ÓÊÕÑ­»·
-      }
-
-      // ? Í³Ò»´¦ÀíÎÄ±¾ÏûÏ¢²¢´¥·¢ MessageReceived
-      if (MessageReceived != null)
-      {
+        var cts = _cts;
+        _cts = null;
         try
         {
-          var text = _encoding.GetString(_rxBuf, 0, n); // ½«±¾´Î»º³å×ª»»Îª×Ö·û´®
-
-          if (FrameByNewLine)
-          {
-            // °´»»ĞĞÀÛ¼Æ²¢ÖğĞĞÉÏ±¨
-            _lineAcc.Append(text);
-            string acc = _lineAcc.ToString();
-            int idx;
-            while ((idx = acc.IndexOf('\n')) >= 0)
-            {
-              var line = acc.Substring(0, idx).TrimEnd('\r');
-              try
-              {
-                LogHelper.Info($"[{Name}] ½ÓÊÕµ½ÏûÏ¢: {line}");
-              }
-              catch
-              {
-                // ÈÕÖ¾Ê§°Ü²»Ó°ÏìÏûÏ¢´¦Àí
-              }
-              MessageReceived?.Invoke(this, line);
-              acc = acc.Substring(idx + 1);
-            }
-
-            _lineAcc.Clear();
-            _lineAcc.Append(acc); // ±£ÁôÎ´ĞÎ³ÉÒ»ĞĞµÄ²ĞÓàÊı¾İ
-          }
-          else
-          {
-            // Ö±½Ó°´¿éÉÏ±¨
-            try
-            {
-              LogHelper.Info($"[{Name}] ½ÓÊÕµ½ÏûÏ¢¿é: {text.Length} ×Ö½Ú");
-            }
-            catch
-            {
-              // ÈÕÖ¾Ê§°Ü²»Ó°ÏìÏûÏ¢´¦Àí
-            }
-            MessageReceived?.Invoke(this, text);
-          }
+            cts?.Cancel();
         }
         catch
         {
-          // ÓÃ»§ÊÂ¼ş´¦ÀíÒì³£²»Ó°Ïì½ÓÊÕÑ­»·
         }
-      }
-    }
-  }
 
-  /// <summary>
-  /// ·¢ËÍ UTF8 ÎÄ±¾¡£
-  /// </summary>
-  public async Task<bool> SendAsync(string text)
-  {
-    if (_stream == null || !_connected) return false;
-    try
-    {
-      var data = _encoding.GetBytes(text);
-      await _stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false); // Òì²½Ğ´Èë
-      return true;
-    }
-    catch
-    {
-      return false;
-    }
-  }
+        try
+        {
+            _runTask?.Wait(1000);
+        }
+        catch
+        {
+        }
 
-  /// <summary>
-  /// ·¢ËÍ¶ş½øÖÆÊı¾İ¡£
-  /// </summary>
-  public async Task<bool> SendAsync(byte[] data, int offset = 0, int count = -1)
-  {
-    if (_stream == null || !_connected) return false;
-    try
-    {
-      if (count < 0) count = data.Length - offset;
-      await _stream.WriteAsync(data, offset, count).ConfigureAwait(false);
-      return true;
-    }
-    catch
-    {
-      return false;
-    }
-  }
-
-  /// <summary>
-  /// Í¬²½·¢ËÍ UTF8 ÎÄ±¾£¨×èÈûµ±Ç°Ïß³Ì£¬½÷É÷Ê¹ÓÃ£©¡£
-  /// </summary>
-  public bool Send(string text)
-  {
-    try
-    {
-      return SendAsync(text).GetAwaiter().GetResult();
-    }
-    catch
-    {
-      return false;
-    }
-  }
-
-  /// <summary>
-  /// ÉèÖÃÁ¬½Ó×´Ì¬²¢´¥·¢ ConnectionStatusChanged ÊÂ¼ş
-  /// </summary>
-  private void SetConnected(bool c)
-  {
-    _connected = c;
-
-    try
-    {
-      // ? Í³Ò»Ê¹ÓÃ ConnectionStatusChanged
-      ConnectionStatusChanged?.Invoke(this, c);
-    }
-    catch
-    {
-      // ÓÃ»§ÊÂ¼ş´¦ÀíÒì³£²»Ó°Ïì×´Ì¬ÉèÖÃ
-    }
-  }
-
-  /// <summary>
-  /// ÊÍ·Åµ×²ãÍøÂç×ÊÔ´£¨²»¸Ä±ä AutoReconnect£©¡£
-  /// </summary>
-  private void Cleanup()
-  {
-    try
-    {
-      _stream?.Dispose();
-    }
-    catch
-    {
+        _runTask = null;
+        Cleanup(); // å…³é—­åº•å±‚è¿æ¥å¥—æ¥å­—
+        SetConnected(false);
     }
 
-    _stream = null;
-    try
+    /// <summary>
+    /// åå°è¿æ¥æ¥æ”¶å¾ªç¯ï¼šè¿æ¥ -> æ¥æ”¶ -> å¼‚å¸¸/æ–­å¼€ -> é‡è¯•ï¼ˆå¯é€‰é‡è¿ï¼‰
+    /// </summary>
+    private async Task RunAsync(CancellationToken token)
     {
-      _client?.Close();
-    }
-    catch
-    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                await ConnectOnceAsync(token).ConfigureAwait(false);
+                await ReceiveLoopAsync(token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                /* æ•è·å¾ªç¯ï¼Œè‡ªåŠ¨é‡è¿ */
+            }
+
+            SetConnected(false);
+            Cleanup();
+            if (!AutoReconnect) break; // å…³é—­è‡ªåŠ¨é‡è¿åˆ™é€€å‡º
+            try
+            {
+                await Task.Delay(ReconnectDelayMs, token).ConfigureAwait(false);
+            }
+            catch
+            {
+                break;
+            }
+        }
     }
 
-    _client = null;
-  }
+    /// <summary>
+    /// æ‰§è¡Œä¸€æ¬¡è¿æ¥ï¼ˆå¸¦è¶…æ—¶ï¼‰ï¼ŒæˆåŠŸåˆ™è·å– NetworkStreamã€‚
+    /// </summary>
+    private async Task ConnectOnceAsync(CancellationToken token)
+    {
+        Cleanup();
+        _client = new TcpClient();
+        var connectTask = _client.ConnectAsync(_ip, _port);
+        var timeout = Task.Delay(ConnectTimeoutMs, token);
+        var done = await Task.WhenAny(connectTask, timeout).ConfigureAwait(false);
+        if (done != connectTask) throw new TimeoutException("TCP è¿æ¥è¶…æ—¶"); // è¿æ¥è¶…æ—¶
+        _stream = _client.GetStream(); // è·å–ç½‘ç»œæµ
+        SetConnected(true);
+    }
 
-  /// <summary>
-  /// ÊÍ·Å×ÊÔ´²¢Í£Ö¹Á¬½Ó¡£
-  /// </summary>
-  public void Dispose()
-  {
-    Stop();
-  }
+    /// <summary>
+    /// æ¥æ”¶å¾ªç¯ï¼šReadAsync -> ä¸ŠæŠ¥åŸå§‹å­—èŠ‚ -> è½¬æ¢æ–‡æœ¬ -> è§¦å‘ MessageReceived
+    /// </summary>
+    private async Task ReceiveLoopAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested && _client != null && _client.Connected)
+        {
+            int n;
+            try
+            {
+                n = await _stream.ReadAsync(_rxBuf, 0, _rxBuf.Length, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                break;
+            } // ä»»ä½•å¼‚å¸¸è§†ä¸ºæ–­å¼€
+
+            if (n <= 0) break; // è¿œç¨‹ç«¯ä¸»åŠ¨æ–­å¼€
+
+            // å¯é€‰ï¼šè§¦å‘åŸå§‹å­—èŠ‚äº‹ä»¶ï¼ˆä¾›ç‰¹æ®Šè°ƒè¯•åœºæ™¯ï¼Œå¦‚è‡ªå®šä¹‰åè®®ï¼‰
+            try
+            {
+                BytesReceived?.Invoke(_rxBuf, n);
+            }
+            catch
+            {
+                // ç”¨æˆ·äº‹ä»¶å¤„ç†å¼‚å¸¸ä¸å½±å“æ¥æ”¶å¾ªç¯
+            }
+
+            // ç»Ÿä¸€å¤„ç†æ–‡æœ¬æ¶ˆæ¯å¹¶è§¦å‘ MessageReceived
+            try
+            {
+                var text = _encoding.GetString(_rxBuf, 0, n); // æœ¬æ¬¡æ”¶åˆ°çš„æ•°æ®è½¬æ¢ä¸ºå­—ç¬¦ä¸²
+
+                if (FrameByNewLine)
+                {
+                    // æ¢è¡Œç¬¦åˆ†å¸§ï¼Œç´¯ç§¯å¹¶åˆ†è¡Œä¸ŠæŠ¥
+                    _lineAcc.Append(text);
+                    string acc = _lineAcc.ToString();
+                    int idx;
+                    while ((idx = acc.IndexOf('\n')) >= 0)
+                    {
+                        var line = acc.Substring(0, idx).TrimEnd('\r');
+                        try
+                        {
+                            LogHelper.Info($"[{Name}] æ”¶åˆ°æ¶ˆæ¯: {line}");
+                        }
+                        catch
+                        {
+                            // æ—¥å¿—å¤±è´¥ä¸å½±å“æ¶ˆæ¯å¤„ç†
+                        }
+                        
+                        // è§¦å‘åŸå§‹æ¶ˆæ¯äº‹ä»¶ï¼ˆç”¨äºUIæ˜¾ç¤ºï¼‰
+                        try { RawMessageReceived?.Invoke(this, line); } catch { }
+                        
+                        // è§¦å‘å¤„ç†åçš„æ¶ˆæ¯äº‹ä»¶
+                        try { MessageReceived?.Invoke(this, line); } catch { }
+                        
+                        acc = acc.Substring(idx + 1);
+                    }
+
+                    _lineAcc.Clear();
+                    _lineAcc.Append(acc); // ä¿ç•™æœªå½¢æˆä¸€è¡Œçš„éƒ¨åˆ†ç»§ç»­ç´¯ç§¯
+                }
+                else
+                {
+                    // ç›´æ¥æŒ‰æ‰¹ä¸ŠæŠ¥
+                    try
+                    {
+                        LogHelper.Info($"[{Name}] æ”¶åˆ°æ¶ˆæ¯å—: {text.Length} å­—èŠ‚, å†…å®¹: {text}");
+                    }
+                    catch
+                    {
+                        // æ—¥å¿—å¤±è´¥ä¸å½±å“æ¶ˆæ¯å¤„ç†
+                    }
+                    
+                    // è§¦å‘åŸå§‹æ¶ˆæ¯äº‹ä»¶ï¼ˆç”¨äºUIæ˜¾ç¤ºï¼‰
+                    try { RawMessageReceived?.Invoke(this, text); } catch { }
+                    
+                    // è§¦å‘å¤„ç†åçš„æ¶ˆæ¯äº‹ä»¶
+                    try { MessageReceived?.Invoke(this, text); } catch { }
+                }
+            }
+            catch
+            {
+                // ç”¨æˆ·äº‹ä»¶å¤„ç†å¼‚å¸¸ä¸å½±å“æ¥æ”¶å¾ªç¯
+            }
+        }
+    }
+
+    /// <summary>
+    /// å‘é€æ–‡æœ¬ï¼ˆä½¿ç”¨å½“å‰ç¼–ç ï¼‰ã€‚
+    /// </summary>
+    public async Task<bool> SendAsync(string text)
+    {
+        if (_stream == null || !_connected) return false;
+        try
+        {
+            var data = _encoding.GetBytes(text);
+            await _stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false); // å¼‚æ­¥å†™å…¥
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// å‘é€äºŒè¿›åˆ¶æ•°æ®ã€‚
+    /// </summary>
+    public async Task<bool> SendAsync(byte[] data, int offset = 0, int count = -1)
+    {
+        if (_stream == null || !_connected) return false;
+        try
+        {
+            if (count < 0) count = data.Length - offset;
+            await _stream.WriteAsync(data, offset, count).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// åŒæ­¥å‘é€æ–‡æœ¬ï¼ˆä¼šé˜»å¡å½“å‰çº¿ç¨‹ï¼Œæ…é‡ä½¿ç”¨ï¼‰
+    /// </summary>
+    public bool Send(string text)
+    {
+        try
+        {
+            return SendAsync(text).GetAwaiter().GetResult();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// è®¾ç½®è¿æ¥çŠ¶æ€å¹¶è§¦å‘ ConnectionStatusChanged äº‹ä»¶
+    /// </summary>
+    private void SetConnected(bool c)
+    {
+        _connected = c;
+
+        try
+        {
+            // ç»Ÿä¸€ä½¿ç”¨ ConnectionStatusChanged
+            ConnectionStatusChanged?.Invoke(this, c);
+        }
+        catch
+        {
+            // ç”¨æˆ·äº‹ä»¶å¤„ç†å¼‚å¸¸ä¸å½±å“çŠ¶æ€æ›´æ–°
+        }
+    }
+
+    /// <summary>
+    /// é‡Šæ”¾åº•å±‚ç½‘ç»œèµ„æºï¼ˆä¸æ”¹å˜ AutoReconnectï¼‰
+    /// </summary>
+    private void Cleanup()
+    {
+        try
+        {
+            _stream?.Dispose();
+        }
+        catch
+        {
+        }
+
+        _stream = null;
+        try
+        {
+            _client?.Close();
+        }
+        catch
+        {
+        }
+
+        _client = null;
+    }
+
+    /// <summary>
+    /// é‡Šæ”¾èµ„æºï¼Œåœæ­¢è¿æ¥ã€‚
+    /// </summary>
+    public void Dispose()
+    {
+        Stop();
+    }
 }

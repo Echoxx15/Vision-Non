@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
 using Cognex.VisionPro;
 
-namespace Vision.UI
+namespace Vision.UserUI
 {
     partial class ImageDisplay
     {

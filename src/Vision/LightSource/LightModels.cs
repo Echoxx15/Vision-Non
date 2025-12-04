@@ -71,17 +71,17 @@ internal sealed class LightConfigNameConverter : StringConverter
     {
         try
         {
-            var solution = SolutionManager.Instance.Current;
             var list = new List<string> { string.Empty };
 
-            //if (solution?.LightConfigs?.Configs != null)
-            //{
-            //    list.AddRange(solution.LightConfigs.Configs
-            //        .Where(c => c?.Enabled == true &&
-            //                    c.Mode == (LightControlNet.LightControllerMode)LightControllerMode.Digital)
-            //        .Select(c => c.Name)
-            //        .OrderBy(n => n));
-            //}
+            // ✅ 从LightFactory获取光源配置列表
+            var configs = LightControlNet.LightFactory.Instance.Configs?.Configs;
+            if (configs != null)
+            {
+                list.AddRange(configs
+                    .Where(c => c?.Enabled == true)
+                    .Select(c => c.Name)
+                    .OrderBy(n => n));
+            }
 
             return new StandardValuesCollection(list);
         }
