@@ -166,13 +166,9 @@ public partial class Frm_GlobalVal : Form
     string name;
     do { name = baseName + suffix++; } while (_rows.Any(r => string.Equals(r.名称, name, StringComparison.OrdinalIgnoreCase)));
     var sol = SolutionManager.Instance.Current;
-    // 默认值
-    object defObj = null; string defStr = string.Empty;
-    if (t == typeof(int)) { defObj = 0; defStr = "0"; }
-    else if (t == typeof(double)) { defObj = 0d; defStr = "0"; }
-    else if (t == typeof(bool)) { defObj = false; defStr = "False"; }
-    else if (t == typeof(string)) { defObj = string.Empty; defStr = string.Empty; }
-    // 数组不在界面初始化
+    // 默认值 - 使用 TypeValueUtil 获取
+    object defObj = TypeValueUtil.GetDefaultValue(t);
+    string defStr = TypeValueUtil.GetDefaultValueString(t);
 
     _rows.Add(new Row { 序号 = _rows.Count + 1, 类型 = TypeValueUtil.TypeToName(t), 名称 = name, 值 = defStr, 注释 = string.Empty, RealType = t });
     if (sol != null)
@@ -196,14 +192,19 @@ public partial class Frm_GlobalVal : Form
     _rows[rowIndex].名称 = name; return true;
   }
 
+  // 变量类型按钮 - 类型以 HSL 通讯库支持的类型为准
+  private void btn_Bool_Click(object sender, EventArgs e) => AddVar(typeof(bool));
+  private void btn_Short_Click(object sender, EventArgs e) => AddVar(typeof(short));
   private void btn_Int_Click(object sender, EventArgs e) => AddVar(typeof(int));
+  private void btn_Float_Click(object sender, EventArgs e) => AddVar(typeof(float));
   private void btn_Double_Click(object sender, EventArgs e) => AddVar(typeof(double));
   private void btn_String_Click(object sender, EventArgs e) => AddVar(typeof(string));
-  private void btn_Bool_Click(object sender, EventArgs e) => AddVar(typeof(bool));
+  private void btn_BoolArray_Click(object sender, EventArgs e) => AddVar(typeof(bool[]));
+  private void btn_ShortArray_Click(object sender, EventArgs e) => AddVar(typeof(short[]));
   private void btn_IntArray_Click(object sender, EventArgs e) => AddVar(typeof(int[]));
+  private void btn_FloatArray_Click(object sender, EventArgs e) => AddVar(typeof(float[]));
   private void btn_DoubleArray_Click(object sender, EventArgs e) => AddVar(typeof(double[]));
   private void btn_StringArray_Click(object sender, EventArgs e) => AddVar(typeof(string[]));
-  private void btn_BoolArray_Click(object sender, EventArgs e) => AddVar(typeof(bool[]));
 
   private void btn_MoveUp_Click(object sender, EventArgs e)
   {

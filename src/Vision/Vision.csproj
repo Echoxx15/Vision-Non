@@ -151,6 +151,15 @@
     <Compile Include="Auth\Storage\SqliteDb.cs" />
     <Compile Include="Auth\UserManager.cs" />
     <Compile Include="Common\TypeValueUtil.cs" />
+    <Compile Include="Controls\Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\SafePropertyGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Frm\FormComm\CommDeviceModel.cs" />
     <Compile Include="Frm\FrmHardwareState\Frm_HardwareState.cs">
       <SubType>UserControl</SubType>
@@ -295,6 +304,9 @@
     <Compile Include="UserUI\uAddValueCollection.Designer.cs">
       <DependentUpon>uAddValueCollection.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Controls\Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Frm\FrmHardwareState\Frm_HardwareState.resx">
       <DependentUpon>Frm_HardwareState.cs</DependentUpon>
     </EmbeddedResource>

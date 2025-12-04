@@ -43,8 +43,12 @@
       this.btn_Bool = new System.Windows.Forms.Button();
       this.btn_StringArray = new System.Windows.Forms.Button();
       this.btn_String = new System.Windows.Forms.Button();
+      this.btn_FloatArray = new System.Windows.Forms.Button();
+      this.btn_Float = new System.Windows.Forms.Button();
       this.btn_DoubleArray = new System.Windows.Forms.Button();
       this.btn_Double = new System.Windows.Forms.Button();
+      this.btn_ShortArray = new System.Windows.Forms.Button();
+      this.btn_Short = new System.Windows.Forms.Button();
       this.btn_IntArray = new System.Windows.Forms.Button();
       this.btn_Int = new System.Windows.Forms.Button();
       this.cogToolBlockEditV21 = new Cognex.VisionPro.ToolBlock.CogToolBlockEditV2();
@@ -126,8 +130,12 @@
       this.panel2.Controls.Add(this.btn_Bool);
       this.panel2.Controls.Add(this.btn_StringArray);
       this.panel2.Controls.Add(this.btn_String);
+      this.panel2.Controls.Add(this.btn_FloatArray);
+      this.panel2.Controls.Add(this.btn_Float);
       this.panel2.Controls.Add(this.btn_DoubleArray);
       this.panel2.Controls.Add(this.btn_Double);
+      this.panel2.Controls.Add(this.btn_ShortArray);
+      this.panel2.Controls.Add(this.btn_Short);
       this.panel2.Controls.Add(this.btn_IntArray);
       this.panel2.Controls.Add(this.btn_Int);
       this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -141,10 +149,10 @@
       this.btn_Remove.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_Remove.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_Remove.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_Remove.Location = new System.Drawing.Point(61, 386);
+      this.btn_Remove.Location = new System.Drawing.Point(61, 496);
       this.btn_Remove.Name = "btn_Remove";
       this.btn_Remove.Size = new System.Drawing.Size(75, 35);
-      this.btn_Remove.TabIndex = 10;
+      this.btn_Remove.TabIndex = 14;
       this.btn_Remove.Text = "删除";
       this.btn_Remove.UseVisualStyleBackColor = false;
       // 
@@ -153,10 +161,10 @@
       this.btn_MoveDown.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_MoveDown.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_MoveDown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_MoveDown.Location = new System.Drawing.Point(61, 325);
+      this.btn_MoveDown.Location = new System.Drawing.Point(61, 435);
       this.btn_MoveDown.Name = "btn_MoveDown";
       this.btn_MoveDown.Size = new System.Drawing.Size(75, 35);
-      this.btn_MoveDown.TabIndex = 9;
+      this.btn_MoveDown.TabIndex = 13;
       this.btn_MoveDown.Text = "下移";
       this.btn_MoveDown.UseVisualStyleBackColor = false;
       // 
@@ -165,10 +173,10 @@
       this.btn_MoveUp.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_MoveUp.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_MoveUp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_MoveUp.Location = new System.Drawing.Point(61, 268);
+      this.btn_MoveUp.Location = new System.Drawing.Point(61, 378);
       this.btn_MoveUp.Name = "btn_MoveUp";
       this.btn_MoveUp.Size = new System.Drawing.Size(75, 35);
-      this.btn_MoveUp.TabIndex = 8;
+      this.btn_MoveUp.TabIndex = 12;
       this.btn_MoveUp.Text = "上移";
       this.btn_MoveUp.UseVisualStyleBackColor = false;
       // 
@@ -177,10 +185,10 @@
       this.btn_BoolArray.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_BoolArray.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_BoolArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_BoolArray.Location = new System.Drawing.Point(108, 195);
+      this.btn_BoolArray.Location = new System.Drawing.Point(108, 305);
       this.btn_BoolArray.Name = "btn_BoolArray";
       this.btn_BoolArray.Size = new System.Drawing.Size(95, 35);
-      this.btn_BoolArray.TabIndex = 7;
+      this.btn_BoolArray.TabIndex = 11;
       this.btn_BoolArray.Text = "Bool[]";
       this.btn_BoolArray.UseVisualStyleBackColor = false;
       // 
@@ -189,10 +197,10 @@
       this.btn_Bool.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_Bool.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_Bool.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_Bool.Location = new System.Drawing.Point(8, 195);
+      this.btn_Bool.Location = new System.Drawing.Point(8, 305);
       this.btn_Bool.Name = "btn_Bool";
       this.btn_Bool.Size = new System.Drawing.Size(90, 35);
-      this.btn_Bool.TabIndex = 6;
+      this.btn_Bool.TabIndex = 10;
       this.btn_Bool.Text = "Bool";
       this.btn_Bool.UseVisualStyleBackColor = false;
       // 
@@ -201,10 +209,10 @@
       this.btn_StringArray.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_StringArray.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_StringArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_StringArray.Location = new System.Drawing.Point(108, 140);
+      this.btn_StringArray.Location = new System.Drawing.Point(108, 250);
       this.btn_StringArray.Name = "btn_StringArray";
       this.btn_StringArray.Size = new System.Drawing.Size(95, 35);
-      this.btn_StringArray.TabIndex = 5;
+      this.btn_StringArray.TabIndex = 9;
       this.btn_StringArray.Text = "String[]";
       this.btn_StringArray.UseVisualStyleBackColor = false;
       // 
@@ -213,22 +221,46 @@
       this.btn_String.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_String.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_String.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_String.Location = new System.Drawing.Point(8, 140);
+      this.btn_String.Location = new System.Drawing.Point(8, 250);
       this.btn_String.Name = "btn_String";
       this.btn_String.Size = new System.Drawing.Size(90, 35);
-      this.btn_String.TabIndex = 4;
+      this.btn_String.TabIndex = 8;
       this.btn_String.Text = "String";
       this.btn_String.UseVisualStyleBackColor = false;
+      // 
+      // btn_FloatArray
+      // 
+      this.btn_FloatArray.BackColor = System.Drawing.Color.LightSeaGreen;
+      this.btn_FloatArray.Cursor = System.Windows.Forms.Cursors.Hand;
+      this.btn_FloatArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+      this.btn_FloatArray.Location = new System.Drawing.Point(108, 195);
+      this.btn_FloatArray.Name = "btn_FloatArray";
+      this.btn_FloatArray.Size = new System.Drawing.Size(95, 35);
+      this.btn_FloatArray.TabIndex = 7;
+      this.btn_FloatArray.Text = "Float[]";
+      this.btn_FloatArray.UseVisualStyleBackColor = false;
+      // 
+      // btn_Float
+      // 
+      this.btn_Float.BackColor = System.Drawing.Color.LightSeaGreen;
+      this.btn_Float.Cursor = System.Windows.Forms.Cursors.Hand;
+      this.btn_Float.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+      this.btn_Float.Location = new System.Drawing.Point(8, 195);
+      this.btn_Float.Name = "btn_Float";
+      this.btn_Float.Size = new System.Drawing.Size(90, 35);
+      this.btn_Float.TabIndex = 6;
+      this.btn_Float.Text = "Float";
+      this.btn_Float.UseVisualStyleBackColor = false;
       // 
       // btn_DoubleArray
       // 
       this.btn_DoubleArray.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_DoubleArray.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_DoubleArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_DoubleArray.Location = new System.Drawing.Point(108, 90);
+      this.btn_DoubleArray.Location = new System.Drawing.Point(108, 140);
       this.btn_DoubleArray.Name = "btn_DoubleArray";
       this.btn_DoubleArray.Size = new System.Drawing.Size(95, 35);
-      this.btn_DoubleArray.TabIndex = 3;
+      this.btn_DoubleArray.TabIndex = 5;
       this.btn_DoubleArray.Text = "Double[]";
       this.btn_DoubleArray.UseVisualStyleBackColor = false;
       // 
@@ -237,19 +269,43 @@
       this.btn_Double.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_Double.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_Double.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_Double.Location = new System.Drawing.Point(8, 90);
+      this.btn_Double.Location = new System.Drawing.Point(8, 140);
       this.btn_Double.Name = "btn_Double";
       this.btn_Double.Size = new System.Drawing.Size(90, 35);
-      this.btn_Double.TabIndex = 2;
+      this.btn_Double.TabIndex = 4;
       this.btn_Double.Text = "Double";
       this.btn_Double.UseVisualStyleBackColor = false;
+      // 
+      // btn_ShortArray
+      // 
+      this.btn_ShortArray.BackColor = System.Drawing.Color.LightSeaGreen;
+      this.btn_ShortArray.Cursor = System.Windows.Forms.Cursors.Hand;
+      this.btn_ShortArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+      this.btn_ShortArray.Location = new System.Drawing.Point(108, 85);
+      this.btn_ShortArray.Name = "btn_ShortArray";
+      this.btn_ShortArray.Size = new System.Drawing.Size(95, 35);
+      this.btn_ShortArray.TabIndex = 3;
+      this.btn_ShortArray.Text = "Short[]";
+      this.btn_ShortArray.UseVisualStyleBackColor = false;
+      // 
+      // btn_Short
+      // 
+      this.btn_Short.BackColor = System.Drawing.Color.LightSeaGreen;
+      this.btn_Short.Cursor = System.Windows.Forms.Cursors.Hand;
+      this.btn_Short.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+      this.btn_Short.Location = new System.Drawing.Point(8, 85);
+      this.btn_Short.Name = "btn_Short";
+      this.btn_Short.Size = new System.Drawing.Size(90, 35);
+      this.btn_Short.TabIndex = 2;
+      this.btn_Short.Text = "Short";
+      this.btn_Short.UseVisualStyleBackColor = false;
       // 
       // btn_IntArray
       // 
       this.btn_IntArray.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_IntArray.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_IntArray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_IntArray.Location = new System.Drawing.Point(108, 40);
+      this.btn_IntArray.Location = new System.Drawing.Point(108, 30);
       this.btn_IntArray.Name = "btn_IntArray";
       this.btn_IntArray.Size = new System.Drawing.Size(95, 35);
       this.btn_IntArray.TabIndex = 1;
@@ -261,7 +317,7 @@
       this.btn_Int.BackColor = System.Drawing.Color.LightSeaGreen;
       this.btn_Int.Cursor = System.Windows.Forms.Cursors.Hand;
       this.btn_Int.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-      this.btn_Int.Location = new System.Drawing.Point(8, 40);
+      this.btn_Int.Location = new System.Drawing.Point(8, 30);
       this.btn_Int.Name = "btn_Int";
       this.btn_Int.Size = new System.Drawing.Size(90, 35);
       this.btn_Int.TabIndex = 0;
@@ -336,8 +392,12 @@
     private System.Windows.Forms.Button btn_Bool;
     private System.Windows.Forms.Button btn_StringArray;
     private System.Windows.Forms.Button btn_String;
+    private System.Windows.Forms.Button btn_FloatArray;
+    private System.Windows.Forms.Button btn_Float;
     private System.Windows.Forms.Button btn_DoubleArray;
     private System.Windows.Forms.Button btn_Double;
+    private System.Windows.Forms.Button btn_ShortArray;
+    private System.Windows.Forms.Button btn_Short;
     private System.Windows.Forms.Button btn_IntArray;
     private System.Windows.Forms.Button btn_Int;
     private System.Windows.Forms.SplitContainer splitContainer1;

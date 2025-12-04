@@ -76,8 +76,8 @@ public class IKapBoradCL : ICamera
     }
     public event EventHandler<bool> DisConnetEvent;
     public string SN { get; }
-    public CameraType Type => CameraType.LineScan;
-    public bool IsConnected { get; }
+    public CameraType Type => CameraType.线扫相机;
+    public bool IsConnected { get; private set; }
     public IParameters Parameters { get; }
 
     #endregion
@@ -141,6 +141,9 @@ public class IKapBoradCL : ICamera
             //
             // Get device information.
             IKapC.ItkManGetDeviceInfo(i, di);
+
+            if(di.SerialNumber == "" || gDeviceInfos.ContainsKey(di.SerialNumber))
+                continue;
             cam.g_index = (int)i;
             cam.g_devInfo = di;
             gDeviceInfos.Add(di.SerialNumber, cam);
@@ -152,6 +155,7 @@ public class IKapBoradCL : ICamera
                 $"Device Full Name:{di.FullName}\n Friendly Name:{di.FriendlyName}\n Vendor Name:{di.VendorName}\n " +
                 $"Model Name:{di.ModelName}\n Serial Name:{di.SerialNumber}\n Device Class:{di.DeviceClass}\n " +
                 $"Device Version:{di.DeviceVersion}\n User Defined Name:{di.UserDefinedName}\n");
+
         }
         return gDeviceInfos.Keys.ToList();
     }
@@ -275,12 +279,50 @@ public class IKapBoradCL : ICamera
 
     public int StopGrabbing()
     {
+        /// \~chinese 释放用户申请的用于存放缓冲区数据的内存				    \~english Release the memory for storing the buffer data
+        if (device.g_bufferData != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(device.g_bufferData);
+        }
+
+        /// \~chinese 释放用户申请的用于设置Buffer地址的内存				    \~english Release the memory that the user requests for setting the Buffer address
+        if (device.g_user_buffer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(device.g_user_buffer);
+        }
         return IKapBoard.IKapStopGrab(device.g_hBoard);
     }
 
     public void DisConnet()
     {
-        throw new NotImplementedException();
+        _processThreadExit = true;
+
+        /// \~chinese 停止图像采集				        \~english Stop grabbing images
+        var ret = IKapBoard.IKapStopGrab(device.g_hBoard);
+        IKUtils.CheckIKapBoard(ret);
+
+        /// \~chinese 清除回调函数				        \~english Unregister callback functions
+        UnRegisterCallbackWithGrabber(device);
+
+        /// \~chinese 关闭采集卡设备				        \~english Close frame grabber device
+        ret = IKapBoard.IKapClose(device.g_hBoard);
+        IKUtils.CheckIKapBoard(ret);
+
+        /// \~chinese 关闭相机设备				        \~english Close camera device
+        var res = IKapC.ItkDevClose(device.g_hCamera);
+        IKUtils.CheckIKapC(res);
+
+        /// \~chinese 释放用户申请的用于存放缓冲区数据的内存				    \~english Release the memory for storing the buffer data
+        if (device.g_bufferData != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(device.g_bufferData);
+        }
+
+        /// \~chinese 释放用户申请的用于设置Buffer地址的内存				    \~english Release the memory that the user requests for setting the Buffer address
+        if (device.g_user_buffer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(device.g_user_buffer);
+        }
     }
 
     public void Close()

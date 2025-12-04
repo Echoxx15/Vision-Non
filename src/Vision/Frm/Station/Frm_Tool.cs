@@ -44,15 +44,19 @@ public partial class Frm_Tool : Form
     InitializeComponent();
     InitDgv();
 
-    // 变量类型按钮绑定
+    // 变量类型按钮绑定 - 类型以 HSL 通讯库支持的类型为准
+    btn_Bool.Click += (_, _) => AddVar(typeof(bool));
+    btn_Short.Click += (_, _) => AddVar(typeof(short));
     btn_Int.Click += (_, _) => AddVar(typeof(int));
+    btn_Float.Click += (_, _) => AddVar(typeof(float));
     btn_Double.Click += (_, _) => AddVar(typeof(double));
     btn_String.Click += (_, _) => AddVar(typeof(string));
-    btn_Bool.Click += (_, _) => AddVar(typeof(bool));
+    btn_BoolArray.Click += (_, _) => AddVar(typeof(bool[]));
+    btn_ShortArray.Click += (_, _) => AddVar(typeof(short[]));
     btn_IntArray.Click += (_, _) => AddVar(typeof(int[]));
+    btn_FloatArray.Click += (_, _) => AddVar(typeof(float[]));
     btn_DoubleArray.Click += (_, _) => AddVar(typeof(double[]));
     btn_StringArray.Click += (_, _) => AddVar(typeof(string[]));
-    btn_BoolArray.Click += (_, _) => AddVar(typeof(bool[]));
 
     // 行移动与删除
     btn_MoveUp.Click += (_, _) => MoveUp();

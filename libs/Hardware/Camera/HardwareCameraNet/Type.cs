@@ -8,7 +8,7 @@ namespace HardwareCameraNet;
 
     public enum CameraType
     {
-        AreaScan,
-        LineScan,
-        Laser3D
-    }
+        面阵相机,
+        线扫相机,
+        激光轮廓仪
+}

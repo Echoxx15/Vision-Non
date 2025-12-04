@@ -362,7 +362,7 @@ public partial class Frm_Camera2D : Form
     {
         try
         {
-            currentSelectedCamera.DisConnet();
+            currentSelectedCamera.Close();
             SetControlState(currentSelectedCamera.IsConnected);
             currentSelectedCamera.DisConnetEvent -= DisConnectEvent;
         }

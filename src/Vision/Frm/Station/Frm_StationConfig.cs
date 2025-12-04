@@ -27,7 +27,7 @@ public partial class Frm_StationConfig : Form
   tsm_OpenForm.Click += Tsm_OpenForm_Click;
   tsm_LoadImageRun.Click += Tsm_LoadImageRun_Click;
   tsm_TriggerCameraRun.Click += Tsm_TriggerCameraRun_Click;
-  propertyGrid1.PropertyValueChanged += PropertyGrid1_PropertyValueChanged;
+  safePropertyGrid1.PropertyValueChanged += safePropertyGrid1_PropertyValueChanged;
   contextMenuStrip2.Opening += ContextMenuStrip2_Opening;
  }
 
@@ -53,12 +53,12 @@ public partial class Frm_StationConfig : Form
  private void Tree_Station_AfterSelect(object sender, TreeViewEventArgs e)
  {
   var obj = e.Node?.Tag as StationConfig;
-  propertyGrid1.SelectedObject = obj;
+  safePropertyGrid1.SelectedObject = obj;
  }
 
  private void ContextMenuStrip2_Opening(object sender, CancelEventArgs e)
  {
-  var gi = propertyGrid1.SelectedGridItem;
+  var gi = safePropertyGrid1.SelectedGridItem;
   if (gi == null || tree_Station.SelectedNode?.Tag is not StationConfig)
   {
    tsm_OpenForm.Enabled = false;
@@ -100,7 +100,7 @@ public partial class Frm_StationConfig : Form
   }
  }
 
- private void PropertyGrid1_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+ private void safePropertyGrid1_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
  {
   if (tree_Station.SelectedNode?.Tag is not StationConfig st) return;
 
@@ -134,7 +134,7 @@ public partial class Frm_StationConfig : Form
     st.CameraParams = null;
    }
 
-   propertyGrid1.Refresh();
+   safePropertyGrid1.Refresh();
   }
   else if (label == "ModelPath" || label == "模型文件夹路径" ||
            label == "RuntimeType" || label == "运行时类型" ||
@@ -254,7 +254,7 @@ public partial class Frm_StationConfig : Form
    UseWaitCursor = false;
   }
 
-  propertyGrid1.Refresh();
+  safePropertyGrid1.Refresh();
  }
 
  private static string GetRuntimeDisplayName(DLRuntime runtime)
@@ -407,7 +407,7 @@ public partial class Frm_StationConfig : Form
   var oldName = st.Name;
   st.Name = input;
   tree_Station.SelectedNode.Text = st.Name;
-  propertyGrid1.Refresh();
+  safePropertyGrid1.Refresh();
 
   try
   {
@@ -473,7 +473,7 @@ public partial class Frm_StationConfig : Form
 
  private void Tsm_OpenForm_Click(object sender, EventArgs e)
  {
-  var gi = propertyGrid1.SelectedGridItem;
+  var gi = safePropertyGrid1.SelectedGridItem;
   if (gi == null || tree_Station.SelectedNode?.Tag is not StationConfig) return;
   if (tree_Station.SelectedNode?.Tag is not StationConfig st) return;
 
@@ -523,7 +523,7 @@ public partial class Frm_StationConfig : Form
      if (frm.ShowDialog(this) == DialogResult.OK)
      {
       // 刷新PropertyGrid显示
-      propertyGrid1.Refresh();
+      safePropertyGrid1.Refresh();
       LogHelper.Info($"[工位配置] 工位[{st.Name}]输出映射已更新");
      }
     }
