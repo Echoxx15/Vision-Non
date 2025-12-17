@@ -12,9 +12,9 @@ namespace IKNS
         // Users enter Enter to exit the program.
         public static void pressEnterToExit()
         {
-            //Console.Write("\nPress Enter key to exit...\n");
-            //while (Console.ReadKey().Key != ConsoleKey.Enter) {; }
-            //Environment.Exit(1);
+            Console.Write("\nPress Enter key to exit...\n");
+            while (Console.ReadKey().Key != ConsoleKey.Enter) {; }
+            Environment.Exit(1);
         }
 
         // 打印错误信息后退出程序。

@@ -43,10 +43,14 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\Cognex\VisionPro\ReferencedAssemblies\Cognex.VisionPro.Core.dll</HintPath>
     </Reference>
+    <Reference Include="IKapBoardClassLibrary">
+      <HintPath>C:\Program Files\I-TEK OptoElectronics\IKapLibrary\Dll\C#\IKapBoardClassLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="IKapBoardDotNet2">
       <HintPath>C:\Program Files\I-TEK OptoElectronics\IKapLibrary\Dll\C#\IKapBoardDotNet2.dll</HintPath>
     </Reference>
-    <Reference Include="IKapCDotNet2">
+    <Reference Include="IKapCDotNet2, Version=1.1.0.1, Culture=neutral, PublicKeyToken=700817f6992dd69b, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\I-TEK OptoElectronics\IKapLibrary\Dll\C#\IKapCDotNet2.dll</HintPath>
     </Reference>
     <Reference Include="System" />

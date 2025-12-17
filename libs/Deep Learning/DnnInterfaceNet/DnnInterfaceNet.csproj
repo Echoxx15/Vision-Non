@@ -7,6 +7,7 @@
     <Nullable>disable</Nullable>
     <AssemblyName>DnnInterfaceNet</AssemblyName>
     <RootNamespace>DnnInterfaceNet</RootNamespace>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

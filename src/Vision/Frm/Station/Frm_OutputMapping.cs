@@ -516,6 +516,8 @@ public partial class Frm_OutputMapping : Form
         // 按钮事件
         btn_Add.Click += Btn_Add_Click;
         btn_Remove.Click += Btn_Remove_Click;
+        btn_MoveUp.Click += Btn_MoveUp_Click;
+        btn_MoveDown.Click += Btn_MoveDown_Click;
         btn_Save.Click += Btn_Save_Click;
         btn_Cancel.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
     }
@@ -689,6 +691,54 @@ public partial class Frm_OutputMapping : Form
         {
             cell.Items.Add($"<无匹配类型({outputType})的输出>");
         }
+    }
+
+    /// <summary>
+    /// 上移映射
+    /// </summary>
+    private void Btn_MoveUp_Click(object sender, EventArgs e)
+    {
+        if (dgv_Mappings.CurrentRow == null) return;
+        
+        int index = dgv_Mappings.CurrentRow.Index;
+        if (index <= 0 || index >= _mappings.Count) return;
+        
+        // 交换位置
+        var item = _mappings[index];
+        _mappings.RemoveAt(index);
+        _mappings.Insert(index - 1, item);
+        
+        // 重新初始化ComboBox
+        InitializeComboBoxCells();
+        
+        // 保持选中
+        dgv_Mappings.ClearSelection();
+        dgv_Mappings.Rows[index - 1].Selected = true;
+        dgv_Mappings.CurrentCell = dgv_Mappings.Rows[index - 1].Cells[0];
+    }
+
+    /// <summary>
+    /// 下移映射
+    /// </summary>
+    private void Btn_MoveDown_Click(object sender, EventArgs e)
+    {
+        if (dgv_Mappings.CurrentRow == null) return;
+        
+        int index = dgv_Mappings.CurrentRow.Index;
+        if (index < 0 || index >= _mappings.Count - 1) return;
+        
+        // 交换位置
+        var item = _mappings[index];
+        _mappings.RemoveAt(index);
+        _mappings.Insert(index + 1, item);
+        
+        // 重新初始化ComboBox
+        InitializeComboBoxCells();
+        
+        // 保持选中
+        dgv_Mappings.ClearSelection();
+        dgv_Mappings.Rows[index + 1].Selected = true;
+        dgv_Mappings.CurrentCell = dgv_Mappings.Rows[index + 1].Cells[0];
     }
 
     /// <summary>

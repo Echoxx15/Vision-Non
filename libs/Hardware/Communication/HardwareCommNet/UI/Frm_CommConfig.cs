@@ -435,7 +435,7 @@ public partial class Frm_CommConfig : UserControl
             Width = 80
         };
 
-        inputForm.Controls.AddRange(new Control[] { label, textBox, btnOK, btnCancel });
+        inputForm.Controls.AddRange([label, textBox, btnOK, btnCancel]);
         inputForm.AcceptButton = btnOK;
         inputForm.CancelButton = btnCancel;
 
@@ -456,13 +456,6 @@ public partial class Frm_CommConfig : UserControl
         }
     }
 
-    private void tsmi_Delete_Click(object sender, EventArgs e)
-    {
-        if (_rightClickedItem?.Device != null)
-        {
-            DeleteDevice(_rightClickedItem.Device);
-        }
-    }
 
     private void tsmi_CommTable_Click(object sender, EventArgs e)
     {

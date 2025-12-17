@@ -33,13 +33,16 @@ public class HikCamera : ICamera, IDisposable
 
   #region ICamera接口属性
 
-  // 图像回调事件（需显式实现事件添加/移除逻辑，确保线程安全）
-  private event EventHandler<ICogImage> frameGrabedEvent;
-  public event EventHandler<ICogImage> FrameGrabedEvent
-  {
-    add => frameGrabedEvent += value;
-    remove => frameGrabedEvent -= value;
-  }
+  /// <summary>
+  /// 图片回调 Action
+  /// </summary>
+  public Action<ICogImage> OnFrameGrabed { get; set; }
+
+  /// <summary>
+  /// 采集超时回调 Action
+  /// </summary>
+  public Action<int> OnGrabTimeout { get; set; }
+
   public event EventHandler<bool> DisConnetEvent;
   public string SN { get; }
 
@@ -342,21 +345,6 @@ public class HikCamera : ICamera, IDisposable
 
           var image = frame.Image;
 
-          //var dstPixelType = IsMonoPixelFormat(image.PixelType) ? MvGvspPixelType.PixelType_Gvsp_Mono8 : MvGvspPixelType.PixelType_Gvsp_BGR8_Packed;
-
-          //if (image.PixelType == MvGvspPixelType.PixelType_Gvsp_Undefined) continue;
-          //// ch:像素格式转换 | en:Pixel type convert 
-          //int result = device.PixelTypeConverter.ConvertPixelType(image, out var outImage, dstPixelType);
-          //if (result != MvError.MV_OK)
-          //{
-          //    Console.WriteLine("Image Convert failed:{0:x8}", result);
-          //    continue;
-          //}
-          //if (outImage.PixelDataPtr == IntPtr.Zero)
-          //{
-          //    continue;
-          //}
-
           using var bitmap = image.ToBitmap();
           ICogImage img;
           if (bitmap.PixelFormat == PixelFormat.Format24bppRgb)
@@ -368,7 +356,8 @@ public class HikCamera : ICamera, IDisposable
             img = new CogImage8Grey(bitmap);
           }
 
-          frameGrabedEvent?.Invoke(this, img);
+          // 使用 Action 回调
+          OnFrameGrabed?.Invoke(img);
           _stopwatch.Stop();
 
           image.Dispose();

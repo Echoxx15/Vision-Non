@@ -9,12 +9,27 @@ public partial class uConfigControl : UserControl
 {
 	private object _device;
 	private TcpType _type;
+
 	private bool _isLoading;
 
 	public uConfigControl()
 	{
 		InitializeComponent();
 		InitializeEncodingComboBox();
+		
+		// 隐藏保存按钮（修改即生效）
+		btn_Save.Visible = false;
+		
+		// 订阅控件值变更事件
+		txt_IpAddress.TextChanged += ConfigValue_Changed;
+		num_Port.ValueChanged += ConfigValue_Changed;
+		cmb_Encoding.SelectedIndexChanged += ConfigValue_Changed;
+		chk_UseTerminator.CheckedChanged += ConfigValue_Changed;
+		txt_Terminator.TextChanged += ConfigValue_Changed;
+		chk_AutoReconnect.CheckedChanged += ConfigValue_Changed;
+		num_ReconnectInterval.ValueChanged += ConfigValue_Changed;
+		num_ConnectTimeout.ValueChanged += ConfigValue_Changed;
+		num_MaxConnections.ValueChanged += ConfigValue_Changed;
 	}
 
 	/// <summary>
@@ -388,6 +403,24 @@ public partial class uConfigControl : UserControl
 	private void btn_Save_Click(object sender, EventArgs e)
 	{
 		SaveConfigToDevice();
+	}
+
+	/// <summary>
+	/// 配置值变更事件 - 修改即生效
+	/// </summary>
+	private void ConfigValue_Changed(object sender, EventArgs e)
+	{
+		// 加载配置时不触发保存
+		if (_isLoading) return;
+		
+		// 设备未绑定时不处理
+		if (_device == null) return;
+		
+		// 设备已连接时不允许修改
+		if (_device is IComm comm && comm.IsConnected) return;
+		
+		// 自动保存配置
+		SaveConfigToDeviceSilent();
 	}
 
 

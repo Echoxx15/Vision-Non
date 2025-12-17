@@ -112,28 +112,37 @@ public partial class uLightConfig : UserControl
     /// </summary>
     private void CreateDevice(LightControllerType type, string customName = null)
     {
+        // 获取已使用的端口列表
+        var usedPorts = LightFactory.Instance.Configs.Configs
+            .Select(c => c.PortName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        
+        // 获取可用端口列表
+        var availablePorts = GetPortNames();
+        
+        // 选择第一个未被使用的端口
+        string selectedPort = "COM1";
+        foreach (var port in availablePorts)
+        {
+            if (!usedPorts.Contains(port))
+            {
+                selectedPort = port;
+                break;
+            }
+        }
+        
         var cfg = new LightConfig
         {
             Name = customName ?? LightFactory.Instance.Configs.GenerateUniqueName(type),
             Type = type,
             Enabled = true,
-            PortName = "COM1",
+            PortName = selectedPort,
             BaudRate = 9600,
             DataBits = 8,
             StopBits = 1,
             Parity = "None",
             ChannelCount = 4
         };
-
-        try
-        {
-            var ports = LightManager.Instance.EnumerateDevices(type);
-            if (ports != null && ports.Count > 0)
-            {
-                cfg.PortName = ports[0];
-            }
-        }
-        catch { }
 
         var config = LightFactory.Instance.AddConfig(cfg);
         if (config != null)
@@ -181,23 +190,23 @@ public partial class uLightConfig : UserControl
         if (cmb_PortName.Items.Count > 0) cmb_PortName.SelectedIndex = 0;
 
         cmb_BaudRate.Items.Clear();
-        cmb_BaudRate.Items.AddRange(new object[] { 4800, 9600, 19200, 38400, 57600, 115200 });
+        cmb_BaudRate.Items.AddRange([4800, 9600, 19200, 38400, 57600, 115200]);
         cmb_BaudRate.SelectedItem = 9600;
 
         cmb_DataBits.Items.Clear();
-        cmb_DataBits.Items.AddRange(new object[] { 5, 6, 7, 8 });
+        cmb_DataBits.Items.AddRange([5, 6, 7, 8]);
         cmb_DataBits.SelectedItem = 8;
 
         cmb_StopBits.Items.Clear();
-        cmb_StopBits.Items.AddRange(new object[] { 1.0, 1.5, 2.0 });
+        cmb_StopBits.Items.AddRange([1.0, 1.5, 2.0]);
         cmb_StopBits.SelectedItem = 1.0;
 
         cmb_Parity.Items.Clear();
-        cmb_Parity.Items.AddRange(new object[] { "None", "Odd", "Even", "Mark", "Space" });
+        cmb_Parity.Items.AddRange(["None", "Odd", "Even", "Mark", "Space"]);
         cmb_Parity.SelectedItem = "None";
 
         cmb_ChannelCount.Items.Clear();
-        cmb_ChannelCount.Items.AddRange(new object[] { 2, 4, 8 });
+        cmb_ChannelCount.Items.AddRange([2, 4, 8]);
         cmb_ChannelCount.SelectedItem = 4;
     }
 
@@ -216,6 +225,7 @@ public partial class uLightConfig : UserControl
 
         item.DeviceSelected += OnDeviceItemSelected;
         item.DeviceDoubleClicked += OnDeviceItemDoubleClicked;
+        item.ConnectionStateChanged += OnDeviceConnectionStateChanged;
         // 使用AntdUI Button的ContextMenuStrip绑定右键菜单
         item.BindContextMenu(contextMenu_Device);
 
@@ -258,6 +268,7 @@ public partial class uLightConfig : UserControl
             flowPanel_Devices.Controls.Remove(item);
             item.DeviceSelected -= OnDeviceItemSelected;
             item.DeviceDoubleClicked -= OnDeviceItemDoubleClicked;
+            item.ConnectionStateChanged -= OnDeviceConnectionStateChanged;
             item.Dispose();
             _deviceItems.Remove(deviceName);
 
@@ -346,11 +357,30 @@ public partial class uLightConfig : UserControl
             cmb_StopBits.SelectedItem = config.StopBits;
             cmb_Parity.SelectedItem = config.Parity;
             cmb_ChannelCount.SelectedItem = config.ChannelCount;
+            
+            // 根据连接状态禁用/启用配置控件
+            var controller = LightFactory.Instance.GetController(config.Name);
+            bool isConnected = controller?.IsConnected ?? false;
+            SetConfigControlsEnabled(!isConnected);
         }
         finally
         {
             _isLoadingConfig = false;
         }
+    }
+    
+    /// <summary>
+    /// 设置配置控件的启用/禁用状态
+    /// </summary>
+    private void SetConfigControlsEnabled(bool enabled)
+    {
+        cmb_PortName.Enabled = enabled;
+        cmb_BaudRate.Enabled = enabled;
+        cmb_DataBits.Enabled = enabled;
+        cmb_StopBits.Enabled = enabled;
+        cmb_Parity.Enabled = enabled;
+        cmb_ChannelCount.Enabled = enabled;
+        chk_Enabled.Enabled = enabled;
     }
 
     private void ClearConfigPanel()
@@ -450,6 +480,25 @@ public partial class uLightConfig : UserControl
         }
     }
 
+    private void OnDeviceConnectionStateChanged(object sender, bool connected)
+    {
+        if (InvokeRequired)
+        {
+            try { BeginInvoke(new Action<object, bool>(OnDeviceConnectionStateChanged), sender, connected); } catch { }
+            return;
+        }
+
+        // 获取触发事件的设备项
+        var deviceItem = sender as uLightDeviceItem;
+        if (deviceItem?.Device == null) return;
+
+        // 如果是当前选中的设备，更新配置控件的启用状态
+        if (_selectedDevice != null && _selectedDevice.Name == deviceItem.Device.Name)
+        {
+            SetConfigControlsEnabled(!connected);
+        }
+    }
+
     private void FlowPanel_Devices_SizeChanged(object sender, EventArgs e)
     {
         // 调整所有设备项宽度
@@ -494,21 +543,24 @@ public partial class uLightConfig : UserControl
 
     private void btn_Save_Click(object sender, EventArgs e)
     {
-        SavePanelToConfig();
+        // 保存按钮已禁用，配置修改即生效
+    }
+
+    /// <summary>
+    /// 保存当前配置到文件（内部调用）
+    /// </summary>
+    private void SaveCurrentConfig()
+    {
+        if (_currentConfig == null) return;
+        
+        // 通过工厂更新与保存
+        LightFactory.Instance.UpdateConfig(_currentConfig);
+        LogHelper.Info($"已保存光源配置[{_currentConfig.Name}]");
     }
 
     private void SavePanelToConfig()
     {
         if (_currentConfig == null) return;
-
-        // 检查控制器是否已连接
-        var controller = LightFactory.Instance.GetController(_currentConfig.Name);
-        if (controller != null && controller.IsConnected)
-        {
-            MessageBox.Show("设备已连接，请先断开连接后再修改配置。", "提示",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
 
         // 将界面参数写回当前配置
         _currentConfig.Enabled = chk_Enabled.Checked;
@@ -521,8 +573,6 @@ public partial class uLightConfig : UserControl
 
         // 通过工厂更新与保存
         LightFactory.Instance.UpdateConfig(_currentConfig);
-        
-        MessageBox.Show("配置已保存", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
         LogHelper.Info($"已保存光源配置[{_currentConfig.Name}]");
     }
 
@@ -545,14 +595,54 @@ public partial class uLightConfig : UserControl
 
     private void cmb_PortName_SelectedIndexChanged(object sender, EventArgs e)
     {
-        // 加载配置时不触发断开连接
-        if (_isLoadingConfig) return;
+        // 加载配置时不触发保存
+        if (_isLoadingConfig || _currentConfig == null) return;
         
-        if (_currentConfig == null) return;
-        
-        // 用户手动修改端口号时，断开当前连接
-        LightFactory.Instance.DisconnectController(_currentConfig.Name);
+        // 更新配置并保存
         _currentConfig.PortName = cmb_PortName.Text;
+        SaveCurrentConfig();
+    }
+
+    private void cmb_BaudRate_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.BaudRate = (int)cmb_BaudRate.SelectedItem;
+        SaveCurrentConfig();
+    }
+
+    private void cmb_DataBits_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.DataBits = (int)cmb_DataBits.SelectedItem;
+        SaveCurrentConfig();
+    }
+
+    private void cmb_StopBits_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.StopBits = (double)cmb_StopBits.SelectedItem;
+        SaveCurrentConfig();
+    }
+
+    private void cmb_Parity_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.Parity = cmb_Parity.SelectedItem?.ToString() ?? "None";
+        SaveCurrentConfig();
+    }
+
+    private void cmb_ChannelCount_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.ChannelCount = (int)cmb_ChannelCount.SelectedItem;
+        SaveCurrentConfig();
+    }
+
+    private void chk_Enabled_CheckedChanged(object sender, EventArgs e)
+    {
+        if (_isLoadingConfig || _currentConfig == null) return;
+        _currentConfig.Enabled = chk_Enabled.Checked;
+        SaveCurrentConfig();
     }
 
     private void tsmi_Rename_Click(object sender, EventArgs e)
@@ -618,14 +708,6 @@ public partial class uLightConfig : UserControl
                     MessageBox.Show("重命名失败，可能名称已存在", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-    }
-
-    private void tsmi_Delete_Click(object sender, EventArgs e)
-    {
-        if (_rightClickedItem?.Device != null)
-        {
-            DeleteDevice(_rightClickedItem.Device.Name);
         }
     }
 

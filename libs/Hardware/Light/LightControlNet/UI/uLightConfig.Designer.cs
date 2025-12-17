@@ -43,7 +43,6 @@
             this.lbl_ConfigTip = new System.Windows.Forms.Label();
             this.contextMenu_Device = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmi_Rename = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmi_Delete = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmi_Test = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenu_Add = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -179,6 +178,7 @@
             this.btn_Save.TabIndex = 4;
             this.btn_Save.Text = "保存配置";
             this.btn_Save.UseVisualStyleBackColor = true;
+            this.btn_Save.Visible = false;
             this.btn_Save.Click += new System.EventHandler(this.btn_Save_Click);
             // 
             // cmb_ChannelCount
@@ -189,6 +189,7 @@
             this.cmb_ChannelCount.Name = "cmb_ChannelCount";
             this.cmb_ChannelCount.Size = new System.Drawing.Size(300, 26);
             this.cmb_ChannelCount.TabIndex = 45;
+            this.cmb_ChannelCount.SelectedIndexChanged += new System.EventHandler(this.cmb_ChannelCount_SelectedIndexChanged);
             // 
             // label11
             // 
@@ -208,6 +209,7 @@
             this.cmb_Parity.Name = "cmb_Parity";
             this.cmb_Parity.Size = new System.Drawing.Size(300, 26);
             this.cmb_Parity.TabIndex = 43;
+            this.cmb_Parity.SelectedIndexChanged += new System.EventHandler(this.cmb_Parity_SelectedIndexChanged);
             // 
             // label10
             // 
@@ -227,6 +229,7 @@
             this.cmb_StopBits.Name = "cmb_StopBits";
             this.cmb_StopBits.Size = new System.Drawing.Size(300, 26);
             this.cmb_StopBits.TabIndex = 41;
+            this.cmb_StopBits.SelectedIndexChanged += new System.EventHandler(this.cmb_StopBits_SelectedIndexChanged);
             // 
             // label9
             // 
@@ -246,6 +249,7 @@
             this.cmb_DataBits.Name = "cmb_DataBits";
             this.cmb_DataBits.Size = new System.Drawing.Size(300, 26);
             this.cmb_DataBits.TabIndex = 39;
+            this.cmb_DataBits.SelectedIndexChanged += new System.EventHandler(this.cmb_DataBits_SelectedIndexChanged);
             // 
             // label8
             // 
@@ -265,6 +269,7 @@
             this.cmb_BaudRate.Name = "cmb_BaudRate";
             this.cmb_BaudRate.Size = new System.Drawing.Size(300, 26);
             this.cmb_BaudRate.TabIndex = 37;
+            this.cmb_BaudRate.SelectedIndexChanged += new System.EventHandler(this.cmb_BaudRate_SelectedIndexChanged);
             // 
             // label7
             // 
@@ -308,6 +313,7 @@
             this.chk_Enabled.TabIndex = 33;
             this.chk_Enabled.Text = "启用";
             this.chk_Enabled.UseVisualStyleBackColor = true;
+            this.chk_Enabled.CheckedChanged += new System.EventHandler(this.chk_Enabled_CheckedChanged);
             // 
             // lbl_Type
             // 
@@ -346,35 +352,27 @@
             this.contextMenu_Device.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.contextMenu_Device.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmi_Rename,
-            this.tsmi_Delete,
             this.toolStripSeparator1,
             this.tsmi_Test});
             this.contextMenu_Device.Name = "contextMenu_Device";
-            this.contextMenu_Device.Size = new System.Drawing.Size(135, 100);
+            this.contextMenu_Device.Size = new System.Drawing.Size(241, 103);
             // 
             // tsmi_Rename
             // 
             this.tsmi_Rename.Name = "tsmi_Rename";
-            this.tsmi_Rename.Size = new System.Drawing.Size(134, 30);
+            this.tsmi_Rename.Size = new System.Drawing.Size(240, 30);
             this.tsmi_Rename.Text = "重命名";
             this.tsmi_Rename.Click += new System.EventHandler(this.tsmi_Rename_Click);
-            // 
-            // tsmi_Delete
-            // 
-            this.tsmi_Delete.Name = "tsmi_Delete";
-            this.tsmi_Delete.Size = new System.Drawing.Size(134, 30);
-            this.tsmi_Delete.Text = "删除";
-            this.tsmi_Delete.Click += new System.EventHandler(this.tsmi_Delete_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(131, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(237, 6);
             // 
             // tsmi_Test
             // 
             this.tsmi_Test.Name = "tsmi_Test";
-            this.tsmi_Test.Size = new System.Drawing.Size(134, 30);
+            this.tsmi_Test.Size = new System.Drawing.Size(240, 30);
             this.tsmi_Test.Text = "测试";
             this.tsmi_Test.Click += new System.EventHandler(this.tsmi_Test_Click);
             // 
@@ -416,7 +414,6 @@
         private System.Windows.Forms.Label lbl_ConfigTip;
         private System.Windows.Forms.ContextMenuStrip contextMenu_Device;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Rename;
-        private System.Windows.Forms.ToolStripMenuItem tsmi_Delete;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Test;
         private System.Windows.Forms.Panel panel_Params;

@@ -38,19 +38,21 @@
             this.flowLayoutPanel_Devices.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel_Devices.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flowLayoutPanel_Devices.Location = new System.Drawing.Point(0, 0);
+            this.flowLayoutPanel_Devices.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.flowLayoutPanel_Devices.Name = "flowLayoutPanel_Devices";
-            this.flowLayoutPanel_Devices.Padding = new System.Windows.Forms.Padding(5);
-            this.flowLayoutPanel_Devices.Size = new System.Drawing.Size(367, 413);
+            this.flowLayoutPanel_Devices.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.flowLayoutPanel_Devices.Size = new System.Drawing.Size(330, 338);
             this.flowLayoutPanel_Devices.TabIndex = 0;
             this.flowLayoutPanel_Devices.WrapContents = false;
             // 
             // Frm_HardwareState
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 22F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.flowLayoutPanel_Devices);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "Frm_HardwareState";
-            this.Size = new System.Drawing.Size(367, 413);
+            this.Size = new System.Drawing.Size(330, 338);
             this.ResumeLayout(false);
 
         }

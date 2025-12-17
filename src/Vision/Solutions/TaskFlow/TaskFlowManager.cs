@@ -143,7 +143,7 @@ public sealed class TaskFlowManager : IDisposable
             // 异步运行工位流程，避免阻塞轮询线程
             if (_taskFlows.TryGetValue(station.Name, out var tf))
             {
-                LogHelper.Info($"[TaskFlowManager] ✅ 触发命中: 工位=[{station.Name}], 变量=[{varName}], 值=[{val}]");
+                LogHelper.Info($"触发命中: 工位=[{station.Name}], 变量=[{varName}], 值=[{val}]");
                 Task.Run(() => tf.Start());
             }
             else
@@ -204,7 +204,10 @@ public sealed class TaskFlowManager : IDisposable
 
     internal bool TryGetTaskFlow(string stationName, out TaskFlow flow) => _taskFlows.TryGetValue(stationName, out flow);
 
-    private void DisposeAll()
+    /// <summary>
+    /// 释放所有任务流和订阅（公开方法，用于切换方案时释放资源）
+    /// </summary>
+    public void DisposeAll()
     {
         //取消所有订阅
         foreach (var kv in _subscriptions)
@@ -218,6 +221,9 @@ public sealed class TaskFlowManager : IDisposable
             try { tf.Dispose(); } catch { }
         }
         _taskFlows.Clear();
+        _initialized = false;
+        
+        LogHelper.Info("[TaskFlowManager] DisposeAll 完成，所有任务流已释放");
     }
 
     public void Dispose()

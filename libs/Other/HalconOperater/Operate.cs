@@ -5,15 +5,16 @@ using System.Runtime.InteropServices;
 using Cognex.VisionPro;
 using HalconDotNet;
 
-namespace DnnInferenceNet.BassClass;
+namespace HalconOperate;
 
-public class ImageProcess
+public class Operate
 {
-    public static void ImageConvertVisionPro2HObject(ICogImage Image, out HObject hoImage)
+    public static void ImageConvertVisionPro2HObject(object image, out HObject hoImage)
     {
         hoImage = null;
         try
         {
+            ICogImage Image = (ICogImage)image;
             int Width = Image.Width;
             int Height = Image.Height;
             if (Image.GetType().Name == "CogImage24PlanarColor")
@@ -180,7 +181,8 @@ public class ImageProcess
         //创建交错格式图像
         HOperatorSet.InterleaveChannels(ho_img, out HObject InterImage, "rgb", 4 * width0, 0);
         //获取交错格式图像指针
-        HOperatorSet.GetImagePointer1(InterImage, out HTuple Pointer, out HTuple type, out HTuple width, out HTuple height);
+        HOperatorSet.GetImagePointer1(InterImage, out HTuple Pointer, out HTuple type, out HTuple width,
+            out HTuple height);
         IntPtr ptr = Pointer;
         //构建新Bitmap图像
         bmp = new Bitmap(width / 4, height, width, PixelFormat.Format24bppRgb, ptr);
@@ -203,14 +205,14 @@ public class ImageProcess
             ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
 
         //// 获取图像参数  
-        int stride = bmpData.Stride;  // 扫描线的宽度  
-        int offset = stride - width;  // 显示宽度与扫描线宽度的间隙  
-        IntPtr iptr = bmpData.Scan0;  // 获取bmpData的内存起始位置  
-        int scanBytes = stride * height;// 用stride宽度，表示这是内存区域的大小  
+        int stride = bmpData.Stride; // 扫描线的宽度  
+        int offset = stride - width; // 显示宽度与扫描线宽度的间隙  
+        IntPtr iptr = bmpData.Scan0; // 获取bmpData的内存起始位置  
+        int scanBytes = stride * height; // 用stride宽度，表示这是内存区域的大小  
 
         //// 下面把原始的显示大小字节数组转换为内存中实际存放的字节数组  
-        int posScan = 0, posReal = 0;// 分别设置两个位置指针，指向源数组和目标数组  
-        byte[] pixelValues = new byte[scanBytes];  //为目标数组分配内存  
+        int posScan = 0, posReal = 0; // 分别设置两个位置指针，指向源数组和目标数组  
+        byte[] pixelValues = new byte[scanBytes]; //为目标数组分配内存  
 
         for (int x = 0; x < height; x++)
         {
@@ -219,12 +221,13 @@ public class ImageProcess
             {
                 pixelValues[posScan++] = rawValues[posReal++];
             }
-            posScan += offset;  //行扫描结束，要将目标位置指针移过那段“间隙”  
+
+            posScan += offset; //行扫描结束，要将目标位置指针移过那段“间隙”  
         }
 
         //// 用Marshal的Copy方法，将刚才得到的内存字节数组复制到BitmapData中  
         System.Runtime.InteropServices.Marshal.Copy(pixelValues, 0, iptr, scanBytes);
-        bmp.UnlockBits(bmpData);  // 解锁内存区域  
+        bmp.UnlockBits(bmpData); // 解锁内存区域  
 
         //// 下面的代码是为了修改生成位图的索引表，从伪彩修改为灰度  
         ColorPalette tempPalette;
@@ -232,6 +235,7 @@ public class ImageProcess
         {
             tempPalette = tempBmp.Palette;
         }
+
         for (int i = 0; i < 256; i++)
         {
             tempPalette.Entries[i] = Color.FromArgb(i, i, i);
@@ -252,9 +256,10 @@ public class ImageProcess
         return ToGrayBitmap(by, width, height);
     }
 
-    public static void HobjectToBitmap(ICogImage image, int[] PixelXArray, int[] PixelYArray, int catWidth, int catHeight, out HObject hv_reImage)
+    public static void HobjectToBitmap(ICogImage image, int[] PixelXArray, int[] PixelYArray, int catWidth,
+        int catHeight, out HObject hv_reImage)
     {
-        ImageProcess.ImageConvertVisionPro2HObject(image, out var hv_Image);
+        ImageConvertVisionPro2HObject(image, out var hv_Image);
 
         int[] Rows = PixelYArray;
         int[] Cols = PixelXArray;
@@ -270,12 +275,35 @@ public class ImageProcess
             HOperatorSet.CropDomain(imageReduced, out var imagePart);
             h_ImageArray = i == 0 ? imagePart : h_ImageArray.ConcatObj(imagePart);
         }
+
         var h_rsImgArray = h_ImageArray[0];
         for (int i = 1; i < h_ImageArray.CountObj(); i++)
         {
             h_rsImgArray = h_rsImgArray.ConcatObj(h_ImageArray[i]);
         }
-        HOperatorSet.TileImagesOffset(h_rsImgArray, out var tiledImage, Rows, Cols, hv_rCat, hv_rCat, hv_rCat, hv_rCat, image.Width, image.Height);
+
+        HOperatorSet.TileImagesOffset(h_rsImgArray, out var tiledImage, Rows, Cols, hv_rCat, hv_rCat, hv_rCat, hv_rCat,
+            image.Width, image.Height);
         hv_reImage = tiledImage;
+    }
+
+    public static void ArrayPointToPolygonXld(double[,] Array2D, out double Area)
+    {
+        HObject region;
+        HTuple area, row, col, p;
+        int Num = Array2D.Length;
+        double[] xArray = new double[Num];
+        double[] yArray = new double[Num];
+        for (int j = 0; j < Num; j++)
+        {
+            xArray[j] = Array2D[j, 0];
+            yArray[j] = Array2D[j, 1];
+        }
+        // 创建Halcon多边形
+        HTuple hvRow = new HTuple(yArray);
+        HTuple hvCol = new HTuple(xArray);
+        HalconDotNet.HOperatorSet.GenContourPolygonXld(out region, hvRow, hvCol);
+        HOperatorSet.AreaCenterXld(region, out area, out row, out col, out p);
+        Area = area.D;
     }
 }

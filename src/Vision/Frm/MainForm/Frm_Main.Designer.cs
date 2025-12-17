@@ -66,6 +66,7 @@
             this.grb_Log = new System.Windows.Forms.GroupBox();
             this.split_Main = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.menuMain.SuspendLayout();
             this.toolMain.SuspendLayout();
             this.statusMain.SuspendLayout();
@@ -89,7 +90,7 @@
             this.menuMain.Location = new System.Drawing.Point(0, 0);
             this.menuMain.Name = "menuMain";
             this.menuMain.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
-            this.menuMain.Size = new System.Drawing.Size(1212, 36);
+            this.menuMain.Size = new System.Drawing.Size(1212, 32);
             this.menuMain.TabIndex = 0;
             this.menuMain.Text = "menuMain";
             // 
@@ -210,8 +211,9 @@
             this.tsm_Comm,
             this.tsm_LightControl,
             this.tsm_DLModel,
-            this.btn_UI});
-            this.toolMain.Location = new System.Drawing.Point(0, 36);
+            this.btn_UI,
+            this.toolStripButton1});
+            this.toolMain.Location = new System.Drawing.Point(0, 32);
             this.toolMain.Name = "toolMain";
             this.toolMain.Size = new System.Drawing.Size(1212, 57);
             this.toolMain.TabIndex = 1;
@@ -385,7 +387,7 @@
             this.tlp_Display.Name = "tlp_Display";
             this.tlp_Display.RowCount = 1;
             this.tlp_Display.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 85.06224F));
-            this.tlp_Display.Size = new System.Drawing.Size(1212, 335);
+            this.tlp_Display.Size = new System.Drawing.Size(1212, 337);
             this.tlp_Display.TabIndex = 6;
             // 
             // grb_State
@@ -396,7 +398,7 @@
             this.grb_State.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.grb_State.Name = "grb_State";
             this.grb_State.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.grb_State.Size = new System.Drawing.Size(176, 174);
+            this.grb_State.Size = new System.Drawing.Size(176, 176);
             this.grb_State.TabIndex = 2;
             this.grb_State.TabStop = false;
             this.grb_State.Text = "硬件状态";
@@ -409,7 +411,7 @@
             this.grb_Log.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.grb_Log.Name = "grb_Log";
             this.grb_Log.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.grb_Log.Size = new System.Drawing.Size(1024, 174);
+            this.grb_Log.Size = new System.Drawing.Size(1024, 176);
             this.grb_Log.TabIndex = 1;
             this.grb_Log.TabStop = false;
             this.grb_Log.Text = "日志";
@@ -417,7 +419,7 @@
             // split_Main
             // 
             this.split_Main.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.split_Main.Location = new System.Drawing.Point(0, 93);
+            this.split_Main.Location = new System.Drawing.Point(0, 89);
             this.split_Main.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.split_Main.Name = "split_Main";
             this.split_Main.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -429,8 +431,8 @@
             // split_Main.Panel2
             // 
             this.split_Main.Panel2.Controls.Add(this.tableLayoutPanel2);
-            this.split_Main.Size = new System.Drawing.Size(1212, 516);
-            this.split_Main.SplitterDistance = 335;
+            this.split_Main.Size = new System.Drawing.Size(1212, 520);
+            this.split_Main.SplitterDistance = 337;
             this.split_Main.SplitterWidth = 3;
             this.split_Main.TabIndex = 11;
             // 
@@ -447,8 +449,18 @@
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 1;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(1212, 178);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(1212, 180);
             this.tableLayoutPanel2.TabIndex = 0;
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(86, 52);
+            this.toolStripButton1.Text = "频闪测试";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // Frm_Main
             // 
@@ -525,5 +537,6 @@
         private System.Windows.Forms.ToolStripButton tsm_LightControl;
         private System.Windows.Forms.ToolStripButton tsm_DLModel;
         private System.Windows.Forms.ToolStripButton tsm_Comm;
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
     }
 }

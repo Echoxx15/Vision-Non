@@ -4,7 +4,6 @@ using IKapBoardDotNet;
 using IKapCDotNet;
 using IKNS;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -45,26 +44,6 @@ public class IKapBoradCL : ICamera, IDisposable
     /// </summary>
     private Thread ReconnectThread;
 
-    /// <summary>
-    /// ch: 帧缓存队列 | en: frame queue for process
-    /// </summary>
-    private readonly ConcurrentQueue<IntPtr> frameQueue = new();
-
-    /// <summary>
-    /// ch: 异步处理线程 | asynchronous processing thread
-    /// </summary>
-    private Thread _asyncProcessThread;
-
-    /// <summary>
-    /// ch: 队列图像数量上限 | en: maximum number of frames in the queue
-    /// </summary>
-    private const uint _maxQueueSize = 200;
-
-    /// <summary>
-    /// ch: 异步处理线程退出标志 false 不退出 | en: Flag to notify the  processing thread to exit
-    /// </summary>
-    private volatile bool _processThreadExit;
-
     private readonly Stopwatch _stopwatch = new();
 
     /// <summary>
@@ -77,14 +56,15 @@ public class IKapBoradCL : ICamera, IDisposable
 
     #region 接口属性
 
-    // 图像回调事件（需显式实现事件添加/移除逻辑，确保线程安全）
-    private event EventHandler<ICogImage> frameGrabedEvent;
+    /// <summary>
+    /// 图片回调 Action
+    /// </summary>
+    public Action<ICogImage> OnFrameGrabed { get; set; }
 
-    public event EventHandler<ICogImage> FrameGrabedEvent
-    {
-        add => frameGrabedEvent += value;
-        remove => frameGrabedEvent -= value;
-    }
+    /// <summary>
+    /// 采集超时回调 Action
+    /// </summary>
+    public Action<int> OnGrabTimeout { get; set; }
 
     public event EventHandler<bool> DisConnetEvent;
     public string SN { get; }
@@ -117,17 +97,6 @@ public class IKapBoradCL : ICamera, IDisposable
         //初始化 IKapBoard.IKapC 运行环境
         var res = IKapC.ItkManInitialize();
         IKUtils.CheckIKapC(res);
-        var cam = new IKCamera();
-
-        cam.g_bufferCount = 10;
-
-        cam.g_saveFileName = "D:\\CImage.tif";
-
-        cam.g_SerialNumber = null;
-
-        cam.g_bSoftTriggerUsed = false;
-
-        cam.g_bLoadGrabberConfig = false;
 
         // 获取设备信息列表
         uint numDevices = 0;
@@ -159,6 +128,17 @@ public class IKapBoradCL : ICamera, IDisposable
 
             if (di.SerialNumber == "" || gDeviceInfos.ContainsKey(di.SerialNumber))
                 continue;
+            var cam = new IKCamera();
+
+            cam.g_bufferCount = 5;
+
+            cam.g_saveFileName = "D:\\CImage.tif";
+
+            cam.g_SerialNumber = null;
+
+            cam.g_bSoftTriggerUsed = false;
+
+            cam.g_bLoadGrabberConfig = false;
             cam.g_index = (int)i;
             cam.g_devInfo = di;
             gDeviceInfos.Add(di.SerialNumber, cam);
@@ -189,13 +169,16 @@ public class IKapBoradCL : ICamera, IDisposable
         Console.Write("Using camera: serial: {0}, name: {1}, interface: {2}.\n", di.SerialNumber, di.FullName,
             di.DeviceClass);
         var res = IKapC.ItkDevOpen(i, IKapC.ITKDEV_VAL_ACCESS_MODE_EXCLUSIVE, ref device.g_hCamera);
-        IKUtils.CheckIKapC(res);
+        //IKUtils.CheckIKapC(res);
+        if (IKapC.ITKSTATUS_OK != res)
+            return -1;
 
         // \~chinese 设置相机的超时时间				\~english set timeout of camera
         var timeOutPtr = Marshal.AllocHGlobal(4);
         Marshal.WriteInt32(timeOutPtr, 20000);
         res = IKapC.ItkDevSetPrm(device.g_hCamera, IKapC.ITKDEV_PRM_HEARTBEAT_TIMEOUT, timeOutPtr);
-        IKUtils.CheckIKapC(res);
+        if (IKapC.ITKSTATUS_OK != res)
+            return -1;
         Marshal.FreeHGlobal(timeOutPtr);
 
         // \~chinese 获取特征名称列表并配置参数设置方法				\~english Get list of features' name and select parameter
@@ -210,7 +193,8 @@ public class IKapBoradCL : ICamera, IDisposable
         {
             //chinese 获取CoaXPress相机设备信息				    \~english Get CoaXPress camera device information
             res = IKapC.ItkManGetCXPDeviceInfo(i, cxp_cam_info);
-            IKUtils.CheckIKapC(res);
+            if (IKapC.ITKSTATUS_OK != res)
+                return -1;
             info = IKapC.get_itk_cxp_dev_info_IntPtr(cxp_cam_info);
             device.g_isCXP = true;
         }
@@ -218,14 +202,16 @@ public class IKapBoradCL : ICamera, IDisposable
         {
             // 获取GigEVision相机设备信息				    \~english Get GigEVision camera device information
             res = IKapC.ItkManGetGVBDeviceInfo(i, gvb_cam_info);
-            IKUtils.CheckIKapC(res);
+            if (IKapC.ITKSTATUS_OK != res)
+                return -1;
             info = IKapC.get_itk_gvb_dev_info_IntPtr(gvb_cam_info);
         }
         else if (string.Compare(di.DeviceClass, "CameraLink") == 0)
         {
             // 获取CameraLink相机设备信息				    \~english Get CameraLink camera device information
             res = IKapC.ItkManGetCLDeviceInfo(i, cl_cam_info);
-            IKUtils.CheckIKapC(res);
+            if (IKapC.ITKSTATUS_OK != res)
+                return -1;
             info = IKapC.get_itk_cl_dev_info_IntPtr(cl_cam_info);
         }
         else
@@ -235,17 +221,11 @@ public class IKapBoradCL : ICamera, IDisposable
         }
 
         device.g_hBoard = IKapBoard.IKapOpenWithSpecificInfo(info);
-        if (device.g_hBoard == IntPtr.Zero)
-            IKUtils.CheckIKapBoard(IKapBoard.IKStatus_OpenBoardFail);
-
-
 
 
         if (device.g_hBoard == IntPtr.Zero)
         {
             Console.Write("Please select camera with grabber.\n");
-            IKapC.ItkManTerminate();
-            IKUtils.pressEnterToExit();
             return -1;
         }
         // ch: 配置采集卡参数 | en: Configure frame grabber parameters
@@ -256,7 +236,8 @@ public class IKapBoradCL : ICamera, IDisposable
         DeviceRemoveCallBackDelegate deviceRemoveCallbackDelegate = cbOnReconnect;
         res = IKapC.ItkDevRegisterCallback(device.g_hCamera, "DeviceRemove",
             Marshal.GetFunctionPointerForDelegate(deviceRemoveCallbackDelegate), IntPtr.Zero);
-        IKUtils.CheckIKapC(res);
+        if (IKapC.ITKSTATUS_OK != res)
+            return -1;
 
 
 
@@ -267,16 +248,8 @@ public class IKapBoradCL : ICamera, IDisposable
         //chinese 配置相机触发方式		            \~english Configure trigger method of the camera
         //SetSoftTriggerWithGrabber(device);
         StartGrabbing();
-        if (_asyncProcessThread == null)
-        {
-            _processThreadExit = false;
-            _asyncProcessThread = new Thread(AsyncProcessThread)
-            {
-                IsBackground = true
-            };
-            _asyncProcessThread.Start();
-        }
 
+        IsConnected = true;
         return (int)IKapC.ITKSTATUS_OK;
     }
 
@@ -297,8 +270,6 @@ public class IKapBoradCL : ICamera, IDisposable
 
     public int StartGrabbing()
     {
-        /// \~chinese 创建数据流和缓冲区				    \~english Create data stream and buffer
-        CreateStreamAndBuffer();
         /// \~chinese 开始图像采集				        \~english Start grabbing images
         StartGrabImage(device);
         return 0;
@@ -324,42 +295,50 @@ public class IKapBoradCL : ICamera, IDisposable
     public void Close()
     {
         // 防止多次释放
-        if (_disposed) return;
-        _disposed = true;
+        if (!IsConnected) return;
 
-        _processThreadExit = true;
-
-        /// \~chinese 停止图像采集				        \~english Stop grabbing images
-        var ret = IKapBoard.IKapStopGrab(device.g_hBoard);
-        IKUtils.CheckIKapBoard(ret);
-
-        /// \~chinese 清除回调函数				        \~english Unregister callback functions
-        UnRegisterCallbackWithGrabber(device);
-
-        /// \~chinese 关闭采集卡设备				        \~english Close frame grabber device
-        ret = IKapBoard.IKapClose(device.g_hBoard);
-        IKUtils.CheckIKapBoard(ret);
-
-        /// \~chinese 关闭相机设备				        \~english Close camera device
-        var res = IKapC.ItkDevClose(device.g_hCamera);
-        IKUtils.CheckIKapC(res);
-
-        /// \~chinese 释放用户申请的用于存放缓冲区数据的内存				    \~english Release the memory for storing the buffer data
-        if (device.g_bufferData != IntPtr.Zero)
+        try
         {
-            Marshal.FreeHGlobal(device.g_bufferData);
-        }
+            /// \~chinese 停止图像采集				        \~english Stop grabbing images
+            var ret = IKapBoard.IKapStopGrab(device.g_hBoard);
+            IKUtils.CheckIKapBoard(ret);
 
-        /// \~chinese 释放用户申请的用于设置Buffer地址的内存				    \~english Release the memory that the user requests for setting the Buffer address
-        if (device.g_user_buffer != IntPtr.Zero)
+            /// \~chinese 清除回调函数				        \~english Unregister callback functions
+            UnRegisterCallbackWithGrabber(device);
+
+            /// \~chinese 释放用户申请的用于存放缓冲区数据的内存				    \~english Release the memory for storing the buffer data
+            if (device.g_bufferData != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(device.g_bufferData);
+                device.g_bufferData = IntPtr.Zero;
+            }
+
+            /// \~chinese 释放用户申请的用于设置Buffer地址的内存				    \~english Release the memory that the user requests for setting the Buffer address
+            if (device.g_user_buffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(device.g_user_buffer);
+                device.g_user_buffer = IntPtr.Zero;
+            }
+
+            /// \~chinese 关闭采集卡设备				        \~english Close frame grabber device
+            ret = IKapBoard.IKapClose(device.g_hBoard);
+            IKUtils.CheckIKapBoard(ret);
+            device.g_hBoard = IntPtr.Zero;
+
+            /// \~chinese 关闭相机设备				        \~english Close camera device
+            var res = IKapC.ItkDevClose(device.g_hCamera);
+            IKUtils.CheckIKapC(res);
+            // 注意：g_hCamera 是 ITKDEVICE 结构体，不能直接赋值 IntPtr.Zero
+        }
+        catch (Exception ex)
         {
-            Marshal.FreeHGlobal(device.g_user_buffer);
+            Console.WriteLine($"[IKapBoradCL] Close 异常: {ex.Message}");
         }
-
-        /// \~chinese 释放 IKapBoard.IKapC 运行环境				\~english Release IKapBoard.IKapC runtime environment
-        IKapC.ItkManTerminate();
-
-        IKUtils.WaitEnterKeyInput();
+        finally
+        {
+            IsConnected = false;
+            // 注意：不设置 _disposed = true，允许重新 Open
+        }
     }
 
     /// <summary>
@@ -367,71 +346,18 @@ public class IKapBoradCL : ICamera, IDisposable
     /// </summary>
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+        
         Close();
+        /// \~chinese 释放 IKapBoard.IKapC 运行环境				\~english Release IKapBoard.IKapC runtime environment
+        IKapC.ItkManTerminate();
         GC.SuppressFinalize(this);
     }
 
     #endregion
 
     #region 内部方法
-
-    #region 创建缓冲区
-
-    private void CreateStreamAndBuffer()
-    {
-        uint res = IKapC.ITKSTATUS_OK;
-
-        /// \~chinese  数据流数量				     \~english The number of data stream
-        uint streamCount = 0;
-
-        /// \~chinese  获取数据流数量			     \~english Get the number of data stream
-        res = IKapC.ItkDevGetStreamCount(device.g_hCamera, ref streamCount);
-        IKUtils.CheckIKapC(res);
-
-        if (streamCount == 0)
-        {
-            Console.Write("Camera does not have image stream channel.");
-            IKapC.ItkManTerminate();
-            IKUtils.pressEnterToExit();
-        }
-
-        /// \~chinese  申请数据流资源		            \~english Allocate data stream source
-        res = IKapC.ItkDevAllocStreamEx(device.g_hCamera, 0, device.g_bufferCount, ref device.g_hStream);
-        IKUtils.CheckIKapC(res);
-
-        ITKBUFFER hBuffer = new ITKBUFFER();
-
-        res = IKapC.ItkStreamGetBuffer(device.g_hStream, 0, ref hBuffer);
-        IKUtils.CheckIKapC(res);
-        ITK_BUFFER_INFO bufferInfo = new ITK_BUFFER_INFO();
-        res = IKapC.ItkBufferGetInfo(hBuffer, bufferInfo);
-        IKUtils.CheckIKapC(res);
-
-        /// \~chinese  创建缓冲区数据存储		       \~english Create buffer data saving
-        device.g_bufferData = Marshal.AllocHGlobal((int)bufferInfo.TotalSize);
-        if (device.g_bufferData == IntPtr.Zero)
-        {
-            IKapC.ItkManTerminate();
-            IKUtils.pressEnterToExit();
-        }
-
-        /***************************/
-        ///// \~chinese  展示如果使用用户申请的内存地址作为Buffer的内存地址，注意不要忘记释放该内存	       \~english Show how to using the memory address as the memory address of Buffer,be careful not to forget to release the memory
-        ///// \~chinese  创建用于设置Buffer地址的内存		       \~english Create the memory that the user requests for setting the Buffer address
-        //cam.g_user_buffer = Marshal.AllocHGlobal((int)bufferInfo.TotalSize);
-        //if (cam.g_user_buffer == IntPtr.Zero)
-        //{
-        //    IKUtils.pressEnterToExit();
-        //}
-
-        //// \~chinese 将序号为0的Buffer的内存地址改为用户申请的大小合适的内存地址，序号为1~g_bufferCount-1的Buffer同理。		\~english The memory address of Buffer with index number 0 is changed to the appropriate size memory address applied by the user, just as with Buffer with index number 1~g_bufferCount-1.
-        //res = IKapC.ItkBufferSetAddress(hBuffer, cam.g_user_buffer, bufferInfo.TotalSize);
-        //IKUtils.CheckIKapC(res); 
-        /***************************/
-    }
-
-
-    #endregion
 
     #region 图像回调
 
@@ -508,23 +434,133 @@ public class IKapBoradCL : ICamera, IDisposable
     {
         Console.Write("On end of frame. \n");
 
+        uint res = IKapC.ITKSTATUS_OK;
+        int ret = IKapBoard.IK_RTN_OK;
+
         if (pContext != IntPtr.Zero)
         {
-            var camGCHanle = GCHandle.FromIntPtr(pContext);
-            var cam = (IKCamera)camGCHanle.Target; //前提：注册回调传入的是IKCamera object
+            GCHandle camGCHanle = GCHandle.FromIntPtr(pContext);
+            IKCamera cam = (IKCamera)camGCHanle.Target; //前提：注册回调传入的是IKCamera object
             if (cam == null)
             {
                 return;
             }
 
             Console.Write("Grab frame ready of camera with serialNumber:{0}.\n", cam.g_devInfo.SerialNumber);
-            lock (this)
+
+            IntPtr pUserBuffer = IntPtr.Zero;
+            long nFrameSize = 0;
+            int nFrameCount = 0;
+            int nFrameIndex = 0;
+
+            IKAPBUFFERSTATUS status = new IKAPBUFFERSTATUS();
+
+            ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_FRAME_COUNT, ref nFrameCount);
+            IKUtils.CheckIKapBoard(ret);
+
+            ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_CURRENT_BUFFER_INDEX, ref nFrameIndex);
+            IKUtils.CheckIKapBoard(ret);
+
+
+            ret = IKapBoard.IKapGetBufferStatus(cam.g_hBoard, nFrameIndex, status);
+            IKUtils.CheckIKapBoard(ret);
+
+
+            /// \~chinese 当图像缓冲区满时				      \~english When the buffer is full
+            if (status.uFull == 1)
             {
-                if (frameQueue.Count <= _maxQueueSize)
+                /// \~chinese 获取一帧图像的大小		      \~english Get the size of a frame of image
+                ret = IKapBoard.IKapGetInfo64(cam.g_hBoard, (uint)IKapBoard.IKP_FRAME_SIZE, ref nFrameSize);
+                IKUtils.CheckIKapBoard(ret);
+
+                /// \~chinese 如果相机的MultiExposureTimeCount特征值大于1并且采集卡的IKP_MULTIPLE_LIGHT_COUNT参数设置为与MultiExposureTimeCount相同的值则开启了多重曝光功能，采集到的图像均分为N种曝光时间，[0~1*Height/N-1]行对应ExposureSelect为1时的ExposureTime，[1*Height/N~2*Height/N-1]行对应ExposureSelect为2时的ExposureTime，...，[(N-1)*Height/N~Height-1]行对应ExposureSelect为N时的ExposureTime.	\~english	If the MultiExposureTimeCount feature value is greater than 1, the multiple exposure function is turned on, The collected images were all divided into N exposure times, line [0~1 * Height / N-1] corresponds to the ExposureTime at a ExposureSelect of 1, line [1 * Height / N~2 * Height / N-1] corresponds to ExposureTime at ExposureSelect 2,..., line [(N-1) * Height / N~Height-1] corresponds to ExposureTime at ExposureSelect N.
+                /// \~chinese 获取缓冲区地址				  \~english Get the buffer address
+                ret = IKapBoard.IKapGetBufferAddress(cam.g_hBoard, nFrameIndex, ref pUserBuffer);
+                IKUtils.CheckIKapBoard(ret);
+
+                // 转换为VisionPro图像
+                // 
+                // Convert to VisionPro format
+                int nFrameWidth = 0;
+                int nFrameHeight = 0;
+                int nImageBit = 0; //像素深度
+                IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_WIDTH, ref nFrameWidth);
+                IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT, ref nFrameHeight);
+                IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BOARD_BIT, ref nImageBit);
+
+                ///获取图像类型
+                int nImageFormat = 0;
+                ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BAYER_PATTERN, ref nImageFormat);
+                IKUtils.CheckIKapBoard(ret);
+
+
+                bool bIsValidImageBit = false;
+                bool bIsColorImage = false; //图像位深是否为24
+                if (nImageBit == 8 || nImageBit == 24)
                 {
-                    //ch: 添加到队列
-                    frameQueue.Enqueue(pContext);
+                    bIsColorImage = true;
+                    //ImageHelper 实现8/24图像位深的实现
+                    bIsValidImageBit = true;
+                    if (nImageFormat == IKapBoard.IKP_BAYER_PATTERN_VAL_RGGB)
+                    {
+                        #region 图像格式转换
+
+                        _stopwatch.Restart();
+                        // 图像行高，宽幅
+                        int bufferWidth = 0;
+                        int bufferHeight = 0;
+
+                        ITKBUFFER m_grayer = new ITKBUFFER();
+                        ITKBUFFER m_color = new ITKBUFFER();
+
+                        //缓冲区建立
+                        ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT,
+                            ref bufferHeight);
+                        IKUtils.CheckIKapBoard(ret);
+
+                        ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_WIDTH, ref bufferWidth);
+                        IKUtils.CheckIKapBoard(ret);
+
+                        res = IKapC.ItkBufferNew(bufferWidth, bufferHeight, IKapC.ITKBUFFER_VAL_FORMAT_BAYER_RG8,
+                            ref m_grayer);
+                        IKUtils.CheckIKapC(res);
+                        res = IKapC.ItkBufferNew(bufferWidth, bufferHeight, IKapC.ITKBUFFER_VAL_FORMAT_RGB888,
+                            ref m_color);
+                        IKUtils.CheckIKapC(res);
+
+                        res = IKapC.ItkBufferWrite(m_grayer, 0, pUserBuffer, (uint)nFrameSize);
+                        IKUtils.CheckIKapC(res);
+
+
+                        res = IKapC.ItkBufferBayerConvert(m_grayer, m_color, IKapC.ITKBUFFER_VAL_BAYER_RGGB);
+                        IKUtils.CheckIKapC(res);
+
+                        ITK_BUFFER_INFO bufferInfo = new ITK_BUFFER_INFO();
+                        res = IKapC.ItkBufferGetInfo(m_color, bufferInfo);
+                        IKUtils.CheckIKapC(res);
+
+
+                        var image = CreateCogImage(bufferInfo.ImageAddress, nFrameWidth, nFrameHeight, true);
+
+                        _stopwatch.Stop();
+                        Console.Write($"转换耗时:{_stopwatch.ElapsedMilliseconds}");
+                        // 使用 Action 回调
+                        OnFrameGrabed?.Invoke(image);
+                        GC.Collect();
+                        return;
+
+                        #endregion
+                    }
                 }
+
+                if (bIsValidImageBit)
+                {
+                    var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, bIsColorImage);
+                    // 使用 Action 回调
+                    OnFrameGrabed?.Invoke(image);
+                }
+
+                GC.Collect();
             }
         }
     }
@@ -556,97 +592,6 @@ public class IKapBoradCL : ICamera, IDisposable
             }
 
             Console.Write("On end of stream of camera with serialNumber:{0}. \n", cam.g_devInfo.SerialNumber);
-        }
-    }
-
-
-    void AsyncProcessThread()
-    {
-        while (!_processThreadExit)
-        {
-            try
-            {
-                lock (this)
-                {
-                    _stopwatch.Restart();
-                    if (!frameQueue.TryDequeue(out var pContext)) continue;
-
-                    if (pContext != IntPtr.Zero)
-                    {
-                        GCHandle camGCHanle = GCHandle.FromIntPtr(pContext);
-                        IKCamera cam = (IKCamera)camGCHanle.Target; //前提：注册回调传入的是IKCamera object
-                        if (cam == null)
-                        {
-                            return;
-                        }
-
-                        Console.Write("Grab frame ready of camera with serialNumber:{0}.\n",
-                            cam.g_devInfo.SerialNumber);
-
-                        IntPtr pUserBuffer = IntPtr.Zero;
-                        int nFrameIndex = 0;
-                        IKAPBUFFERSTATUS status = new IKAPBUFFERSTATUS();
-
-                        var ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_CURRENT_BUFFER_INDEX,
-                            ref nFrameIndex);
-                        IKUtils.CheckIKapBoard(ret);
-
-                        ret = IKapBoard.IKapGetBufferStatus(cam.g_hBoard, nFrameIndex, status);
-                        IKUtils.CheckIKapBoard(ret);
-
-                        /// \~chinese 当图像缓冲区满时				      \~english When the buffer is full
-                        if (status.uFull == 1)
-                        {
-
-                            /// \~chinese 获取缓冲区地址				  \~english Get the buffer address
-                            ret = IKapBoard.IKapGetBufferAddress(cam.g_hBoard, nFrameIndex, ref pUserBuffer);
-                            IKUtils.CheckIKapBoard(ret);
-
-                            /// \~chinese 保存图像				       \~english Save image
-                            /*
-                            ret=IKapBoard.IKapSaveBuffer(cam.g_hBoard,nFrameIndex,cam.g_saveFileName,(uint)IKapBoard.IKP_DEFAULT_COMPRESSION);
-                            IKUtils.CheckIKapBoard(ret);
-                            */
-
-                            // 转换为VisionPro图像
-                            // 
-                            // Convert to VisionPro format
-                            int nFrameWidth = 0;
-                            int nFrameHeight = 0;
-                            int nImageBit = 0; //像素深度
-                            IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_WIDTH, ref nFrameWidth);
-                            IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT, ref nFrameHeight);
-                            IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BOARD_BIT, ref nImageBit);
-                            bool bIsValidImageBit = false;
-                            bool bIsColorImage = false; //图像位深是否为24
-                            if (nImageBit == 8 || nImageBit == 24)
-                            {
-                                //ImageHelper 实现8/24图像位深的实现
-                                bIsValidImageBit = true;
-                                if (nImageBit == 24)
-                                {
-                                    bIsColorImage = true;
-                                }
-                            }
-
-                            if (bIsValidImageBit)
-                            {
-                                var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, bIsColorImage);
-                                frameGrabedEvent?.Invoke(this, image);
-                            }
-                        }
-                    }
-
-                    GC.Collect();
-                    Console.WriteLine("转换耗时:{0}", _stopwatch.ElapsedMilliseconds);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("AsyncProcessThread exception: " + e.Message);
-            }
-
-            Thread.Sleep(2);
         }
     }
 

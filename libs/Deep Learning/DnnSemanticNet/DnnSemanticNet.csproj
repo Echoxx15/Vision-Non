@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
@@ -12,6 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="classify_pill_defects_deep_learning_4_infer_openvino.cs" />
+    <Compile Remove="optimize_dl_model_for_inference_classification_openvino.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="halcondotnet">
       <HintPath>C:\Program Files\MVTec\HALCON-24.11-Progress-Steady\bin\dotnet35\halcondotnet.dll</HintPath>
       <Private>False</Private>
@@ -21,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Other\HalconOperater\HalconOperater.csproj" />
     <ProjectReference Include="..\DnnInterfaceNet\DnnInterfaceNet.csproj" />
   </ItemGroup>
 

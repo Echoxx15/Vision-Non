@@ -9,8 +9,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using Logger;
+using UserControls;
+using UserControls.Display;
 using Vision.Common;
-using Vision.UserUI;
+using Vision.Solutions.TaskFlow;
 
 // 添加引用
 
@@ -415,6 +417,9 @@ public sealed class SolutionManager
             throw new FileNotFoundException("方案文件不存在", uv);
         try
         {
+            // 释放旧方案资源
+            DisposeCurrent();
+            
             var sol = Load(uv);
             Current = sol;
             CurrentChanged?.Invoke();
@@ -425,6 +430,101 @@ public sealed class SolutionManager
             LogHelper.Error(ex, $"打开方案失败: {info.Name}");
             throw new InvalidOperationException($"打开方案失败: {info?.Name}", ex);
         }
+    }
+
+    /// <summary>
+    /// 释放当前方案的资源（ToolBlock、显示控件等）
+    /// </summary>
+    private void DisposeCurrent()
+    {
+        if (Current == null) return;
+        
+        var solutionName = Current.Name;
+        try
+        {
+            // 0. 先停止 TaskFlowManager 释放工位任务流（包括相机回调等）
+            try
+            {
+                TaskFlowManager.Instance.DisposeAll();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warn($"[SolutionManager] 停止任务流管理器异常: {ex.Message}");
+            }
+            
+            // 1. 释放所有工位的 ToolBlock
+            foreach (var station in Current.Stations ?? new List<StationConfig>())
+            {
+                if (station == null) continue;
+                
+                DisposeToolBlock(station.CheckerboardTool);
+                DisposeToolBlock(station.NPointTool);
+                DisposeToolBlock(station.DetectionTool);
+            }
+            
+            // 2. 释放显示控件
+            foreach (var ctrl in Current.DisplayControls?.Values ?? Enumerable.Empty<UserControls.Display.ImageDisplay>())
+            {
+                try
+                {
+                    ctrl?.Dispose();
+                }
+                catch { }
+            }
+            Current.DisplayControls?.Clear();
+            
+            // 3. 清空运行时缓存
+            Current.GlobalValues?.Clear();
+            Current.LastOutputs?.Clear();
+            
+            // 4. 清空工位列表引用
+            Current.Stations?.Clear();
+            Current.Globals?.Clear();
+            
+            LogHelper.Info($"[SolutionManager] 已释放旧方案 '{solutionName}' 的资源");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[SolutionManager] 释放旧方案资源时异常: {ex.Message}");
+        }
+        finally
+        {
+            // 5. 强制垃圾回收，释放非托管内存（VisionPro 对象等）
+            Current = null;
+            try
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>
+    /// 释放单个工具的 ToolBlock 资源
+    /// </summary>
+    private static void DisposeToolBlock(StationConfig.Tools tool)
+    {
+        if (tool?.ToolBlock == null) return;
+        
+        try
+        {
+            // 释放 ToolBlock 中的所有工具
+            foreach (var t in tool.ToolBlock.Tools)
+            {
+                try
+                {
+                    if (t is IDisposable disposable)
+                        disposable.Dispose();
+                }
+                catch { }
+            }
+            
+            // 释放 ToolBlock 本身
+            tool.ToolBlock = null;
+        }
+        catch { }
     }
 
     /// <summary>
@@ -833,9 +933,9 @@ public sealed class SolutionManager
                 Directory.CreateDirectory(stationDir);
 
                 // 保存三个工具（棋盘格、九点、检测）
-                SaveSingleTool(sol, st, st.CheckerboardTool, "棋盘格标定");
-                SaveSingleTool(sol, st, st.NPointTool, "九点标定");
-                SaveSingleTool(sol, st, st.DetectionTool, "检测");
+                SaveSingleTool(sol, st, st.CheckerboardTool);
+                SaveSingleTool(sol, st, st.NPointTool);
+                SaveSingleTool(sol, st, st.DetectionTool);
             }
             catch (Exception ex)
             {
@@ -847,7 +947,7 @@ public sealed class SolutionManager
     /// <summary>
     /// 保存单个工具的 VPP 和变量文件
     /// </summary>
-    private static void SaveSingleTool(Solution sol, StationConfig st, StationConfig.Tools tool, string toolName)
+    private static void SaveSingleTool(Solution sol, StationConfig st, StationConfig.Tools tool)
     {
         if (tool?.ToolBlock == null) return;
 
@@ -861,7 +961,7 @@ public sealed class SolutionManager
         }
         catch (Exception ex)
         {
-            LogHelper.Warn($"工位[{st.Name}]{toolName}工具保存失败: {ex.Message}");
+            LogHelper.Warn($"工位[{st.Name}]{tool.FileName}工具保存失败: {ex.Message}");
         }
 
         try
@@ -870,7 +970,7 @@ public sealed class SolutionManager
         }
         catch (Exception ex)
         {
-            LogHelper.Warn($"工位[{st.Name}]{toolName}工具变量保存失败: {ex.Message}");
+            LogHelper.Warn($"工位[{st.Name}]{tool.FileName}工具变量保存失败: {ex.Message}");
         }
     }
 
@@ -901,11 +1001,11 @@ public sealed class SolutionManager
                 Directory.CreateDirectory(stationDir);
 
                 // 加载三个工具（棋盘格、九点、检测）
-                if (LoadSingleTool(sol, st, st.CheckerboardTool, "棋盘格标定")) successCount++;
+                if (LoadSingleTool(sol, st, st.CheckerboardTool)) successCount++;
                 else if (st.bCalibCheckboardTool) failCount++;
-                if (LoadSingleTool(sol, st, st.NPointTool, "九点标定")) successCount++;
+                if (LoadSingleTool(sol, st, st.NPointTool)) successCount++;
                 else if (st.bCalibNPointTool) failCount++;
-                if (LoadSingleTool(sol, st, st.DetectionTool, "检测")) successCount++;
+                if (LoadSingleTool(sol, st, st.DetectionTool)) successCount++;
                 else failCount++;
             }
             catch (Exception ex)
@@ -917,14 +1017,9 @@ public sealed class SolutionManager
 
         if (successCount > 0 || failCount > 0)
         {
-            if (failCount > 0)
-            {
-                LogHelper.Info($"方案[{sol.Name}]加载完成: 成功 {successCount} 项,失败 {failCount} 项");
-            }
-            else
-            {
-                LogHelper.Info($"方案[{sol.Name}]加载完成: 成功 {successCount} 项");
-            }
+            LogHelper.Info(failCount > 0
+                ? $"方案[{sol.Name}]加载完成: 成功 {successCount} 项,失败 {failCount} 项"
+                : $"方案[{sol.Name}]加载完成: 成功 {successCount} 项");
         }
     }
 
@@ -932,7 +1027,7 @@ public sealed class SolutionManager
     /// 加载单个工具的 VPP 和变量文件
     /// </summary>
     /// <returns>是否成功加载</returns>
-    private static bool LoadSingleTool(Solution sol, StationConfig st, StationConfig.Tools tool, string toolName)
+    private static bool LoadSingleTool(Solution sol, StationConfig st, StationConfig.Tools tool)
     {
         if (tool == null) return false;
 
@@ -945,7 +1040,7 @@ public sealed class SolutionManager
         }
         catch (Exception ex)
         {
-            LogHelper.Warn($"工位[{st.Name}]{toolName}工具加载失败: {ex.Message}");
+            LogHelper.Warn($"工位[{st.Name}]{tool.FileName}工具加载失败: {ex.Message}");
             return false;
         }
 
@@ -955,7 +1050,7 @@ public sealed class SolutionManager
         }
         catch (Exception ex)
         {
-            LogHelper.Warn($"工位[{st.Name}]{toolName}工具变量加载失败: {ex.Message}");
+            LogHelper.Warn($"工位[{st.Name}]{tool.FileName}工具变量加载失败: {ex.Message}");
         }
 
         return true;

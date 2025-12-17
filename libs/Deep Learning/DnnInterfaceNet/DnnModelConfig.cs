@@ -41,6 +41,16 @@ public class DnnModelConfig
     public bool LoadOnStartup { get; set; } = false;
 
     /// <summary>
+    /// 优化精度（用于加速模型）
+    /// </summary>
+    public DnnOptimizePrecision OptimizePrecision { get; set; } = DnnOptimizePrecision.FP32;
+
+    /// <summary>
+    /// 优化批次大小
+    /// </summary>
+    public int OptimizeBatchSize { get; set; } = 1;
+
+    /// <summary>
     /// 扩展参数（插件特有配置）
     /// </summary>
     public List<ConfigParameter> ExtendedParams { get; set; } = new();

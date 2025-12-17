@@ -53,6 +53,18 @@ namespace DnnOCRNet
             this.panelButtons = new System.Windows.Forms.Panel();
             this.btnUnload = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
+            this.groupBoxOptimize = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanelOptimize = new System.Windows.Forms.TableLayoutPanel();
+            this.lblOptimizeDevice = new System.Windows.Forms.Label();
+            this.cmbOptimizeDevice = new System.Windows.Forms.ComboBox();
+            this.lblOptimizePrecision = new System.Windows.Forms.Label();
+            this.cmbOptimizePrecision = new System.Windows.Forms.ComboBox();
+            this.lblOptimizeBatchSize = new System.Windows.Forms.Label();
+            this.nudOptimizeBatchSize = new System.Windows.Forms.NumericUpDown();
+            this.lblOptimizeStatusLabel = new System.Windows.Forms.Label();
+            this.lblOptimizeStatus = new System.Windows.Forms.Label();
+            this.btnExportOptimized = new System.Windows.Forms.Button();
+            this.progressBarOptimize = new System.Windows.Forms.ProgressBar();
             this.tableLayoutPanel1.SuspendLayout();
             this.panelPath.SuspendLayout();
             this.groupBoxOCR.SuspendLayout();
@@ -60,6 +72,9 @@ namespace DnnOCRNet
             ((System.ComponentModel.ISupportInitialize)(this.nudBatchSize)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudOverlap)).BeginInit();
             this.panelButtons.SuspendLayout();
+            this.groupBoxOptimize.SuspendLayout();
+            this.tableLayoutPanelOptimize.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudOptimizeBatchSize)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -80,10 +95,11 @@ namespace DnnOCRNet
             this.tableLayoutPanel1.Controls.Add(this.chkLoadOnStartup, 1, 5);
             this.tableLayoutPanel1.Controls.Add(this.groupBoxOCR, 0, 6);
             this.tableLayoutPanel1.Controls.Add(this.panelButtons, 1, 7);
+            this.tableLayoutPanel1.Controls.Add(this.groupBoxOptimize, 0, 8);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(10, 10);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 9;
+            this.tableLayoutPanel1.RowCount = 10;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
@@ -92,8 +108,9 @@ namespace DnnOCRNet
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 160F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(380, 380);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(380, 530);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
             // lblName
@@ -381,15 +398,178 @@ namespace DnnOCRNet
             this.btnLoad.Text = "加载模型";
             this.btnLoad.UseVisualStyleBackColor = true;
             // 
+            // groupBoxOptimize
+            // 
+            this.tableLayoutPanel1.SetColumnSpan(this.groupBoxOptimize, 2);
+            this.groupBoxOptimize.Controls.Add(this.tableLayoutPanelOptimize);
+            this.groupBoxOptimize.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBoxOptimize.Location = new System.Drawing.Point(3, 336);
+            this.groupBoxOptimize.Name = "groupBoxOptimize";
+            this.groupBoxOptimize.Padding = new System.Windows.Forms.Padding(6);
+            this.groupBoxOptimize.Size = new System.Drawing.Size(374, 154);
+            this.groupBoxOptimize.TabIndex = 13;
+            this.groupBoxOptimize.TabStop = false;
+            this.groupBoxOptimize.Text = "模型优化导出";
+            // 
+            // tableLayoutPanelOptimize
+            // 
+            this.tableLayoutPanelOptimize.ColumnCount = 4;
+            this.tableLayoutPanelOptimize.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+            this.tableLayoutPanelOptimize.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanelOptimize.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanelOptimize.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanelOptimize.Controls.Add(this.lblOptimizeDevice, 0, 0);
+            this.tableLayoutPanelOptimize.Controls.Add(this.cmbOptimizeDevice, 1, 0);
+            this.tableLayoutPanelOptimize.Controls.Add(this.lblOptimizePrecision, 0, 1);
+            this.tableLayoutPanelOptimize.Controls.Add(this.cmbOptimizePrecision, 1, 1);
+            this.tableLayoutPanelOptimize.Controls.Add(this.lblOptimizeBatchSize, 2, 1);
+            this.tableLayoutPanelOptimize.Controls.Add(this.nudOptimizeBatchSize, 3, 1);
+            this.tableLayoutPanelOptimize.Controls.Add(this.lblOptimizeStatusLabel, 0, 2);
+            this.tableLayoutPanelOptimize.Controls.Add(this.lblOptimizeStatus, 1, 2);
+            this.tableLayoutPanelOptimize.Controls.Add(this.btnExportOptimized, 1, 3);
+            this.tableLayoutPanelOptimize.Controls.Add(this.progressBarOptimize, 1, 4);
+            this.tableLayoutPanelOptimize.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanelOptimize.Location = new System.Drawing.Point(6, 22);
+            this.tableLayoutPanelOptimize.Name = "tableLayoutPanelOptimize";
+            this.tableLayoutPanelOptimize.RowCount = 5;
+            this.tableLayoutPanelOptimize.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.tableLayoutPanelOptimize.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.tableLayoutPanelOptimize.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanelOptimize.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tableLayoutPanelOptimize.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanelOptimize.Size = new System.Drawing.Size(362, 126);
+            this.tableLayoutPanelOptimize.TabIndex = 0;
+            // 
+            // lblOptimizeDevice
+            // 
+            this.lblOptimizeDevice.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOptimizeDevice.AutoSize = true;
+            this.lblOptimizeDevice.Location = new System.Drawing.Point(3, 6);
+            this.lblOptimizeDevice.Name = "lblOptimizeDevice";
+            this.lblOptimizeDevice.Size = new System.Drawing.Size(43, 15);
+            this.lblOptimizeDevice.TabIndex = 0;
+            this.lblOptimizeDevice.Text = "设备:";
+            // 
+            // cmbOptimizeDevice
+            // 
+            this.tableLayoutPanelOptimize.SetColumnSpan(this.cmbOptimizeDevice, 3);
+            this.cmbOptimizeDevice.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbOptimizeDevice.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbOptimizeDevice.FormattingEnabled = true;
+            this.cmbOptimizeDevice.Location = new System.Drawing.Point(78, 3);
+            this.cmbOptimizeDevice.Name = "cmbOptimizeDevice";
+            this.cmbOptimizeDevice.Size = new System.Drawing.Size(281, 23);
+            this.cmbOptimizeDevice.TabIndex = 1;
+            // 
+            // lblOptimizePrecision
+            // 
+            this.lblOptimizePrecision.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOptimizePrecision.AutoSize = true;
+            this.lblOptimizePrecision.Location = new System.Drawing.Point(3, 34);
+            this.lblOptimizePrecision.Name = "lblOptimizePrecision";
+            this.lblOptimizePrecision.Size = new System.Drawing.Size(55, 15);
+            this.lblOptimizePrecision.TabIndex = 2;
+            this.lblOptimizePrecision.Text = "精确率:";
+            // 
+            // cmbOptimizePrecision
+            // 
+            this.cmbOptimizePrecision.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.cmbOptimizePrecision.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbOptimizePrecision.FormattingEnabled = true;
+            this.cmbOptimizePrecision.Items.AddRange(new object[] {
+            "浮点 32位",
+            "浮点 16位",
+            "整型 8位"});
+            this.cmbOptimizePrecision.Location = new System.Drawing.Point(78, 31);
+            this.cmbOptimizePrecision.Name = "cmbOptimizePrecision";
+            this.cmbOptimizePrecision.Size = new System.Drawing.Size(100, 23);
+            this.cmbOptimizePrecision.TabIndex = 3;
+            // 
+            // lblOptimizeBatchSize
+            // 
+            this.lblOptimizeBatchSize.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOptimizeBatchSize.AutoSize = true;
+            this.lblOptimizeBatchSize.Location = new System.Drawing.Point(191, 34);
+            this.lblOptimizeBatchSize.Name = "lblOptimizeBatchSize";
+            this.lblOptimizeBatchSize.Size = new System.Drawing.Size(55, 15);
+            this.lblOptimizeBatchSize.TabIndex = 4;
+            this.lblOptimizeBatchSize.Text = "批次:";
+            // 
+            // nudOptimizeBatchSize
+            // 
+            this.nudOptimizeBatchSize.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.nudOptimizeBatchSize.Location = new System.Drawing.Point(251, 31);
+            this.nudOptimizeBatchSize.Maximum = new decimal(new int[] {
+            16,
+            0,
+            0,
+            0});
+            this.nudOptimizeBatchSize.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudOptimizeBatchSize.Name = "nudOptimizeBatchSize";
+            this.nudOptimizeBatchSize.Size = new System.Drawing.Size(60, 25);
+            this.nudOptimizeBatchSize.TabIndex = 5;
+            this.nudOptimizeBatchSize.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // lblOptimizeStatusLabel
+            // 
+            this.lblOptimizeStatusLabel.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOptimizeStatusLabel.AutoSize = true;
+            this.lblOptimizeStatusLabel.Location = new System.Drawing.Point(3, 61);
+            this.lblOptimizeStatusLabel.Name = "lblOptimizeStatusLabel";
+            this.lblOptimizeStatusLabel.Size = new System.Drawing.Size(43, 15);
+            this.lblOptimizeStatusLabel.TabIndex = 6;
+            this.lblOptimizeStatusLabel.Text = "状态:";
+            // 
+            // lblOptimizeStatus
+            // 
+            this.tableLayoutPanelOptimize.SetColumnSpan(this.lblOptimizeStatus, 3);
+            this.lblOptimizeStatus.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOptimizeStatus.AutoSize = true;
+            this.lblOptimizeStatus.ForeColor = System.Drawing.Color.Gray;
+            this.lblOptimizeStatus.Location = new System.Drawing.Point(78, 61);
+            this.lblOptimizeStatus.Name = "lblOptimizeStatus";
+            this.lblOptimizeStatus.Size = new System.Drawing.Size(15, 15);
+            this.lblOptimizeStatus.TabIndex = 7;
+            this.lblOptimizeStatus.Text = "-";
+            // 
+            // btnExportOptimized
+            // 
+            this.tableLayoutPanelOptimize.SetColumnSpan(this.btnExportOptimized, 3);
+            this.btnExportOptimized.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.btnExportOptimized.Location = new System.Drawing.Point(78, 84);
+            this.btnExportOptimized.Name = "btnExportOptimized";
+            this.btnExportOptimized.Size = new System.Drawing.Size(120, 28);
+            this.btnExportOptimized.TabIndex = 8;
+            this.btnExportOptimized.Text = "导出优化模型";
+            this.btnExportOptimized.UseVisualStyleBackColor = true;
+            // 
+            // progressBarOptimize
+            // 
+            this.tableLayoutPanelOptimize.SetColumnSpan(this.progressBarOptimize, 3);
+            this.progressBarOptimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.progressBarOptimize.Location = new System.Drawing.Point(78, 119);
+            this.progressBarOptimize.Name = "progressBarOptimize";
+            this.progressBarOptimize.Size = new System.Drawing.Size(281, 4);
+            this.progressBarOptimize.TabIndex = 9;
+            this.progressBarOptimize.Visible = false;
+            // 
             // OCRConfigControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.tableLayoutPanel1);
-            this.MinimumSize = new System.Drawing.Size(350, 380);
+            this.MinimumSize = new System.Drawing.Size(350, 550);
             this.Name = "OCRConfigControl";
             this.Padding = new System.Windows.Forms.Padding(10);
-            this.Size = new System.Drawing.Size(400, 400);
+            this.Size = new System.Drawing.Size(400, 550);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.panelPath.ResumeLayout(false);
@@ -400,6 +580,10 @@ namespace DnnOCRNet
             ((System.ComponentModel.ISupportInitialize)(this.nudBatchSize)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudOverlap)).EndInit();
             this.panelButtons.ResumeLayout(false);
+            this.groupBoxOptimize.ResumeLayout(false);
+            this.tableLayoutPanelOptimize.ResumeLayout(false);
+            this.tableLayoutPanelOptimize.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudOptimizeBatchSize)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -431,5 +615,17 @@ namespace DnnOCRNet
         private System.Windows.Forms.Panel panelButtons;
         private System.Windows.Forms.Button btnUnload;
         private System.Windows.Forms.Button btnLoad;
+        private System.Windows.Forms.GroupBox groupBoxOptimize;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanelOptimize;
+        private System.Windows.Forms.Label lblOptimizeDevice;
+        private System.Windows.Forms.ComboBox cmbOptimizeDevice;
+        private System.Windows.Forms.Label lblOptimizePrecision;
+        private System.Windows.Forms.ComboBox cmbOptimizePrecision;
+        private System.Windows.Forms.Label lblOptimizeBatchSize;
+        private System.Windows.Forms.NumericUpDown nudOptimizeBatchSize;
+        private System.Windows.Forms.Label lblOptimizeStatusLabel;
+        private System.Windows.Forms.Label lblOptimizeStatus;
+        private System.Windows.Forms.Button btnExportOptimized;
+        private System.Windows.Forms.ProgressBar progressBarOptimize;
     }
 }

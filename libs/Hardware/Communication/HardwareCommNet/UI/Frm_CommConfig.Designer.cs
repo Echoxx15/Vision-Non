@@ -28,7 +28,6 @@
             this.contextMenu_Add = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.contextMenu_Device = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmi_Rename = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmi_Delete = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmi_CommTable = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -170,35 +169,27 @@
             this.contextMenu_Device.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.contextMenu_Device.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmi_Rename,
-            this.tsmi_Delete,
             this.toolStripSeparator1,
             this.tsmi_CommTable});
             this.contextMenu_Device.Name = "contextMenu_Device";
-            this.contextMenu_Device.Size = new System.Drawing.Size(171, 100);
+            this.contextMenu_Device.Size = new System.Drawing.Size(241, 103);
             // 
             // tsmi_Rename
             // 
             this.tsmi_Rename.Name = "tsmi_Rename";
-            this.tsmi_Rename.Size = new System.Drawing.Size(170, 30);
+            this.tsmi_Rename.Size = new System.Drawing.Size(240, 30);
             this.tsmi_Rename.Text = "重命名";
             this.tsmi_Rename.Click += new System.EventHandler(this.tsmi_Rename_Click);
-            // 
-            // tsmi_Delete
-            // 
-            this.tsmi_Delete.Name = "tsmi_Delete";
-            this.tsmi_Delete.Size = new System.Drawing.Size(170, 30);
-            this.tsmi_Delete.Text = "删除";
-            this.tsmi_Delete.Click += new System.EventHandler(this.tsmi_Delete_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(167, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(237, 6);
             // 
             // tsmi_CommTable
             // 
             this.tsmi_CommTable.Name = "tsmi_CommTable";
-            this.tsmi_CommTable.Size = new System.Drawing.Size(170, 30);
+            this.tsmi_CommTable.Size = new System.Drawing.Size(240, 30);
             this.tsmi_CommTable.Text = "通讯表配置";
             this.tsmi_CommTable.Click += new System.EventHandler(this.tsmi_CommTable_Click);
             // 
@@ -237,7 +228,6 @@
         private System.Windows.Forms.ContextMenuStrip contextMenu_Add;
         private System.Windows.Forms.ContextMenuStrip contextMenu_Device;
         private System.Windows.Forms.ToolStripMenuItem tsmi_Rename;
-        private System.Windows.Forms.ToolStripMenuItem tsmi_Delete;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem tsmi_CommTable;
     }

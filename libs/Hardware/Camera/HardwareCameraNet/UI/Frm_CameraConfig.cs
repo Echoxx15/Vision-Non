@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -23,11 +23,14 @@ public partial class Frm_CameraConfig : Form
     }
     private void Frm_CameraConfig_Load(object sender, EventArgs e)
     {
+        // 初始化厂商下拉框（只在窗体加载时执行一次）
         var mans = CameraFactory.Instance.GetAllManufacturers().Cast<object>().ToArray();
         cmb_Manufacturers.Items.AddRange(mans);
 
+        // 只刷新 DataGridView，避免触发下拉框选中逻辑
         DgvUpdate();
 
+        // 初始化控件使能状态（不改变厂商和SN下拉框的选中项）
         SetControlState();
         
         // 订阅DGV行选择事件（点击行时选中对应相机）
@@ -250,37 +253,35 @@ public partial class Frm_CameraConfig : Form
         cmb_SnList.Items.AddRange(list.Cast<object>().ToArray());
     }
     /// <summary>
-    /// 订阅新相机的FrameGrabedEvent（确保只订阅一次）
+    /// 订阅新相机的图像回调（使用 Action）
     /// </summary>
     private void SubscribeNewCameraEvent(ICamera newCamera)
     {
         if (newCamera == null) return;
 
-        //订阅前先取消一次（防止相机实例被其他地方订阅过）
-        newCamera.FrameGrabedEvent -= UpdateUIImage;
-        // 正式订阅
-        newCamera.FrameGrabedEvent += UpdateUIImage;
+        // 使用 Action 赋值方式，直接覆盖
+        newCamera.OnFrameGrabed = (img) => UpdateUIImage(img);
         Console.WriteLine($"订阅相机{newCamera.SN}的图像事件");
     }
     /// <summary>
-    /// 取消当前相机的FrameGrabedEvent订阅
+    /// 取消当前相机的图像回调
     /// </summary>
     private void UnsubscribeCurrentCameraEvent()
     {
         if (currentSelectedCamera != null)
         {
-            // 取消订阅
-            currentSelectedCamera.FrameGrabedEvent -= UpdateUIImage;
+            // 清空 Action
+            currentSelectedCamera.OnFrameGrabed = null;
             Console.WriteLine($"取消订阅相机{currentSelectedCamera.SN}的图像事件");
         }
     }
 
-    private void UpdateUIImage(object sender, object img)
+    private void UpdateUIImage(object img)
     {
         Control dispatcher = pictureEdit_Display != null ? (Control)pictureEdit_Display : this;
         if (dispatcher.InvokeRequired)
         {
-            dispatcher.BeginInvoke(new Action<object, object>(UpdateUIImage), sender, img);
+            dispatcher.BeginInvoke(new Action<object>(UpdateUIImage), img);
             return;
         }
         try
@@ -288,6 +289,11 @@ public partial class Frm_CameraConfig : Form
             if (img is Bitmap bmp)
             {
                 pictureEdit_Display.Image = bmp;
+            }
+            else if (img is Cognex.VisionPro.ICogImage cogImage)
+            {
+                // ICogImage 转 Bitmap
+                pictureEdit_Display.Image = cogImage.ToBitmap();
             }
         }
         catch (Exception)
@@ -419,6 +425,7 @@ public partial class Frm_CameraConfig : Form
                 Expain = expain
             };
             CameraFactory.Instance.AddOrUpdateConfig(cfg);
+            // 添加配置仅需刷新列表，不改变当前厂商和SN选择，避免重新枚举
             DgvUpdate();
         }
         catch (Exception exception)
@@ -495,6 +502,7 @@ public partial class Frm_CameraConfig : Form
         try
         {
             currentSelectedCamera.Open();
+            // 连接相机仅刷新按钮和参数控件状态，不刷新厂商/SN下拉框
             SetControlState(currentSelectedCamera.IsConnected);
             currentSelectedCamera.DisConnetEvent += DisConnectEvent;
             
@@ -523,6 +531,7 @@ public partial class Frm_CameraConfig : Form
                 .FirstOrDefault(c => c.SerialNumber == currentSelectedCamera.SN);
             
             currentSelectedCamera.Close();
+            // 断开连接同样只更新按钮和参数控件
             SetControlState(currentSelectedCamera.IsConnected);
             currentSelectedCamera.DisConnetEvent -= DisConnectEvent;
             

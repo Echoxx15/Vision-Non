@@ -111,15 +111,16 @@ public sealed class LightFactory : IDisposable
                     var controller = LightManager.Instance.CreateController(config);
                     if (controller == null) throw new NotSupportedException($"不支持的光源控制器: {config.Type}");
 
+                    // ✅ 无论是否打开成功，都保留控制器实例
+                    _controllers[config.Name] = controller;
+                    
                     if (controller.Open())
                     {
-                        _controllers[config.Name] = controller;
                         LogHelper.Info($"光源控制器[{config.Name}]初始化成功");
                     }
                     else
                     {
-                        LogHelper.Warn($"光源控制器[{config.Name}]初始化失败");
-                        controller.Dispose();
+                        LogHelper.Warn($"光源控制器[{config.Name}]初始化失败，设备保留但未连接");
                     }
                 }
                 catch (Exception ex)
@@ -475,15 +476,16 @@ public sealed class LightFactory : IDisposable
 
             if (controller == null) { LogHelper.Warn($"不支持的光源控制器: {config?.Type}"); return; }
 
+            // ✅ 无论是否打开成功，都保留控制器实例（便于UI显示和后续重试连接）
+            _controllers[config.Name] = controller;
+            
             if (controller.Open())
             {
-                _controllers[config.Name] = controller;
                 LogHelper.Info($"光源控制器[{config.Name}]初始化成功");
             }
             else
             {
-                LogHelper.Warn($"光源控制器[{config.Name}]初始化失败");
-                controller.Dispose();
+                LogHelper.Warn($"光源控制器[{config.Name}]初始化失败，设备保留但未连接");
             }
         }
         catch (Exception ex)

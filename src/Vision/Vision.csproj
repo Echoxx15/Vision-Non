@@ -271,24 +271,6 @@
     <Compile Include="Solutions\TaskFlow\TaskFlowManager.cs" />
     <Compile Include="Solutions\TaskFlow\TaskFlow.cs" />
     <Compile Include="Solutions\WorkFlow\SystemStateManager.cs" />
-    <Compile Include="UserUI\ImageDisplay.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UserUI\ImageDisplay.Designer.cs">
-      <DependentUpon>ImageDisplay.cs</DependentUpon>
-    </Compile>
-    <Compile Include="UserUI\MaxDisplay.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UserUI\MaxDisplay.Designer.cs">
-      <DependentUpon>MaxDisplay.cs</DependentUpon>
-    </Compile>
-    <Compile Include="UserUI\uAddValueCollection.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UserUI\uAddValueCollection.Designer.cs">
-      <DependentUpon>uAddValueCollection.cs</DependentUpon>
-    </Compile>
     <EmbeddedResource Include="Frm\FrmHardwareState\Frm_HardwareState.resx">
       <DependentUpon>Frm_HardwareState.cs</DependentUpon>
     </EmbeddedResource>
@@ -341,15 +323,6 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="UserUI\ImageDisplay.resx">
-      <DependentUpon>ImageDisplay.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UserUI\MaxDisplay.resx">
-      <DependentUpon>MaxDisplay.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UserUI\uAddValueCollection.resx">
-      <DependentUpon>uAddValueCollection.cs</DependentUpon>
-    </EmbeddedResource>
     <None Include="NLog.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -386,7 +359,9 @@
     <None Include="Resources\深度学习1.png" />
     <Content Include="YZZN.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="UserUI\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Hardware\Camera\HardwareCameraNet\HardwareCameraNet.csproj">
       <Project>{02d11c38-cc51-4ba5-ac42-c5091b86abbb}</Project>
@@ -403,6 +378,10 @@
     <ProjectReference Include="..\..\libs\Deep Learning\DnnInterfaceNet\DnnInterfaceNet.csproj">
       <Project>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</Project>
       <Name>DnnInterfaceNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libs\Other\UserControls\UserControls.csproj">
+      <Project>{ad87e8b2-06e5-4ab6-8790-d173ad050656}</Project>
+      <Name>UserControls</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

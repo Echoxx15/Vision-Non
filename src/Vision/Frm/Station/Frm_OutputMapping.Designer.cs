@@ -19,6 +19,8 @@
         private System.Windows.Forms.Panel panel_Buttons;
         private System.Windows.Forms.Button btn_Add;
         private System.Windows.Forms.Button btn_Remove;
+        private System.Windows.Forms.Button btn_MoveUp;
+        private System.Windows.Forms.Button btn_MoveDown;
         private System.Windows.Forms.Button btn_Save;
         private System.Windows.Forms.Button btn_Cancel;
         
@@ -61,6 +63,8 @@
             this.panel_Buttons = new System.Windows.Forms.Panel();
             this.btn_Add = new System.Windows.Forms.Button();
             this.btn_Remove = new System.Windows.Forms.Button();
+            this.btn_MoveUp = new System.Windows.Forms.Button();
+            this.btn_MoveDown = new System.Windows.Forms.Button();
             this.btn_Save = new System.Windows.Forms.Button();
             this.btn_Cancel = new System.Windows.Forms.Button();
             this.panel_Top = new System.Windows.Forms.Panel();
@@ -240,6 +244,8 @@
             // 
             this.panel_Buttons.Controls.Add(this.btn_Add);
             this.panel_Buttons.Controls.Add(this.btn_Remove);
+            this.panel_Buttons.Controls.Add(this.btn_MoveUp);
+            this.panel_Buttons.Controls.Add(this.btn_MoveDown);
             this.panel_Buttons.Controls.Add(this.btn_Save);
             this.panel_Buttons.Controls.Add(this.btn_Cancel);
             this.panel_Buttons.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -285,6 +291,40 @@
             this.btn_Remove.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(180, 80, 80);
             this.btn_Remove.Cursor = System.Windows.Forms.Cursors.Hand;
             // 
+            // btn_MoveUp
+            // 
+            this.btn_MoveUp.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.btn_MoveUp.Location = new System.Drawing.Point(250, 14);
+            this.btn_MoveUp.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btn_MoveUp.Name = "btn_MoveUp";
+            this.btn_MoveUp.Size = new System.Drawing.Size(80, 38);
+            this.btn_MoveUp.TabIndex = 2;
+            this.btn_MoveUp.Text = "⬆ 上移";
+            this.btn_MoveUp.UseVisualStyleBackColor = false;
+            this.btn_MoveUp.BackColor = darkControl;
+            this.btn_MoveUp.ForeColor = lightText;
+            this.btn_MoveUp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_MoveUp.FlatAppearance.BorderColor = darkBorder;
+            this.btn_MoveUp.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(80, 140, 80);
+            this.btn_MoveUp.Cursor = System.Windows.Forms.Cursors.Hand;
+            // 
+            // btn_MoveDown
+            // 
+            this.btn_MoveDown.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            this.btn_MoveDown.Location = new System.Drawing.Point(337, 14);
+            this.btn_MoveDown.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btn_MoveDown.Name = "btn_MoveDown";
+            this.btn_MoveDown.Size = new System.Drawing.Size(80, 38);
+            this.btn_MoveDown.TabIndex = 3;
+            this.btn_MoveDown.Text = "⬇ 下移";
+            this.btn_MoveDown.UseVisualStyleBackColor = false;
+            this.btn_MoveDown.BackColor = darkControl;
+            this.btn_MoveDown.ForeColor = lightText;
+            this.btn_MoveDown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_MoveDown.FlatAppearance.BorderColor = darkBorder;
+            this.btn_MoveDown.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(80, 140, 80);
+            this.btn_MoveDown.Cursor = System.Windows.Forms.Cursors.Hand;
+            // 
             // btn_Save
             // 
             this.btn_Save.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -293,7 +333,7 @@
             this.btn_Save.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btn_Save.Name = "btn_Save";
             this.btn_Save.Size = new System.Drawing.Size(108, 38);
-            this.btn_Save.TabIndex = 2;
+            this.btn_Save.TabIndex = 4;
             this.btn_Save.Text = "✔ 保存";
             this.btn_Save.UseVisualStyleBackColor = false;
             this.btn_Save.BackColor = accentBlue;
@@ -311,7 +351,7 @@
             this.btn_Cancel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btn_Cancel.Name = "btn_Cancel";
             this.btn_Cancel.Size = new System.Drawing.Size(108, 38);
-            this.btn_Cancel.TabIndex = 3;
+            this.btn_Cancel.TabIndex = 5;
             this.btn_Cancel.Text = "✖ 取消";
             this.btn_Cancel.UseVisualStyleBackColor = false;
             this.btn_Cancel.BackColor = darkControl;

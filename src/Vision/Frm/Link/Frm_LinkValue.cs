@@ -74,25 +74,28 @@ public partial class Frm_LinkValue : Form
         }
             
         // 工位属性变量节点（带 [LinkableProperty] 特性的属性）
-        var stationPropertyRootNode = new TreeNode("工位属性变量") { Tag = "StationPropertyRoot" };
-        foreach (var st in sol.Stations ?? new List<StationConfig>())
+        // ✅ 只显示自身工位（用于链接自身的触发次数等属性）
+        if (!string.IsNullOrWhiteSpace(_excludeStation))
         {
-            if (st == null) continue;
-            if (!string.IsNullOrWhiteSpace(_excludeStation) && string.Equals(st.Name, _excludeStation, StringComparison.OrdinalIgnoreCase)) continue;
-            var stPropNode = new TreeNode(st.Name) { Tag = ("StationProperty", st) };
-            stationPropertyRootNode.Nodes.Add(stPropNode);
-        }
-        if (stationPropertyRootNode.Nodes.Count > 0)
-        {
-            treeView1.Nodes.Add(stationPropertyRootNode);
+            var selfStation = sol.Stations?.FirstOrDefault(s => 
+                string.Equals(s?.Name, _excludeStation, StringComparison.OrdinalIgnoreCase));
+            if (selfStation != null)
+            {
+                var stationPropertyRootNode = new TreeNode("工位属性变量") { Tag = "StationPropertyRoot" };
+                var stPropNode = new TreeNode(selfStation.Name) { Tag = ("StationProperty", selfStation) };
+                stationPropertyRootNode.Nodes.Add(stPropNode);
+                treeView1.Nodes.Add(stationPropertyRootNode);
+            }
         }
             
         // 工位节点（检测工具输出）
+        // ✅ 排除自身工位（不能链接自己工具的输出）
         foreach (var st in sol.Stations ?? new List<StationConfig>())
         {
             if (st == null) continue;
-            // ✅ 修复：排除当前工位自身
-            if (!string.IsNullOrWhiteSpace(_excludeStation) && string.Equals(st.Name, _excludeStation, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.IsNullOrWhiteSpace(_excludeStation) && 
+                string.Equals(st.Name, _excludeStation, StringComparison.OrdinalIgnoreCase)) 
+                continue;
             var node = new TreeNode(st.Name) { Tag = st };
             treeView1.Nodes.Add(node);
         }

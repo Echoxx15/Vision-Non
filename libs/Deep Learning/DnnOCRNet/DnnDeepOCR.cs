@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using DnnInterfaceNet;
@@ -10,7 +11,7 @@ namespace DnnOCRNet;
 /// 深度OCR模型插件 - 实现 IDnnModel 接口
 /// </summary>
 [DnnModelType("深度OCR", "基于深度学习的OCR模型，支持文字检测和识别")]
-public class DnnDeepOCR : IDnnModel, IRenameableDnnModel, IConfigurableDnnModel
+public class DnnDeepOCR : IDnnModel, IRenameableDnnModel, IConfigurableDnnModel, IOptimizableDnnModel, IInferenceDeviceProvider
 {
     #region 私有字段
 
@@ -316,6 +317,299 @@ public class DnnDeepOCR : IDnnModel, IRenameableDnnModel, IConfigurableDnnModel
                     if (int.TryParse(param.Value, out var overlap))
                         _detectionTilingOverlap = overlap;
                     break;
+            }
+        }
+    }
+
+    #endregion
+
+    #region IOptimizableDnnModel 实现
+
+    /// <summary>
+    /// 获取可用的优化设备列表
+    /// </summary>
+    public List<string> GetAvailableOptimizeDevices()
+    {
+        var devices = new List<string>();
+        
+        try
+        {
+            // 查询 TensorRT 设备
+            try
+            {
+                HOperatorSet.QueryAvailableDlDevices("ai_accelerator_interface", "tensorrt", out var tensorrtDevices);
+                for (int i = 0; i < tensorrtDevices.Length; i++)
+                {
+                    HOperatorSet.GetDlDeviceParam(tensorrtDevices[i], "name", out var deviceName);
+                    devices.Add($"{deviceName.S} with TensorRT");
+                }
+            }
+            catch { }
+
+            // 查询 OpenVINO 设备
+            try
+            {
+                HOperatorSet.QueryAvailableDlDevices("ai_accelerator_interface", "openvino", out var openvinoDevices);
+                for (int i = 0; i < openvinoDevices.Length; i++)
+                {
+                    HOperatorSet.GetDlDeviceParam(openvinoDevices[i], "name", out var deviceName);
+                    var name = $"{deviceName.S} with OpenVINO";
+                    if (!devices.Contains(name))
+                        devices.Add(name);
+                }
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"查询优化设备失败: {ex.Message}");
+        }
+
+        return devices;
+    }
+
+    /// <summary>
+    /// 优化并导出模型
+    /// </summary>
+    public bool OptimizeAndExport(string deviceName, DnnOptimizePrecision precision, int batchSize, Action<int, string> progress = null)
+    {
+        if (!IsLoaded || string.IsNullOrEmpty(ModelPath))
+        {
+            progress?.Invoke(0, "模型未加载");
+            return false;
+        }
+
+        try
+        {
+            progress?.Invoke(5, "正在查询设备...");
+            
+            // 解析设备类型
+            bool isTensorRT = deviceName.Contains("TensorRT");
+            bool isOpenVINO = deviceName.Contains("OpenVINO");
+            
+            if (!isTensorRT && !isOpenVINO)
+            {
+                progress?.Invoke(0, "不支持的设备类型");
+                return false;
+            }
+
+            // 查询对应设备
+            HTuple deviceHandles;
+            string accelerator = isTensorRT ? "tensorrt" : "openvino";
+            
+            HOperatorSet.QueryAvailableDlDevices("ai_accelerator_interface", accelerator, out deviceHandles);
+            
+            if (deviceHandles.Length == 0)
+            {
+                progress?.Invoke(0, "未找到可用设备");
+                return false;
+            }
+
+            // 选择第一个匹配的设备
+            HTuple selectedDevice = null;
+            for (int i = 0; i < deviceHandles.Length; i++)
+            {
+                HOperatorSet.GetDlDeviceParam(deviceHandles[i], "name", out var name);
+                if (deviceName.Contains(name.S))
+                {
+                    selectedDevice = deviceHandles[i];
+                    break;
+                }
+            }
+
+            if (selectedDevice == null)
+                selectedDevice = deviceHandles[0];
+
+            progress?.Invoke(10, "正在准备优化...");
+
+            // 读取原始识别模型
+            string recognitionModelPath = Path.Combine(ModelPath, "recognition.hdl").Replace("\\", "/");
+            if (!File.Exists(recognitionModelPath.Replace("/", "\\")))
+            {
+                progress?.Invoke(0, "识别模型文件不存在");
+                return false;
+            }
+
+            progress?.Invoke(15, "正在读取模型...");
+            HOperatorSet.ReadDlModel(recognitionModelPath, out var dlModelHandle);
+
+            // 设置批次大小
+            HOperatorSet.SetDlModelParam(dlModelHandle, "batch_size", batchSize);
+
+            progress?.Invoke(25, "正在优化模型（这可能需要几分钟）...");
+
+            // 转换精度字符串
+            string precisionStr = precision switch
+            {
+                DnnOptimizePrecision.FP16 => "float16",
+                DnnOptimizePrecision.INT8 => "int8",
+                _ => "float32"
+            };
+
+            // 优化模型 - Halcon 24.11 正确调用方式
+            // 首先获取优化参数
+            HTuple optimizeForInferenceParams;
+            try
+            {
+                HOperatorSet.GetDlDeviceParam(selectedDevice, "optimize_for_inference_params", out optimizeForInferenceParams);
+                Console.WriteLine($"[{_name}] 获取优化参数成功");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{_name}] 获取优化参数失败: {ex.Message}，使用默认参数");
+                optimizeForInferenceParams = new HTuple();
+            }
+            
+            HTuple optimizedModelHandle;
+            HTuple conversionReport;
+            
+            try
+            {
+                Console.WriteLine($"[{_name}] 调用 OptimizeDlModelForInference (Halcon 24.11)");
+                
+                // Halcon 24.11 签名:
+                // OptimizeDlModelForInference(DLModelHandle, DLDevice, Precision, GenParamName, OptimizeForInferenceParams, 
+                //                            out DLModelHandleOptimized, out ConversionReport)
+                HOperatorSet.OptimizeDlModelForInference(
+                    dlModelHandle,              // DLModelHandle - 原始模型
+                    selectedDevice,             // DLDevice - 设备句柄
+                    precisionStr,               // Precision - 精度
+                    new HTuple(),               // GenParamName - 空的额外参数
+                    optimizeForInferenceParams, // OptimizeForInferenceParams - 优化参数
+                    out optimizedModelHandle,   // DLModelHandleOptimized - 优化后的模型
+                    out conversionReport);      // ConversionReport - 转换报告
+                    
+                Console.WriteLine($"[{_name}] 优化成功！");
+            }
+            catch (Exception ex)
+            {
+                progress?.Invoke(0, $"Halcon优化失败: {ex.Message}");
+                Console.WriteLine($"[{_name}] OptimizeDlModelForInference 失败: {ex.Message}");
+                Console.WriteLine($"[{_name}] 异常详情: {ex}");
+                return false;
+            }
+
+            progress?.Invoke(80, "正在保存优化模型...");
+
+            // 生成输出文件名
+            string suffix = isTensorRT ? "_tensorrt" : "_openvino";
+            string optimizedPath = Path.Combine(ModelPath, $"recognition{suffix}.hdl").Replace("\\", "/");
+            
+            HOperatorSet.WriteDlModel(optimizedModelHandle, optimizedPath);
+
+            progress?.Invoke(100, "优化完成");
+
+            // 清理
+            dlModelHandle?.Dispose();
+            optimizedModelHandle?.Dispose();
+
+            Console.WriteLine($"[{_name}] 模型优化导出成功: {optimizedPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            progress?.Invoke(0, $"优化失败: {ex.Message}");
+            Console.WriteLine($"[{_name}] 模型优化失败: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 检查优化模型是否存在
+    /// </summary>
+    public bool HasOptimizedModel(DnnRuntime runtime)
+    {
+        if (string.IsNullOrEmpty(ModelPath))
+            return false;
+
+        string suffix = runtime switch
+        {
+            DnnRuntime.TensorRT => "_tensorrt",
+            DnnRuntime.OpenVINO => "_openvino",
+            _ => ""
+        };
+
+        if (string.IsNullOrEmpty(suffix))
+            return false;
+
+        string optimizedPath = Path.Combine(ModelPath, $"recognition{suffix}.hdl");
+        return File.Exists(optimizedPath);
+    }
+
+    #endregion
+
+    #region IInferenceDeviceProvider 实现
+
+    /// <summary>
+    /// 枚举可用推理设备及对应运行时
+    /// </summary>
+    public List<DnnInferenceDeviceInfo> GetAvailableInferenceDevices()
+    {
+        var devices = new List<DnnInferenceDeviceInfo>();
+
+        // 通用 GC 运行时
+        TryCollectDevices(
+            (new HTuple("runtime")).TupleConcat("runtime"),
+            (new HTuple("gpu")).TupleConcat("cpu"),
+            DnnRuntime.GC,
+            devices);
+
+        // OpenVINO
+        TryCollectDevices(
+            new HTuple("ai_accelerator_interface"),
+            new HTuple("openvino"),
+            DnnRuntime.OpenVINO,
+            devices);
+
+        // TensorRT
+        TryCollectDevices(
+            new HTuple("ai_accelerator_interface"),
+            new HTuple("tensorrt"),
+            DnnRuntime.TensorRT,
+            devices);
+
+        return devices;
+    }
+
+    private void TryCollectDevices(HTuple interfaceName, HTuple deviceName, DnnRuntime runtime, List<DnnInferenceDeviceInfo> output)
+    {
+        try
+        {
+            HOperatorSet.QueryAvailableDlDevices(interfaceName, deviceName, out var handles);
+            AppendDeviceInfo(handles, runtime, output);
+            handles?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{_name}] 查询{runtime}设备失败: {ex.Message}");
+        }
+    }
+
+    private void AppendDeviceInfo(HTuple handles, DnnRuntime runtime, List<DnnInferenceDeviceInfo> output)
+    {
+        if (handles == null || handles.Length == 0) return;
+
+        for (int i = 0; i < handles.Length; i++)
+        {
+            try
+            {
+                HOperatorSet.GetDlDeviceParam(handles[i], "name", out var name);
+                HOperatorSet.GetDlDeviceParam(handles[i], "type", out var type);
+
+                var deviceType = string.Equals(type.S, "cpu", StringComparison.OrdinalIgnoreCase)
+                    ? DnnDeviceType.CPU
+                    : DnnDeviceType.GPU;
+
+                output.Add(new DnnInferenceDeviceInfo
+                {
+                    Name = name.S,
+                    Runtime = runtime,
+                    DeviceType = deviceType
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{_name}] 读取{runtime}设备信息失败: {ex.Message}");
             }
         }
     }

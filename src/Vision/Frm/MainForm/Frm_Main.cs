@@ -21,8 +21,10 @@ using Vision.LightSource;
 using DnnInterfaceNet; // 深度学习插件接口
 using Vision.Frm.DLModel;
 using Vision.Frm.Station;
-using Vision.UserUI; // 深度学习模型配置界面
-using HardwareCommNet; // 通讯配置接口
+using HardwareCommNet;
+using UserControls;
+using UserControls.Display;
+using UserControls.LightTestForm; // 通讯配置接口
 
 // 界面工厂
 
@@ -177,8 +179,8 @@ public partial class Frm_Main : Form
 
         // 2.5. 加载通讯插件（支持多种通讯类型）
         splash.SetProgress(20, "正在加载通讯插件...");
-        HardwareCommNet.CommPluginServer.Instance.LoadPlugins();
-        HardwareCommNet.CommunicationFactory.Instance.Initialize();
+        CommPluginServer.Instance.LoadPlugins();
+        CommunicationFactory.Instance.Initialize();
 
         // 2.8 加载光源插件（支持多品牌光源控制器）
         splash.SetProgress(25, "正在加载光源插件...");
@@ -219,7 +221,7 @@ public partial class Frm_Main : Form
         splash.SetProgress(55, "加载通讯设备配置...");
         try
         {
-            HardwareCommNet.CommunicationFactory.Instance.LoadConfigs();
+            CommunicationFactory.Instance.LoadConfigs();
         }
         catch (Exception ex)
         {
@@ -301,7 +303,7 @@ public partial class Frm_Main : Form
     /// </summary>
     private void InitIdleTimer()
     {
-        _lastMouse = Control.MousePosition;
+        _lastMouse = MousePosition;
         _lastInputTime = DateTime.Now;
 
         _idleTimer = new Timer { Interval = 1000, Enabled = true };
@@ -333,7 +335,7 @@ public partial class Frm_Main : Form
         try
         {
             // 1. 检查鼠标移动（过滤小幅度抖动）
-            var cur = Control.MousePosition;
+            var cur = MousePosition;
             var dx = Math.Abs(cur.X - _lastMouse.X);
             var dy = Math.Abs(cur.Y - _lastMouse.Y);
 
@@ -557,9 +559,7 @@ public partial class Frm_Main : Form
             var currentState = SystemStateManager.Instance.IsOnline;
             var newState = !currentState;
 
-            var stateText = newState ? "在线" : "离线";
-
-// 执行状态切换
+            // 执行状态切换
             SystemStateManager.Instance.SetOnlineState(newState);
 
             // 可选：显示状态切换提示
@@ -617,16 +617,17 @@ public partial class Frm_Main : Form
     {
         try
         {
-            // 1. 当前方案名称
+            // 1. 当前方案名称（从SolutionInfo列表获取，确保显示最新修改后的名称）
             var sol = SolutionManager.Instance.Current;
-            txt_JobName.Text = $"当前方案:{(sol?.Name ?? "无")}";
+            var solutionName = GetCurrentSolutionDisplayName(sol);
+            txt_JobName.Text = $"当前方案:{solutionName}";
 
             // 2. 运行时间（天时分格式）
             var span = DateTime.Now - _startTime;
             txt_RunTime.Text = $"运行时间:{(int)span.TotalDays}天{span.Hours:D2}时{span.Minutes:D2}分";
 
             // 3. 内存占用（进程工作集，单位MB）
-            using (var p = System.Diagnostics.Process.GetCurrentProcess())
+            using (var p = Process.GetCurrentProcess())
             {
                 var memMb = p.WorkingSet64 / (1024.0 * 1024.0);
                 txt_Memory.Text = $"内存:{memMb:F1}MB";
@@ -684,6 +685,38 @@ public partial class Frm_Main : Form
         catch
         {
         }
+    }
+
+    /// <summary>
+    /// 获取当前方案的显示名称
+    /// 从 SolutionInfo 列表中匹配当前方案，返回列表中的名称（可能已被修改）
+    /// 如果没有匹配到，则返回 Solution.Name，最后返回"无"
+    /// </summary>
+    private string GetCurrentSolutionDisplayName(Solutions.Models.Solution sol)
+    {
+        if (sol == null) return "无";
+        
+        try
+        {
+            // 根据当前方案的 FilePath 从 SolutionInfo 列表中查找对应的记录
+            var filePath = sol.FilePath;
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                var info = SolutionManager.Instance.Solutions?.FirstOrDefault(s =>
+                {
+                    var uvPath = SolutionManager.GetUvPath(s);
+                    return !string.IsNullOrEmpty(uvPath) &&
+                           string.Equals(Path.GetFullPath(uvPath), Path.GetFullPath(filePath),
+                               StringComparison.OrdinalIgnoreCase);
+                });
+                if (info != null && !string.IsNullOrWhiteSpace(info.Name))
+                    return info.Name;
+            }
+        }
+        catch { }
+        
+        // 如果没有匹配到 SolutionInfo，返回 Solution.Name
+        return sol.Name ?? "无";
     }
 
     /// <summary>
@@ -778,7 +811,7 @@ public partial class Frm_Main : Form
         try
         {
             var now = DateTime.Now;
-            var proc = System.Diagnostics.Process.GetCurrentProcess();
+            var proc = Process.GetCurrentProcess();
 
             // 进程总CPU时间（所有核心累加）
             double totalMs = proc.TotalProcessorTime.TotalMilliseconds;
@@ -1250,25 +1283,39 @@ public partial class Frm_Main : Form
     private void tsm_Comm_Click(object sender, EventArgs e)
     {
         // 使用新的通讯配置界面（在独立窗口中显示）
-        using var frm = new Form
-        {
-            Text = "通讯配置",
-            Size = new Size(1200, 900),
-            StartPosition = FormStartPosition.CenterParent
-        };
-        
+        using var frm = new Form();
+        frm.Text = "通讯配置";
+        frm.Size = new Size(1200, 900);
+        frm.StartPosition = FormStartPosition.CenterParent;
+
         // 获取通讯配置控件
         var configControl = CommConfigHost.Instance.ConfigControl;
         configControl.Dock = DockStyle.Fill;
         frm.Controls.Add(configControl);
         
-        // 订阅打开通讯表请求事件
-        CommConfigHost.Instance.OpenCommTableRequested += (s, device) =>
+        // 使用局部事件处理器，避免重复订阅
+        EventHandler<IComm> openCommTableHandler = (_, device) =>
         {
             CommConfigHost.Instance.OpenCommTable(device);
         };
         
-        frm.ShowDialog(this);
+        CommConfigHost.Instance.OpenCommTableRequested += openCommTableHandler;
+        
+        try
+        {
+            frm.ShowDialog(this);
+        }
+        finally
+        {
+            // 窗口关闭后取消订阅，防止重复触发
+            CommConfigHost.Instance.OpenCommTableRequested -= openCommTableHandler;
+        }
+    }
+
+    private void toolStripButton1_Click(object sender, EventArgs e)
+    {
+        using var frm = new FugenPinshanLight();
+        frm.ShowDialog();
     }
 }
 

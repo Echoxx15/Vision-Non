@@ -8,11 +8,17 @@ namespace HardwareCameraNet;
 /// </summary>
 public interface ICamera
 {
+    /// <summary>
+    /// 图片回调 Action，使用时直接赋值即可，无需订阅/取消订阅
+    /// 参数：ICogImage 图像
+    /// </summary>
+    Action<ICogImage> OnFrameGrabed { get; set; }
 
     /// <summary>
-    /// 图片回调事件,康耐视图像
+    /// 采集超时回调 Action
+    /// 参数：超时时间（毫秒）
     /// </summary>
-    event EventHandler<ICogImage> FrameGrabedEvent;
+    Action<int> OnGrabTimeout { get; set; }
 
     /// <summary>
     /// 掉线事件,掉线时触发，true 表示掉线，false表示恢复

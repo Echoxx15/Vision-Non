@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using Cognex.VisionPro;
@@ -10,24 +13,51 @@ using HardwareCameraNet;
 using Vision.Solutions.Models;
 using Vision.Solutions.TaskFlow;
 
-// ✅ 添加输出映射窗体的命名空间
-
 namespace Vision.Frm.Station;
 
 public partial class Frm_StationConfig : Form
 {
- private BindingList<StationConfig> _models; // 存储模型列表
+ private BindingList<StationConfig> _models;
+ private CancellationTokenSource _flyCaptureCts;
 
  public Frm_StationConfig()
  {
   InitializeComponent();
   Load += Frm_StationConfig_Load;
   tree_Station.AfterSelect += Tree_Station_AfterSelect;
+  tree_Station.DrawMode = TreeViewDrawMode.OwnerDrawAll;
+  tree_Station.DrawNode += Tree_Station_DrawNode;
   tsm_OpenForm.Click += Tsm_OpenForm_Click;
   tsm_LoadImageRun.Click += Tsm_LoadImageRun_Click;
   tsm_TriggerCameraRun.Click += Tsm_TriggerCameraRun_Click;
+  tsm_SimulateFlyCapture.Click += Tsm_SimulateFlyCapture_Click;
   safePropertyGrid1.PropertyValueChanged += safePropertyGrid1_PropertyValueChanged;
   contextMenuStrip2.Opening += ContextMenuStrip2_Opening;
+ }
+
+ private void Tree_Station_DrawNode(object sender, DrawTreeNodeEventArgs e)
+ {
+  Color selectedBackColor = Color.FromArgb(0, 122, 204);
+  Color normalBackColor = Color.FromArgb(45, 45, 48);
+  Color textColor = Color.FromArgb(220, 220, 220);
+  Color selectedTextColor = Color.White;
+
+  bool isSelected = (e.State & TreeNodeStates.Selected) != 0;
+  
+  Rectangle bounds = e.Bounds;
+  if (bounds is { Width: > 0, Height: > 0 })
+  {
+   using (var brush = new SolidBrush(isSelected ? selectedBackColor : normalBackColor))
+   {
+    e.Graphics.FillRectangle(brush, bounds);
+   }
+   
+   var textBounds = new Rectangle(bounds.X + 8, bounds.Y + (bounds.Height - e.Node.TreeView.Font.Height) / 2, 
+                                  bounds.Width - 8, bounds.Height);
+   TextRenderer.DrawText(e.Graphics, e.Node.Text, e.Node.TreeView.Font, textBounds, 
+                         isSelected ? selectedTextColor : textColor, 
+                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+  }
  }
 
  private void Frm_StationConfig_Load(object sender, EventArgs e)
@@ -121,9 +151,9 @@ public partial class Frm_StationConfig : Form
     {
      st.CameraParams.Exposure = cam.Parameters.ExposureTime;
      st.CameraParams.Gain = cam.Parameters.Gain;
-     st.CameraParams.TimeoutMs =3000;
+     st.CameraParams.TimeoutMs = 3000;
      st.CameraParams.TriggerMode = TriggerMode.软触发;
-     st.CameraParams.TriggerCount =1;
+     st.CameraParams.TriggerCount = 1;
      st.CameraParams.Width = cam.Parameters.Width;
      st.CameraParams.Height = cam.Parameters.Height;
     }
@@ -135,14 +165,12 @@ public partial class Frm_StationConfig : Form
 
    safePropertyGrid1.Refresh();
   }
-  // ✅ 监听通讯配置变化，自动重新绑定触发
   else if (label == "CommDeviceName" || label == "通讯设备" ||
            label == "TriggerVariableName" || label == "触发变量" ||
            label == "TriggerValue" || label == "触发值")
   {
    try
    {
-    // 重新绑定该工位的通讯触发
     TaskFlowManager.Instance.ReloadStation(st.Name);
     LogHelper.Info($"[工位配置] 工位[{st.Name}]通讯配置已更新，已重新绑定触发");
    }
@@ -151,17 +179,18 @@ public partial class Frm_StationConfig : Form
     LogHelper.Error(ex, $"[工位配置] 重新绑定工位[{st.Name}]通讯触发失败");
    }
   }
-  // ✅ 监听光源亮度与通道配置变化，立即写入亮度
-  else if (label == "Brightness1" || label == "亮度1" || label == "Brightness2" || label == "亮度2" || label == "Channel1" || label == "通道1" || label == "Channel2" || label == "通道2" || label == "LightConfigName" || label == "光源配置")
+  else if (label == "Brightness1" || label == "亮度1" || label == "Brightness2" || label == "亮度2" || 
+           label == "Channel1" || label == "通道1" || label == "Channel2" || label == "通道2" || 
+           label == "LightConfigName" || label == "光源配置")
   {
    try
    {
     var lc = st.LightControl;
     if (lc != null && lc.EnableLightControl && !string.IsNullOrWhiteSpace(lc.LightConfigName))
     {
-     Vision.LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel1, lc.Brightness1);
+     LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel1, lc.Brightness1);
      if (lc.IsMultiChannel)
-      Vision.LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel2, lc.Brightness2);
+      LightSource.LightSourceManager.Instance.SetBrightness(lc.LightConfigName, lc.Channel2, lc.Brightness2);
      LogHelper.Info($"[工位配置] 工位[{st.Name}]亮度已写入: {lc.LightConfigName}");
     }
    }
@@ -171,9 +200,6 @@ public partial class Frm_StationConfig : Form
    }
   }
  }
-
- // ✅ 深度学习模型已移至 DnnInterfaceNet.DnnModelFactory 统一管理
- // 模型配置通过「深度学习模型配置」窗口进行，不再在工位级别配置
 
  private void Tsm_LoadImageRun_Click(object sender, EventArgs e)
  {
@@ -197,9 +223,7 @@ public partial class Frm_StationConfig : Form
     if (TaskFlowManager.Instance.TryGetTaskFlow(st.Name, out var flow))
      flow.StartFromImage(f);
    }
-   catch
-   {
-   }
+   catch { }
   }
  }
 
@@ -243,6 +267,85 @@ public partial class Frm_StationConfig : Form
   }
  }
 
+ private void Tsm_SimulateFlyCapture_Click(object sender, EventArgs e)
+ {
+  if (tree_Station.SelectedNode?.Tag is not StationConfig st)
+  {
+   MessageBox.Show("请先选择工位", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+   return;
+  }
+
+  using var ofd = new OpenFileDialog
+  {
+   Filter = "图片路径列表|*.txt",
+   Title = "选择包含图片路径的TXT文件"
+  };
+  
+  if (ofd.ShowDialog() != DialogResult.OK) return;
+  
+  try
+  {
+   var lines = File.ReadAllLines(ofd.FileName);
+   var imagePaths = new List<string>();
+   
+   foreach (var line in lines)
+   {
+    var path = line.Trim();
+    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+    {
+     imagePaths.Add(path);
+    }
+   }
+   
+   if (imagePaths.Count == 0)
+   {
+    MessageBox.Show("TXT文件中没有找到有效的图片路径", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    return;
+   }
+   
+   _flyCaptureCts?.Cancel();
+   _flyCaptureCts = new CancellationTokenSource();
+   var token = _flyCaptureCts.Token;
+   
+   LogHelper.Info($"[模拟飞拍] 工位[{st.Name}]开始模拟飞拍，共{imagePaths.Count}张图片");
+   
+   Task.Run(async () =>
+   {
+    int imageIndex = 1;
+    foreach (var imagePath in imagePaths)
+    {
+     if (token.IsCancellationRequested) break;
+     
+     try
+     {
+      if (TaskFlowManager.Instance.TryGetTaskFlow(st.Name, out var flow))
+      {
+       flow.StartFromImage(imagePath, imageIndex);
+       LogHelper.Info($"[模拟飞拍] 工位[{st.Name}]执行第{imageIndex}张图片: {Path.GetFileName(imagePath)}");
+      }
+      
+      imageIndex++;
+      await Task.Delay(100, token);
+     }
+     catch (OperationCanceledException) { break; }
+     catch (Exception ex)
+     {
+      LogHelper.Error(ex, $"[模拟飞拍] 工位[{st.Name}]执行图片失败: {imagePath}");
+     }
+    }
+    
+    LogHelper.Info($"[模拟飞拍] 工位[{st.Name}]飞拍流程完成");
+   }, token);
+   
+   MessageBox.Show($"已启动模拟飞拍流程，共{imagePaths.Count}张图片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+  }
+  catch (Exception ex)
+  {
+   LogHelper.Error(ex, $"[模拟飞拍] 工位[{st.Name}]启动失败");
+   MessageBox.Show($"启动模拟飞拍失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+  }
+ }
+
  private void tsb_Add_Click(object sender, EventArgs e)
  {
   var idx = _models.Count + 1;
@@ -266,7 +369,6 @@ public partial class Frm_StationConfig : Form
    var folder = SolutionManager.GetStationFolder(sol, m);
    if (!string.IsNullOrEmpty(folder)) Directory.CreateDirectory(folder);
    
-   // ✅ 为新工位创建TaskFlow（即使没有配置通讯设备）
    TaskFlowManager.Instance.ReloadStation(m.Name);
    LogHelper.Info($"[工位配置] 已为新工位[{m.Name}]创建任务流");
   }
@@ -283,7 +385,6 @@ public partial class Frm_StationConfig : Form
    string folder = null;
    try { var sol = SolutionManager.Instance.Current; folder = SolutionManager.GetStationFolder(sol, st); } catch { }
 
-   // ✅ 先从TaskFlowManager中移除
    try
    {
     TaskFlowManager.Instance.RemoveStation(st.Name);
@@ -334,36 +435,14 @@ public partial class Frm_StationConfig : Form
        foreach (var file in Directory.GetFiles(oldDir))
        {
         var target = Path.Combine(newDir, Path.GetFileName(file));
-        try
-        {
-         if (File.Exists(target)) File.Delete(target);
-         File.Move(file, target);
-        }
-        catch
-        {
-        }
+        try { if (File.Exists(target)) File.Delete(target); File.Move(file, target); } catch { }
        }
-
        foreach (var dir in Directory.GetDirectories(oldDir))
        {
         var target = Path.Combine(newDir, Path.GetFileName(dir));
-        try
-        {
-         if (Directory.Exists(target)) Directory.Delete(target, true);
-         Directory.Move(dir, target);
-        }
-        catch
-        {
-        }
+        try { if (Directory.Exists(target)) Directory.Delete(target, true); Directory.Move(dir, target); } catch { }
        }
-
-       try
-       {
-        Directory.Delete(oldDir, true);
-       }
-       catch
-       {
-       }
+       try { Directory.Delete(oldDir, true); } catch { }
       }
      }
      else
@@ -373,9 +452,7 @@ public partial class Frm_StationConfig : Form
     }
    }
   }
-  catch
-  {
-  }
+  catch { }
  }
 
  private void Tsm_OpenForm_Click(object sender, EventArgs e)
@@ -416,13 +493,11 @@ public partial class Frm_StationConfig : Form
    }
    case "OutputMapping":
    {
-    // ✅ 打开输出映射配置窗体
     try
     {
      using var frm = new Frm_OutputMapping(st);
      if (frm.ShowDialog(this) == DialogResult.OK)
      {
-      // 刷新PropertyGrid显示
       safePropertyGrid1.Refresh();
       LogHelper.Info($"[工位配置] 工位[{st.Name}]输出映射已更新");
      }
@@ -434,8 +509,6 @@ public partial class Frm_StationConfig : Form
     }
     break;
    }
-   default:
-    break;
   }
  }
 
@@ -465,13 +538,7 @@ public partial class Frm_StationConfig : Form
     var list = tool.Vars ?? new List<StationConfig.DetectVarDef>();
     if (list.Count == 0)
     {
-     try
-     {
-      if (File.Exists(varsPath)) File.Delete(varsPath);
-     }
-     catch
-     {
-     }
+     try { if (File.Exists(varsPath)) File.Delete(varsPath); } catch { }
     }
     else
     {
@@ -483,11 +550,8 @@ public partial class Frm_StationConfig : Form
     }
    }
   }
-  catch
-  {
-  }
+  catch { }
  }
-
 }
 
 internal class InputBoxForm : Form

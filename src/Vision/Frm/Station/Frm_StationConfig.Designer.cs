@@ -38,6 +38,7 @@
             this.tsm_ReName = new System.Windows.Forms.ToolStripMenuItem();
             this.tsm_LoadImageRun = new System.Windows.Forms.ToolStripMenuItem();
             this.tsm_TriggerCameraRun = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsm_SimulateFlyCapture = new System.Windows.Forms.ToolStripMenuItem();
             this.safePropertyGrid1 = new Vision.Controls.SafePropertyGrid();
             this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsm_OpenForm = new System.Windows.Forms.ToolStripMenuItem();
@@ -74,11 +75,18 @@
             // 
             // tree_Station
             // 
-            this.tree_Station.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.tree_Station.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
+            this.tree_Station.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.tree_Station.ContextMenuStrip = this.contextMenuStrip1;
             this.tree_Station.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tree_Station.Font = new System.Drawing.Font("Microsoft YaHei UI", 10F);
+            this.tree_Station.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.tree_Station.FullRowSelect = true;
+            this.tree_Station.HideSelection = false;
+            this.tree_Station.ItemHeight = 32;
             this.tree_Station.Location = new System.Drawing.Point(3, 3);
             this.tree_Station.Name = "tree_Station";
+            this.tree_Station.ShowLines = false;
             this.tree_Station.Size = new System.Drawing.Size(189, 605);
             this.tree_Station.TabIndex = 3;
             // 
@@ -90,9 +98,10 @@
             this.tsm_Remove,
             this.tsm_ReName,
             this.tsm_LoadImageRun,
-            this.tsm_TriggerCameraRun});
+            this.tsm_TriggerCameraRun,
+            this.tsm_SimulateFlyCapture});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(233, 154);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(233, 184);
             // 
             // tsb_Add
             // 
@@ -126,6 +135,12 @@
             this.tsm_TriggerCameraRun.Name = "tsm_TriggerCameraRun";
             this.tsm_TriggerCameraRun.Size = new System.Drawing.Size(232, 30);
             this.tsm_TriggerCameraRun.Text = "运行检测-触发相机";
+            // 
+            // tsm_SimulateFlyCapture
+            // 
+            this.tsm_SimulateFlyCapture.Name = "tsm_SimulateFlyCapture";
+            this.tsm_SimulateFlyCapture.Size = new System.Drawing.Size(232, 30);
+            this.tsm_SimulateFlyCapture.Text = "模拟飞拍流程";
             // 
             // safePropertyGrid1
             // 
@@ -187,6 +202,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsm_OpenForm;
         private System.Windows.Forms.ToolStripMenuItem tsm_LoadImageRun;
         private System.Windows.Forms.ToolStripMenuItem tsm_TriggerCameraRun;
+        private System.Windows.Forms.ToolStripMenuItem tsm_SimulateFlyCapture;
         private Controls.SafePropertyGrid safePropertyGrid1;
     }
 }

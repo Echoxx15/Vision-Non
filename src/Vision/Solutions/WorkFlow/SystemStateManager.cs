@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Logger;
 
 namespace Vision.Solutions.WorkFlow;
@@ -42,7 +42,7 @@ public sealed class SystemStateManager
     /// false: 离线，拒绝外部触发（但允许手动）
     /// 默认值为 false（离线）
     /// </summary>
-    public bool IsOnline { get; private set; } = false;
+    public bool IsOnline { get; private set; } = true;
 
     /// <summary>
     /// 系统在线状态变化事件（用于刷新UI与通讯模块）

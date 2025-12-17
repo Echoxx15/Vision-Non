@@ -13,9 +13,33 @@
     /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
     protected override void Dispose(bool disposing)
     {
-      if (disposing && (components != null))
+      if (disposing)
       {
-        components.Dispose();
+        // 取消事件订阅，防止内存泄漏
+        UnsubscribeToolBlockEvents();
+        
+        // 释放 VisionPro 编辑控件资源
+        try
+        {
+          if (cogToolBlockEditV21 != null)
+          {
+            cogToolBlockEditV21.Subject = null;
+          }
+        }
+        catch { }
+        
+        // 清空数据绑定
+        try
+        {
+          dgv_Data.DataSource = null;
+          _vars = null;
+        }
+        catch { }
+        
+        if (components != null)
+        {
+          components.Dispose();
+        }
       }
 
       base.Dispose(disposing);

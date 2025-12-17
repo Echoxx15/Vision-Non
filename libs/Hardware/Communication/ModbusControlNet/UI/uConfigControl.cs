@@ -8,11 +8,24 @@ namespace ModbusControlNet.UI;
 public partial class uConfigControl : UserControl
 {
 	private IComm _device;
+	private bool _isLoading = false; // 防止加载配置时触发保存
 
 	public uConfigControl()
 	{
 		InitializeComponent();
 		cmbDataFormat.SelectedIndex = 1; // 默认选择CDAB
+		
+		// 隐藏保存按钮（修改即生效）
+		btn_Save.Visible = false;
+		
+		// 订阅控件值变更事件
+		txtIpAddress.TextChanged += ConfigValue_Changed;
+		numPort.ValueChanged += ConfigValue_Changed;
+		numStation.ValueChanged += ConfigValue_Changed;
+		chkStringReverse.CheckedChanged += ConfigValue_Changed;
+		cmbDataFormat.SelectedIndexChanged += ConfigValue_Changed;
+		numConnectTimeout.ValueChanged += ConfigValue_Changed;
+		numReceiveTimeout.ValueChanged += ConfigValue_Changed;
 	}
 
 	/// <summary>
@@ -53,6 +66,8 @@ public partial class uConfigControl : UserControl
 
 		try
 		{
+			_isLoading = true; // 开始加载，禁止触发保存
+			
 			if (_device is ModbusTcp modbus)
 			{
 				// 通过反射或公开属性获取配置
@@ -77,6 +92,10 @@ public partial class uConfigControl : UserControl
 		catch (Exception ex)
 		{
 			Console.WriteLine($"加载配置失败: {ex.Message}");
+		}
+		finally
+		{
+			_isLoading = false; // 加载完成，允许触发保存
 		}
 	}
 
@@ -126,6 +145,53 @@ public partial class uConfigControl : UserControl
 	private void btn_Save_Click(object sender, EventArgs e)
 	{
 		SaveConfigToDevice();
+	}
+
+	/// <summary>
+	/// 配置值变更事件 - 修改即生效
+	/// </summary>
+	private void ConfigValue_Changed(object sender, EventArgs e)
+	{
+		// 加载配置时不触发保存
+		if (_isLoading) return;
+		
+		// 设备未绑定时不处理
+		if (_device == null) return;
+		
+		// 设备已连接时不允许修改（控件应该已被禁用，这里做双重保护）
+		if (_device.IsConnected) return;
+		
+		// 自动保存配置
+		SaveConfigToDeviceSilent();
+	}
+
+	/// <summary>
+	/// 静默保存配置（不弹出提示框）
+	/// </summary>
+	private void SaveConfigToDeviceSilent()
+	{
+		if (_device == null) return;
+
+		try
+		{
+			if (_device is ModbusTcp modbus)
+			{
+				var config = new CommConfig(modbus.Name, "ModbusTcp");
+				config.SetParameter("IpAddress", txtIpAddress.Text);
+				config.SetParameter("Port", numPort.Value.ToString());
+				config.SetParameter("Station", numStation.Value.ToString());
+				config.SetParameter("StringReverse", chkStringReverse.Checked.ToString());
+				
+				modbus.ApplyConfig(config);
+
+				// 保存到 CommunicationFactory
+				CommunicationFactory.Instance.SaveConfigs();
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"自动保存配置失败: {ex.Message}");
+		}
 	}
 
 	/// <summary>

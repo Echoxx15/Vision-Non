@@ -22,6 +22,22 @@ public class StationConfig
     [Category("工位"), DisplayName("是否启用")] 
     public bool Enable { get; set; } = true;
 
+    // ==================== 可链接的工位属性 ====================
+    
+    /// <summary>
+    /// 触发次数（可链接属性），用于判断是否是最后一张图片
+    /// </summary>
+    [Browsable(false)]
+    [LinkableProperty("触发次数", "硬触发模式下的触发次数")]
+    public int TriggerCount => CameraParams?.TriggerCount ?? 1;
+
+    /// <summary>
+    /// 工位名称（可链接属性）
+    /// </summary>
+    [Browsable(false)]
+    [LinkableProperty("工位名称", "当前工位的名称")]
+    public string StationName => Name;
+
     [Category("采集参数"), DisplayName("相机序列号"), TypeConverter(typeof(SnStandardValuesConverter))]
     public string SN { get; set; }
 
@@ -37,6 +53,8 @@ public class StationConfig
 
     [Category("采集参数"), DisplayName("是否保存处理图")]
     public bool SaveDealImage { get; set; } = false;
+    [Category("采集参数"), DisplayName("采集触发延时时间-毫秒")]
+    public int TrgDelay { get; set; } = 0;
 
     // 通讯配置
     [Category("通讯配置"), DisplayName("通讯设备")]
@@ -51,6 +69,10 @@ public class StationConfig
     [Category("通讯配置"), DisplayName("触发值"), Description("触发匹配的目标值")]
     [TypeConverter(typeof(StationTriggerValueConverter))]
     public string TriggerValue { get; set; }
+
+    [Category("通讯配置"), DisplayName("码来源"), Description("作为本次流程Code的来源输入变量(字符串)，若未选择则使用触发命中时间(时分秒)")]
+    [TypeConverter(typeof(StationIOTableInputVarConverter))]
+    public string CodeInputName { get; set; }
 
     [Browsable(false)]
     public List<OutputMapping> OutputMappings { get; set; } = [];
@@ -73,14 +95,12 @@ public class StationConfig
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public StationLightControl LightControl { get; set; } = new();
 
-    // ✅ 深度学习模型已移至 DnnInterfaceNet.DnnModelFactory 统一管理
-    // 模型配置通过「深度学习模型配置」窗口进行，不再在工位级别配置
 
     // 算法配置
     [Category("算法"), DisplayName("棋盘格标定启用"), Description("是否使用棋盘格标定，右键打开工具配置")]
     public bool bCalibCheckboardTool { get; set; } = false;
 
-    [Category("算法"), DisplayName("九点标定启用"), Description("是否使用九点标定，右键打开工具配置")]
+    [Category("算法"), DisplayName("九点标定工具启用"), Description("是否使用九点标定，右键打开工具配置")]
     public bool bCalibNPointTool { get; set; } = false;
     [Category("算法"), DisplayName("检测工具启用"), ReadOnly(true),Description("启用检测工具，目前必须启用，右键打开工具配置")]
     public bool bDetectionTool { get; set; } = true;
@@ -310,13 +330,13 @@ public class StationConfig
             if (targetType == null) return;
 
             object obj = null;
-            bool haveValue = false;
+            var haveValue = false;
             
             // 变量链接优先级：深度学习模型 > 通讯输入 > 工位属性 > 工位输出 > 全局变量
             var sol = SolutionManager.Instance.Current;
             
             // 深度学习模型链接（最高优先级）- 优先从新的 DnnModelFactory 获取
-            if (!haveValue && !string.IsNullOrWhiteSpace(v.LinkDLModel))
+            if (!string.IsNullOrWhiteSpace(v.LinkDLModel))
             {
                 try
                 {

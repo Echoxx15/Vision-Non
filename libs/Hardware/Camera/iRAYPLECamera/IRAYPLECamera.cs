@@ -42,13 +42,16 @@ public class IRAYPLECamera : ICamera, IDisposable
     #endregion
 
     #region 属性
-    // 图像回调事件（需显式实现事件添加/移除逻辑，确保线程安全）
-    private event EventHandler<ICogImage> frameGrabedEvent;
-    public event EventHandler<ICogImage> FrameGrabedEvent
-    {
-        add => frameGrabedEvent += value;
-        remove => frameGrabedEvent -= value;
-    }
+    /// <summary>
+    /// 图片回调 Action
+    /// </summary>
+    public Action<ICogImage> OnFrameGrabed { get; set; }
+
+    /// <summary>
+    /// 采集超时回调 Action
+    /// </summary>
+    public Action<int> OnGrabTimeout { get; set; }
+
     public event EventHandler<bool> DisConnetEvent;
     
     public string SN { get; }
@@ -90,7 +93,7 @@ public class IRAYPLECamera : ICamera, IDisposable
                             deviceList.pDevInfo + Marshal.SizeOf(typeof(IMVDefine.IMV_DeviceInfo)) * i,
                             typeof(IMVDefine.IMV_DeviceInfo));
 
-                    if (devInfo.manufactureInfo != "Huaray Technology") continue;
+                    if (devInfo.manufactureInfo != "Huaray Technology" && devInfo.manufactureInfo != "Machine Vision") continue;
 
                     if (!gDevInfoCameraKeys.ContainsKey(devInfo.serialNumber))
                         gDevInfoCameraKeys.Add(devInfo.serialNumber, devInfo.cameraKey);
@@ -127,7 +130,13 @@ public class IRAYPLECamera : ICamera, IDisposable
                 Console.WriteLine("Open camera failed! ErrorCode:[{0}]", res);
                 return res;
             }
-            SetSoftwareTrigger();
+            // 设置触发模式 
+            // Set trigger mode to On 
+            res = device.IMV_SetEnumFeatureSymbol("TriggerMode", "On");
+            if (res != IMVDefine.IMV_OK)
+            {
+                Console.WriteLine("Set triggerMode value failed! ErrorCode[{0}]", res);
+            }
             // 注册数据帧回调函数
             // Register data frame callback function
             frameCallBack = onGetFrame;
@@ -388,7 +397,8 @@ public class IRAYPLECamera : ICamera, IDisposable
                                 img = new CogImage8Grey(bmp);
                             }
 
-                            frameGrabedEvent?.Invoke(this, img);
+                            // 使用 Action 回调
+                            OnFrameGrabed?.Invoke(img);
                             _stopwatch.Stop();
                             bmp.Dispose();
                             GC.Collect();

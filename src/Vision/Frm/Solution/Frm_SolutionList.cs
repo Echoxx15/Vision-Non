@@ -205,17 +205,15 @@ public partial class Frm_SolutionList : Form
         // 未修改直接返回
         if (string.Equals(newName, _originalNameEditing, StringComparison.OrdinalIgnoreCase)) return;
 
-        // 校验：格式 + 重名（基于文件夹/名称）
+        // 校验
         if (!IsNameValid(newName, out var reason))
         {
             MessageBox.Show(reason, "名称无效", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            // 还原
             rowInfo.Name = _originalNameEditing;
             dgvSolutions.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = _originalNameEditing;
             _bs.ResetCurrentItem();
             return;
         }
-        // 重名校验：除当前正在编辑项以外不允许重名
         if (SolutionManager.Instance.Solutions.Any(s => !ReferenceEquals(s, rowInfo) && s.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
         {
             MessageBox.Show("方案名称已存在，请更换名称。", "名称冲突", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -225,30 +223,58 @@ public partial class Frm_SolutionList : Form
             return;
         }
 
-        // 只重命名方案文件夹并更新索引，不操作 .uv、不重新加载/保存方案
         try
         {
             var oldFolder = Directory.Exists(rowInfo.Path) ? rowInfo.Path : Path.GetDirectoryName(rowInfo.Path);
             var solutionsDir = SolutionManager.Instance.SolutionsDir;
-            var baseNewFolder = Path.Combine(solutionsDir, SanitizeFileName(newName));
+            var safeNewName = SanitizeFileName(newName);
+            var baseNewFolder = Path.Combine(solutionsDir, safeNewName);
             var newFolder = baseNewFolder;
             int suffix = 1;
             while (!string.Equals(oldFolder, newFolder, StringComparison.OrdinalIgnoreCase) && Directory.Exists(newFolder))
-            {
                 newFolder = baseNewFolder + $"_{suffix++}";
+
+            // 1. 重命名 .uv 文件
+            if (!string.IsNullOrEmpty(oldFolder) && Directory.Exists(oldFolder))
+            {
+                var uvFiles = Directory.GetFiles(oldFolder, "*.uv");
+                foreach (var uvFile in uvFiles)
+                {
+                    var newUvPath = Path.Combine(oldFolder, safeNewName + ".uv");
+                    if (!string.Equals(uvFile, newUvPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (File.Exists(newUvPath)) File.Delete(newUvPath);
+                        File.Move(uvFile, newUvPath);
+                    }
+                }
             }
 
+            // 2. 重命名文件夹
             if (!string.Equals(oldFolder, newFolder, StringComparison.OrdinalIgnoreCase))
             {
                 Directory.Move(oldFolder, newFolder);
                 rowInfo.Path = newFolder;
             }
 
-            // 仅更新名称与索引时间
             rowInfo.Name = newName;
             rowInfo.LastModifyTime = DateTime.Now;
             SolutionManager.Instance.SaveList();
             _bs.ResetCurrentItem();
+            
+            // 3. 如果重命名的是当前方案，同步更新 Solution.Name
+            var current = SolutionManager.Instance.Current;
+            if (current != null)
+            {
+                var currentUv = current.FilePath;
+                var renamedUv = SolutionManager.GetUvPath(rowInfo);
+                if (!string.IsNullOrEmpty(currentUv) && !string.IsNullOrEmpty(renamedUv) &&
+                    string.Equals(Path.GetFullPath(currentUv), Path.GetFullPath(renamedUv), StringComparison.OrdinalIgnoreCase))
+                {
+                    current.Name = newName;
+                    // 更新 FilePath 指向新路径
+                    current.FilePath = renamedUv;
+                }
+            }
         }
         catch (Exception ex)
         {
