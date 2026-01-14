@@ -9,7 +9,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using Logger;
-using UserControls;
 using UserControls.Display;
 using Vision.Common;
 using Vision.Solutions.TaskFlow;
@@ -102,6 +101,10 @@ public sealed class SolutionManager
 {
     private static readonly Lazy<SolutionManager> _inst = new(() => new SolutionManager());
     public static SolutionManager Instance => _inst.Value;
+
+    // 缓存 XmlSerializer 实例，避免每次创建时动态生成程序集导致内存泄漏
+    private static readonly XmlSerializer _solutionSerializer = new XmlSerializer(typeof(Solution));
+    private static readonly XmlSerializer _solutionInfoListSerializer = new XmlSerializer(typeof(List<SolutionInfo>));
 
     // 当前已加载的方案对象
     public Solution Current { get; private set; }
@@ -335,9 +338,8 @@ public sealed class SolutionManager
     {
         try
         {
-            var ser = new XmlSerializer(typeof(Solution));
             using var fs = File.OpenRead(uvPath);
-            var _ = (Solution)ser.Deserialize(fs);
+            var _ = (Solution)_solutionSerializer.Deserialize(fs);
             return true;
         }
         catch
@@ -422,6 +424,18 @@ public sealed class SolutionManager
             
             var sol = Load(uv);
             Current = sol;
+            
+            // 重新初始化任务流管理器（确保相机回调和通讯触发被重新订阅）
+            try
+            {
+                TaskFlowManager.Instance.InitializeFromSolution(sol);
+                LogHelper.Info($"[SolutionManager] TaskFlowManager 已重新初始化");
+            }
+            catch (Exception initEx)
+            {
+                LogHelper.Error(initEx, "[SolutionManager] 重新初始化 TaskFlowManager 失败");
+            }
+            
             CurrentChanged?.Invoke();
             return Current;
         }
@@ -698,10 +712,9 @@ public sealed class SolutionManager
             tempFile = file + ".tmp";
             try
             {
-                var ser = new XmlSerializer(typeof(Solution));
                 using (var fs = File.Create(tempFile))
                 {
-                    if (sol != null) ser.Serialize(fs, sol);
+                    if (sol != null) _solutionSerializer.Serialize(fs, sol);
                 }
 
                 LogHelper.Info($"方案序列化成功: {Path.GetFileName(file)}");
@@ -821,9 +834,8 @@ public sealed class SolutionManager
             Solution sol;
             try
             {
-                var ser = new XmlSerializer(typeof(Solution));
                 using var fs = File.OpenRead(file);
-                sol = (Solution)ser.Deserialize(fs);
+                sol = (Solution)_solutionSerializer.Deserialize(fs);
                 sol.FilePath = file;
 
             }
@@ -1207,9 +1219,8 @@ public sealed class SolutionManager
     /// </summary>
     public Solution LoadForClone(string file)
     {
-        var ser = new XmlSerializer(typeof(Solution));
         using var fs = File.OpenRead(file);
-        var sol = (Solution)ser.Deserialize(fs);
+        var sol = (Solution)_solutionSerializer.Deserialize(fs);
         sol.Display ??= new DisplayConfig();
         sol.Display.Items ??= new List<DisplayItem>();
         LoadVppFile(sol);

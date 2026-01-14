@@ -1,6 +1,5 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Vision.Auth.Storage;
@@ -8,7 +7,7 @@ using Vision.Auth.Storage;
 namespace Vision.Auth;
 
 /// <summary>
-/// ½ÇÉ«¶¨Òå£º°´´ÓµÍµ½¸ß£¨¼¼ÊõÔ± &lt; ¹¤³ÌÊ¦ &lt; ¹ÜÀíÔ±£©¡£
+/// è§’è‰²å®šä¹‰ï¼šæŒ‰ä»ä½åˆ°é«˜ï¼ˆæŠ€æœ¯å‘˜ &lt; å·¥ç¨‹å¸ˆ &lt; ç®¡ç†å‘˜ï¼‰ã€‚
 /// </summary>
 public enum Role
 {
@@ -18,7 +17,7 @@ public enum Role
 }
 
 /// <summary>
-/// ÓÃ»§Ä£ĞÍ¡£
+/// ç”¨æˆ·æ¨¡å‹ã€‚
 /// </summary>
 public class User
 {
@@ -29,9 +28,9 @@ public class User
 }
 
 /// <summary>
-/// ÓÃ»§Óë½ÇÉ«¹ÜÀí£¨SQLite ³Ö¾Ã»¯£©¡£
-/// - Ê×´ÎÆô¶¯×Ô¶¯½¨±í²¢´´½¨3¸öÄ¬ÈÏÓÃ»§£¨¹ÜÀíÔ±/¹¤³ÌÊ¦/¼¼ÊõÔ±£¬ÃÜÂë123456£©¡£
-/// - Ìá¹©µÇÂ¼/×¢²á/²éÑ¯½Ó¿Ú¡£
+/// ç”¨æˆ·ä¸è§’è‰²ç®¡ç†ï¼ˆSQLite æŒä¹…åŒ–ï¼‰ã€‚
+/// - é¦–æ¬¡å¯åŠ¨è‡ªåŠ¨å»ºè¡¨å¹¶åˆ›å»º3ä¸ªé»˜è®¤ç”¨æˆ·ï¼ˆç®¡ç†å‘˜/å·¥ç¨‹å¸ˆ/æŠ€æœ¯å‘˜ï¼Œå¯†ç 123456ï¼‰ã€‚
+/// - æä¾›ç™»å½•/æ³¨å†Œ/æŸ¥è¯¢æ¥å£ã€‚
 /// </summary>
 public sealed class UserManager
 {
@@ -41,12 +40,12 @@ public sealed class UserManager
     private readonly string _dbPath = AuthPath.DbPath;
 
     /// <summary>
-    /// µ±Ç°ÒÑµÇÂ¼ÓÃ»§£¨Îª¿Õ±íÊ¾Î´µÇÂ¼£©¡£
+    /// å½“å‰å·²ç™»å½•ç”¨æˆ·ï¼ˆä¸ºç©ºè¡¨ç¤ºæœªç™»å½•ï¼‰ã€‚
     /// </summary>
     public User CurrentUser { get; private set; }
 
     /// <summary>
-    /// ÓÃ»§×´Ì¬¸Ä±äÊÂ¼ş£¬µÇÂ¼/×¢ÏúÊ±´¥·¢¡£
+    /// ç”¨æˆ·çŠ¶æ€æ”¹å˜äº‹ä»¶ï¼Œç™»å½•/æ³¨é”€æ—¶è§¦å‘ã€‚
     /// </summary>
     public event Action<User> CurrentUserChanged;
 
@@ -57,7 +56,7 @@ public sealed class UserManager
     }
 
     /// <summary>
-    /// ´´½¨ Users ±í¡£
+    /// åˆ›å»º Users è¡¨ã€‚
     /// </summary>
     private void EnsureSchema()
     {
@@ -72,7 +71,7 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// ¼ÆËãÃÜÂë¹şÏ££¬±ÜÃâÃ÷ÎÄ´æ´¢¡£
+    /// è®¡ç®—å¯†ç å“ˆå¸Œï¼Œé¿å…æ˜æ–‡å­˜å‚¨ã€‚
     /// </summary>
     private static string HashPassword(string password)
     {
@@ -82,7 +81,7 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// Ğ£ÑéµÇÂ¼¡£
+    /// æ ¡éªŒç™»å½•ã€‚
     /// </summary>
     public bool Login(string username, string password)
     {
@@ -107,26 +106,26 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// ×¢²áĞÂÓÃ»§£¬ÓÃ»§ÃûÎ¨Ò»¡£
+    /// æ³¨å†Œæ–°ç”¨æˆ·ï¼Œç”¨æˆ·åå”¯ä¸€ã€‚
     /// </summary>
     public bool Register(string username, string password, Role role, out string error)
     {
         error = null;
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
         {
-            error = "ÓÃ»§Ãû»òÃÜÂë²»ÄÜÎª¿Õ";
+            error = "ç”¨æˆ·åæˆ–å¯†ç ä¸èƒ½ä¸ºç©º";
             return false;
         }
         using var db = new SqliteDb(_dbPath);
         if (!db.Available)
         {
-            error = "Êı¾İ¿â²»¿ÉÓÃ";
+            error = "æ•°æ®åº“ä¸å¯ç”¨";
             return false;
         }
         var exists = db.ExecuteScalar("SELECT 1 FROM Users WHERE Username=@u", ("@u", username)) != null;
         if (exists)
         {
-            error = "ÓÃ»§ÃûÒÑ´æÔÚ";
+            error = "ç”¨æˆ·åå·²å­˜åœ¨";
             return false;
         }
         var rows = db.ExecuteNonQuery("INSERT INTO Users(Username,PasswordHash,Role) VALUES(@u,@p,@r)",
@@ -135,7 +134,7 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// ¶ÁÈ¡È«²¿ÓÃ»§£¨ÓÃÓÚµÇÂ¼ÏÂÀ­µÈ£©¡£
+    /// è¯»å–å…¨éƒ¨ç”¨æˆ·ï¼ˆç”¨äºç™»å½•ä¸‹æ‹‰ç­‰ï¼‰ã€‚
     /// </summary>
     public List<User> GetAllUsers()
     {
@@ -156,7 +155,7 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// ×¢Ïúµ±Ç°ÓÃ»§¡£
+    /// æ³¨é”€å½“å‰ç”¨æˆ·ã€‚
     /// </summary>
     public void Logout()
     {
@@ -165,7 +164,7 @@ Role INTEGER NOT NULL
     }
 
     /// <summary>
-    /// Ê×´ÎÔËĞĞ²åÈëÈı¸öÄ¬ÈÏÓÃ»§¡£
+    /// é¦–æ¬¡è¿è¡Œæ’å…¥ä¸‰ä¸ªé»˜è®¤ç”¨æˆ·ã€‚
     /// </summary>
     private void EnsureDefaults()
     {
@@ -181,8 +180,8 @@ Role INTEGER NOT NULL
             db.ExecuteNonQuery("INSERT INTO Users(Username,PasswordHash,Role) VALUES(@u,@p,@r)",
                 ("@u", name), ("@p", HashPassword(pwd)), ("@r", (int)role));
         }
-        AddDefault("¹ÜÀíÔ±", "admin", Role.Admin);
-        AddDefault("¹¤³ÌÊ¦", "123456", Role.Engineer);
-        AddDefault("¼¼ÊõÔ±", "123", Role.Technician);
+        AddDefault("ç®¡ç†å‘˜", "admin", Role.Admin);
+        AddDefault("å·¥ç¨‹å¸ˆ", "123456", Role.Engineer);
+        AddDefault("æŠ€æœ¯å‘˜", "123", Role.Technician);
     }
 }

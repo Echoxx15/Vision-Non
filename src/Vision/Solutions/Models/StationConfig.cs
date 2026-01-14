@@ -4,7 +4,6 @@ using Cognex.VisionPro;
 using Cognex.VisionPro.ToolBlock;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Vision.Common;

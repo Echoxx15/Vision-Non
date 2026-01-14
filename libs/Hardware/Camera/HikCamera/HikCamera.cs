@@ -82,7 +82,6 @@ public class HikCamera : ICamera, IDisposable
   /// </summary>
   private volatile bool _processThreadExit;
 
-  private readonly Stopwatch _stopwatch = new();
   #endregion
 
   #region 构造函数
@@ -340,10 +339,13 @@ public class HikCamera : ICamera, IDisposable
       {
         lock (this)
         {
-          _stopwatch.Restart();
-          if (!frameQueue.TryDequeue(out var frame)) continue;
+            if (!frameQueue.TryDequeue(out var frame))
+            {
+                Thread.Sleep(2);
+                continue;
+            }
 
-          var image = frame.Image;
+            var image = frame.Image;
 
           using var bitmap = image.ToBitmap();
           ICogImage img;
@@ -358,12 +360,10 @@ public class HikCamera : ICamera, IDisposable
 
           // 使用 Action 回调
           OnFrameGrabed?.Invoke(img);
-          _stopwatch.Stop();
 
           image.Dispose();
           device.StreamGrabber.FreeImageBuffer(frame);
           GC.Collect();
-          Console.WriteLine("转换耗时:{0}", _stopwatch.ElapsedMilliseconds);
         }
       }
       catch (Exception e)
@@ -371,7 +371,6 @@ public class HikCamera : ICamera, IDisposable
         Console.WriteLine("AsyncProcessThread exception: " + e.Message);
       }
 
-      Thread.Sleep(2);
     }
   }
 

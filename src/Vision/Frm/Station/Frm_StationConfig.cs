@@ -10,12 +10,13 @@ using System.Xml.Serialization;
 using Cognex.VisionPro;
 using Logger;
 using HardwareCameraNet;
+using Vision.Localization;
 using Vision.Solutions.Models;
 using Vision.Solutions.TaskFlow;
 
 namespace Vision.Frm.Station;
 
-public partial class Frm_StationConfig : Form
+public partial class Frm_StationConfig : Form, ILocalizable
 {
  private BindingList<StationConfig> _models;
  private CancellationTokenSource _flyCaptureCts;
@@ -33,6 +34,37 @@ public partial class Frm_StationConfig : Form
   tsm_SimulateFlyCapture.Click += Tsm_SimulateFlyCapture_Click;
   safePropertyGrid1.PropertyValueChanged += safePropertyGrid1_PropertyValueChanged;
   contextMenuStrip2.Opening += ContextMenuStrip2_Opening;
+  
+  // 订阅语言变更事件
+  UITranslationService.Instance.LanguageChanged += OnLanguageChanged;
+  this.FormClosed += (_, _) => UITranslationService.Instance.LanguageChanged -= OnLanguageChanged;
+ }
+ 
+ private void OnLanguageChanged(object sender, string languageCode)
+ {
+  if (IsDisposed) return;
+  if (InvokeRequired)
+   BeginInvoke(new Action(ApplyLanguage));
+  else
+   ApplyLanguage();
+ }
+ 
+ /// <summary>
+ /// 应用当前语言到界面控件
+ /// </summary>
+ public void ApplyLanguage()
+ {
+  // 窗体标题
+  this.Text = this.T("Title");
+  
+  // 右键菜单项
+  tsb_Add.Text = this.T("tsb_Add");
+  tsm_Remove.Text = this.T("tsm_Remove");
+  tsm_ReName.Text = this.T("tsm_ReName");
+  tsm_LoadImageRun.Text = this.T("tsm_LoadImageRun");
+  tsm_TriggerCameraRun.Text = this.T("tsm_TriggerCameraRun");
+  tsm_SimulateFlyCapture.Text = this.T("tsm_SimulateFlyCapture");
+  tsm_OpenForm.Text = this.T("tsm_OpenForm");
  }
 
  private void Tree_Station_DrawNode(object sender, DrawTreeNodeEventArgs e)
@@ -67,6 +99,9 @@ public partial class Frm_StationConfig : Form
   _models = new BindingList<StationConfig>(sol.Stations);
   RefreshTree();
   if (tree_Station.Nodes.Count > 0) tree_Station.SelectedNode = tree_Station.Nodes[0];
+  
+  // 应用当前语言
+  ApplyLanguage();
  }
 
  private void RefreshTree()
@@ -380,26 +415,28 @@ public partial class Frm_StationConfig : Form
 
  private void tsm_Remove_Click(object sender, EventArgs e)
  {
-  if (tree_Station.SelectedNode?.Tag is StationConfig st)
-  {
-   string folder = null;
-   try { var sol = SolutionManager.Instance.Current; folder = SolutionManager.GetStationFolder(sol, st); } catch { }
+     if(MessageBox.Show("是否移除工位?","",MessageBoxButtons.YesNo) != DialogResult.Yes)
+         return;
+     if (tree_Station.SelectedNode?.Tag is StationConfig st)
+     {
+         string folder = null;
+         try { var sol = SolutionManager.Instance.Current; folder = SolutionManager.GetStationFolder(sol, st); } catch { }
 
-   try
-   {
-    TaskFlowManager.Instance.RemoveStation(st.Name);
-    LogHelper.Info($"[工位配置] 已从TaskFlowManager移除工位[{st.Name}]");
-   }
-   catch (Exception ex)
-   {
-    LogHelper.Error(ex, $"[工位配置] 移除工位[{st.Name}]任务流失败");
-   }
+         try
+         {
+             TaskFlowManager.Instance.RemoveStation(st.Name);
+             LogHelper.Info($"[工位配置] 已从TaskFlowManager移除工位[{st.Name}]");
+         }
+         catch (Exception ex)
+         {
+             LogHelper.Error(ex, $"[工位配置] 移除工位[{st.Name}]任务流失败");
+         }
 
-   _models.Remove(st);
-   RefreshTree();
+         _models.Remove(st);
+         RefreshTree();
 
-   try { if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder)) Directory.Delete(folder, true); } catch { }
-  }
+         try { if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder)) Directory.Delete(folder, true); } catch { }
+     }
  }
 
  private void tsm_ReName_Click(object sender, EventArgs e)
@@ -470,7 +507,6 @@ public partial class Frm_StationConfig : Form
     frm.Text = "检测工具配置";
     frm.LoadDetection(st.DetectionTool, st);
     frm.ShowDialog(this);
-    try { SaveToolVpp(st, st.DetectionTool); } catch { }
     break;
    }
    case "Checkerboard":
@@ -479,7 +515,6 @@ public partial class Frm_StationConfig : Form
     frm.Text = "棋盘格标定工具配置";
     frm.LoadDetection(st.CheckerboardTool, st);
     frm.ShowDialog(this);
-    try { SaveToolVpp(st, st.CheckerboardTool); } catch { }
     break;
    }
    case "NPoint":
@@ -488,7 +523,6 @@ public partial class Frm_StationConfig : Form
     frm.Text = "九点标定工具配置";
     frm.LoadDetection(st.NPointTool, st);
     frm.ShowDialog(this);
-    try { SaveToolVpp(st, st.NPointTool); } catch { }
     break;
    }
    case "OutputMapping":
@@ -556,24 +590,24 @@ public partial class Frm_StationConfig : Form
 
 internal class InputBoxForm : Form
 {
- private readonly TextBox _text;
- public string Value => _text.Text;
+    private readonly TextBox _text;
+    public string Value => _text.Text;
 
- public InputBoxForm(string title, string prompt, string defaultValue = "")
- {
-  Text = title;
-  Width = 360;
-  Height = 150;
-  FormBorderStyle = FormBorderStyle.FixedDialog;
-  MaximizeBox = false;
-  MinimizeBox = false;
-  StartPosition = FormStartPosition.CenterParent;
-  var lbl = new Label { Left = 12, Top = 12, Width = 320, Text = prompt };
-  _text = new TextBox { Left = 12, Top = 36, Width = 320, Text = defaultValue };
-  var ok = new Button { Text = "确定", Left = 166, Width = 75, Top = 70, DialogResult = DialogResult.OK };
-  var cancel = new Button { Text = "取消", Left = 257, Width = 75, Top = 70, DialogResult = DialogResult.Cancel };
-  AcceptButton = ok;
-  CancelButton = cancel;
-  Controls.AddRange([lbl, _text, ok, cancel]);
- }
+    public InputBoxForm(string title, string prompt, string defaultValue = "")
+    {
+        Text = title;
+        Width = 360;
+        Height = 150;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterParent;
+        var lbl = new Label { Left = 12, Top = 12, Width = 320, Text = prompt };
+        _text = new TextBox { Left = 12, Top = 36, Width = 320, Text = defaultValue };
+        var ok = new Button { Text = "确定", Left = 166, Width = 75, Top = 70, DialogResult = DialogResult.OK };
+        var cancel = new Button { Text = "取消", Left = 257, Width = 75, Top = 70, DialogResult = DialogResult.Cancel };
+        AcceptButton = ok;
+        CancelButton = cancel;
+        Controls.AddRange([lbl, _text, ok, cancel]);
+    }
 }

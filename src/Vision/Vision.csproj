@@ -223,6 +223,13 @@
     <Compile Include="Frm\Station\Frm_StationConfig.Designer.cs">
       <DependentUpon>Frm_StationConfig.cs</DependentUpon>
     </Compile>
+    <Compile Include="Localization\ILanguageProvider.cs" />
+    <Compile Include="Localization\JsonLanguageProvider.cs" />
+    <Compile Include="Localization\LangKeys.cs" />
+    <Compile Include="Localization\LanguageExtensions.cs" />
+    <Compile Include="Localization\LanguageInfo.cs" />
+    <Compile Include="Localization\LanguageService.cs" />
+    <Compile Include="Localization\UITranslationService.cs" />
     <Compile Include="Solutions\Models\StationIOTableInputVarConverter.cs" />
     <Compile Include="Solutions\Models\StationTriggerValueConverter.cs" />
     <Compile Include="Frm\Solution\Frm_SolutionList.cs">
@@ -358,6 +365,9 @@
   <ItemGroup>
     <None Include="Resources\深度学习1.png" />
     <Content Include="YZZN.ico" />
+    <Content Include="Languages\ui-translations.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="UserUI\" />

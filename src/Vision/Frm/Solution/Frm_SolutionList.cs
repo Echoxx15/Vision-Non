@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Vision.Localization;
 using Vision.Solutions.Models;
 
 namespace Vision.Frm.Solution;
@@ -22,6 +23,46 @@ public partial class Frm_SolutionList : Form
         InitializeComponent();
         InitGrid();
         Load += (_, _) => BindData();
+        
+        // 多语言支持
+        UITranslationService.Instance.LanguageChanged += (_, _) => ApplyLanguage();
+        ApplyLanguage();
+    }
+
+    /// <summary>
+    /// 应用多语言翻译
+    /// </summary>
+    private void ApplyLanguage()
+    {
+        this.Text = this.T("Title");
+        btn_Open.Text = this.T("btn_Open");
+        btn_AddNew.Text = this.T("btn_AddNew");
+        btn_AddCur.Text = this.T("btn_AddCur");
+        btn_SetStart.Text = this.T("btn_SetStart");
+        btn_Delete.Text = this.T("btn_Delete");
+        
+        // 更新列标题
+        UpdateColumnHeaders();
+    }
+
+    /// <summary>
+    /// 更新DataGridView列标题
+    /// </summary>
+    private void UpdateColumnHeaders()
+    {
+        if (dgvSolutions.Columns.Count == 0) return;
+        
+        var colName = dgvSolutions.Columns[nameof(SolutionInfo.Name)];
+        var colDesc = dgvSolutions.Columns[nameof(SolutionInfo.Description)];
+        var colEnable = dgvSolutions.Columns[nameof(SolutionInfo.Enable)];
+        var colCreate = dgvSolutions.Columns[nameof(SolutionInfo.CreateTime)];
+        var colModify = dgvSolutions.Columns[nameof(SolutionInfo.LastModifyTime)];
+        
+        if (colName != null) colName.HeaderText = this.T("col_Name");
+        if (colDesc != null) colDesc.HeaderText = this.T("col_Description");
+        if (colEnable != null) colEnable.HeaderText = this.T("col_Enable");
+        if (colCreate != null) colCreate.HeaderText = this.T("col_CreateTime");
+        if (colModify != null) colModify.HeaderText = this.T("col_ModifyTime");
     }
 
     private void BindData()
@@ -52,7 +93,7 @@ public partial class Frm_SolutionList : Form
         {
             DataPropertyName = nameof(SolutionInfo.Name),
             Name = nameof(SolutionInfo.Name),
-            HeaderText = "方案名称",
+            HeaderText = this.T("col_Name"),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet,
             ReadOnly = false,
             SortMode = DataGridViewColumnSortMode.NotSortable,
@@ -64,7 +105,7 @@ public partial class Frm_SolutionList : Form
         {
             DataPropertyName = nameof(SolutionInfo.Description),
             Name = nameof(SolutionInfo.Description),
-            HeaderText = "描述",
+            HeaderText = this.T("col_Description"),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet,
             ReadOnly = false,
             SortMode = DataGridViewColumnSortMode.NotSortable,
@@ -76,7 +117,7 @@ public partial class Frm_SolutionList : Form
         {
             DataPropertyName = nameof(SolutionInfo.Enable),
             Name = nameof(SolutionInfo.Enable),
-            HeaderText = "默认启动",
+            HeaderText = this.T("col_Enable"),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet,
             ReadOnly = true,
             SortMode = DataGridViewColumnSortMode.NotSortable,
@@ -88,7 +129,7 @@ public partial class Frm_SolutionList : Form
         {
             DataPropertyName = nameof(SolutionInfo.CreateTime),
             Name = nameof(SolutionInfo.CreateTime),
-            HeaderText = "创建时间",
+            HeaderText = this.T("col_CreateTime"),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet,
             ReadOnly = true,
             SortMode = DataGridViewColumnSortMode.NotSortable,
@@ -100,7 +141,7 @@ public partial class Frm_SolutionList : Form
         {
             DataPropertyName = nameof(SolutionInfo.LastModifyTime),
             Name = nameof(SolutionInfo.LastModifyTime),
-            HeaderText = "修改时间",
+            HeaderText = this.T("col_ModifyTime"),
             AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet,
             ReadOnly = true,
             SortMode = DataGridViewColumnSortMode.NotSortable,

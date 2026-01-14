@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HalconOperater", "..\libs\O
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserControls", "..\libs\Other\UserControls\UserControls.csproj", "{AD87E8B2-06E5-4AB6-8790-D173AD050656}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger", "..\libs\Logger\Logger.csproj", "{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -223,6 +225,18 @@ Global
 		{AD87E8B2-06E5-4AB6-8790-D173AD050656}.remote|Any CPU.Build.0 = Debug|Any CPU
 		{AD87E8B2-06E5-4AB6-8790-D173AD050656}.remote|x64.ActiveCfg = Debug|Any CPU
 		{AD87E8B2-06E5-4AB6-8790-D173AD050656}.remote|x64.Build.0 = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Debug|x64.Build.0 = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Release|x64.ActiveCfg = Release|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.Release|x64.Build.0 = Release|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|Any CPU.Build.0 = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|x64.ActiveCfg = Debug|Any CPU
+		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

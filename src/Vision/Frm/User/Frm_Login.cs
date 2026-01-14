@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Logger;
 using Vision.Auth;
+using Vision.Localization;
 
 namespace Vision.Frm.User;
 
@@ -18,6 +19,23 @@ public partial class Frm_Login : Form
         btn_Login.Click += Btn_Login_Click;
         btn_Cancel.Click += (_, _) => this.Close();
         tb_Password.PasswordChar = '•';
+        
+        // 多语言支持
+        UITranslationService.Instance.LanguageChanged += (_, _) => ApplyLanguage();
+        ApplyLanguage();
+    }
+
+    /// <summary>
+    /// 应用多语言翻译
+    /// </summary>
+    private void ApplyLanguage()
+    {
+        this.Text = this.T("Title");
+        label1.Text = this.T("label1");
+        label2.Text = this.T("label2");
+        label3.Text = this.T("label3");
+        btn_Login.Text = this.T("btn_Login");
+        btn_Cancel.Text = this.T("btn_Cancel");
     }
 
     private void Frm_Login_Load(object sender, EventArgs e)
@@ -40,10 +58,14 @@ public partial class Frm_Login : Form
     private void Btn_Login_Click(object sender, EventArgs e)
     {
         var name = cb_Users.SelectedItem as string;
-        if (string.IsNullOrWhiteSpace(name)) { MessageBox.Show("请选择用户"); return; }
+        if (string.IsNullOrWhiteSpace(name)) 
+        { 
+            MessageBox.Show(this.T("msg_SelectUser")); 
+            return; 
+        }
         if (!UserManager.Instance.Login(name, tb_Password.Text))
         {
-            MessageBox.Show("用户名或密码错误");
+            MessageBox.Show(this.T("msg_LoginFailed"));
             tb_Password.Text = string.Empty;
             return;
         }

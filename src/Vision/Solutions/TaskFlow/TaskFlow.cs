@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Cognex.VisionPro;
+using Cognex.VisionPro.Display;
 using Logger;
 using Vision.LightSource;
 using HardwareCameraNet;
@@ -113,6 +115,7 @@ internal sealed class TaskFlow : IDisposable
                 _imageQueue.Enqueue(new ImageFrame
                     { StationName = StationName, Image = img, ImageIndex = currentIndex, ClientId = clientId });
                 LogHelper.Info($"[{StationName}]拍照完成次数: {currentIndex}");
+
                 // ✅ 图像回调完成后异步关闭光源（异常单独捕获，不影响图像处理）
                 if (_station.LightControl is { EnableLightControl: true })
                 {
@@ -145,6 +148,8 @@ internal sealed class TaskFlow : IDisposable
 
         try
         {
+            Stopwatch stp = new Stopwatch();
+            stp.Start();
             // 设置相机参数
             if (_station.CameraParams != null)
             {
@@ -152,6 +157,8 @@ internal sealed class TaskFlow : IDisposable
                 camera.Parameters.Gain = _station.CameraParams.Gain;
             }
 
+            LogHelper.Info($"工位[{StationName}]设置相机参数耗时:{stp.ElapsedMilliseconds}");
+            stp.Restart();
             // ✅ 软触发前打开光源（同步，异常单独捕获）
             if (_station.CameraParams?.TriggerMode == TriggerMode.软触发)
             {
@@ -162,26 +169,27 @@ internal sealed class TaskFlow : IDisposable
                     {
                         var success =
                             LightSourceManager.Instance.ControlStationLight(_station.LightControl, turnOn: true);
-                        Thread.Sleep(_station.LightControl.OpenDelayMs);
+                        LogHelper.Info($"工位[{StationName}]打开光源耗时:{stp.ElapsedMilliseconds}");
                         if (!success)
                         {
-                            LogHelper.Warn($"[TaskFlow] 工位[{StationName}]打开光源失败");
+                            LogHelper.Warn($"工位[{StationName}]打开光源失败");
                         }
                     }
                     catch (Exception ex)
                     {
-                        LogHelper.Error(ex, $"[TaskFlow] 工位[{StationName}]打开光源异常");
+                        LogHelper.Error(ex, $"工位[{StationName}]打开光源异常");
                     }
                 }
 
                 Thread.Sleep(_station.TrgDelay);
                 // 执行软触发
                 camera.SoftwareTriggerOnce();
+                LogHelper.Info($"工位[{StationName}]执行软触发");
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"[TaskFlow] 工位[{StationName}]触发失败");
+            LogHelper.Error(ex, $"工位[{StationName}]触发失败");
             camera.OnFrameGrabed = null;
         }
     }
@@ -203,7 +211,7 @@ internal sealed class TaskFlow : IDisposable
                         }
                         catch (Exception ex)
                         {
-                            LogHelper.Error(ex, $"[TaskFlow] 工位[{StationName}]处理异常");
+                            LogHelper.Error(ex, $"工位[{StationName}]处理异常");
                         }
                         finally
                         {
@@ -228,7 +236,7 @@ internal sealed class TaskFlow : IDisposable
         if (_station.DetectionTool?.ToolBlock == null) return;
         var tool = _station.DetectionTool.ToolBlock;
         _station.DetectionTool.ApplyVarsToInputs();
-        bool result = false;
+        bool result;
         ICogRecord record = null;
         try
         {
@@ -361,16 +369,15 @@ internal sealed class TaskFlow : IDisposable
         bool isLastShot = (imageIndex >= triggerCount);
 
         // 调用带条件的写入方法
-        WriteToolOutputsToComm(imageIndex, isLastShot);
+        WriteToolOutputsToComm(isLastShot);
     }
 
     /// <summary>
     /// 将工具输出端子的值写入通讯设备的输出表
     /// 根据每个映射的 SendEveryTime 属性决定是否发送
     /// </summary>
-    /// <param name="imageIndex">当前拍照序号</param>
     /// <param name="isLastShot">是否为最后一次拍照</param>
-    private void WriteToolOutputsToComm(int imageIndex, bool isLastShot)
+    private void WriteToolOutputsToComm(bool isLastShot)
     {
         // 检查前置条件
         if (_station.OutputMappings == null || _station.OutputMappings.Count == 0)
@@ -608,7 +615,7 @@ internal sealed class TaskFlow : IDisposable
         int triggerCount = station.CameraParams?.TriggerCount ?? 1;
         bool isLastShot = frame.ImageIndex >= triggerCount;
 
-        object recordDisplay = null;
+        CogRecordDisplay recordDisplay = null;
         try
         {
             if (station.bShow)
@@ -696,29 +703,27 @@ internal sealed class TaskFlow : IDisposable
                 {
                     try
                     {
-                        var method = recordDisplay.GetType().GetMethod("CreateContentBitmap", new[] { typeof(int) });
-                        if (method != null)
+                        var img = recordDisplay.CreateContentBitmap(CogDisplayContentBitmapConstants.Custom);
+                        if (img != null)
                         {
-                            var imgObj = method.Invoke(recordDisplay, new object[] { 13 });
-                            if (imgObj is Bitmap img)
+                            var dealDir = System.IO.Path.Combine(cfg.SavePath, date, "Deal", StationName, Code,
+                                resultFolder);
+                            System.IO.Directory.CreateDirectory(dealDir);
+
+                            var dealFileName = $"{baseFileName}.{cfg.DealImageType}";
+                            var savedDealPath = System.IO.Path.Combine(dealDir, dealFileName);
+
+                            var cogImage = new CogImage24PlanarColor(new Bitmap(img));
+                            var req = new SaveRequest
                             {
-                                var dealDir = System.IO.Path.Combine(cfg.SavePath, date, "Deal", StationName, Code, resultFolder);
-                                System.IO.Directory.CreateDirectory(dealDir);
-                                
-                                var dealFileName = $"{baseFileName}.{cfg.DealImageType}";
-                                var savedDealPath = System.IO.Path.Combine(dealDir, dealFileName);
-                                
-                                var cogImage = new CogImage24PlanarColor(new Bitmap(img));
-                                var req = new SaveRequest
-                                {
-                                    FullPath = savedDealPath,
-                                    VisionProImage = cogImage,
-                                    Type = cfg.DealImageType,
-                                    ScalePercent = 100,
-                                    IsDealImage = true
-                                };
-                                ImageSaver.Enqueue(req);
-                            }
+                                FullPath = savedDealPath,
+                                VisionProImage = cogImage,
+                                Type = cfg.DealImageType,
+                                ScalePercent = 100,
+                                IsDealImage = true
+                            };
+                            ImageSaver.Enqueue(req);
+
                         }
                     }
                     catch (Exception ex)
@@ -735,7 +740,7 @@ internal sealed class TaskFlow : IDisposable
                         var codeFolder = System.IO.Path.Combine(cfg.SavePath, date, "Raw", StationName, Code);
                         var txtPath = System.IO.Path.Combine(codeFolder, "paths.txt");
                         System.IO.Directory.CreateDirectory(codeFolder);
-                        System.IO.File.AppendAllLines(txtPath, new[] { savedRawPath });
+                        System.IO.File.AppendAllLines(txtPath, [savedRawPath]);
                     }
                 }
                 catch (Exception ex)

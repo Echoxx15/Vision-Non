@@ -35,23 +35,21 @@
             this.btn_Register = new System.Windows.Forms.ToolStripMenuItem();
             this.btn_Permission = new System.Windows.Forms.ToolStripMenuItem();
             this.btn_System = new System.Windows.Forms.ToolStripMenuItem();
-            this.barButtonItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.btn_SystemParam = new System.Windows.Forms.ToolStripMenuItem();
             this.btn_File = new System.Windows.Forms.ToolStripMenuItem();
             this.tsm_SystemState = new System.Windows.Forms.ToolStripMenuItem();
-            this.barSubItem3 = new System.Windows.Forms.ToolStripMenuItem();
-            this.barSubItem4 = new System.Windows.Forms.ToolStripMenuItem();
-            this.btn_Chinese = new System.Windows.Forms.ToolStripMenuItem();
-            this.btn_English = new System.Windows.Forms.ToolStripMenuItem();
+            this.btn_Help = new System.Windows.Forms.ToolStripMenuItem();
             this.toolMain = new System.Windows.Forms.ToolStrip();
             this.btn_SolutionList = new System.Windows.Forms.ToolStripButton();
             this.btn_SaveSolution = new System.Windows.Forms.ToolStripButton();
             this.btn_CreateVar = new System.Windows.Forms.ToolStripButton();
             this.btn_Station = new System.Windows.Forms.ToolStripButton();
             this.btn_HardwareCamera = new System.Windows.Forms.ToolStripButton();
-            this.tsm_Comm = new System.Windows.Forms.ToolStripButton();
-            this.tsm_LightControl = new System.Windows.Forms.ToolStripButton();
-            this.tsm_DLModel = new System.Windows.Forms.ToolStripButton();
+            this.btn_HardwareComm = new System.Windows.Forms.ToolStripButton();
+            this.btn_LightConfig = new System.Windows.Forms.ToolStripButton();
+            this.btn_DnnModel = new System.Windows.Forms.ToolStripButton();
             this.btn_UI = new System.Windows.Forms.ToolStripButton();
+            this.btn_TestStrobe = new System.Windows.Forms.ToolStripButton();
             this.statusMain = new System.Windows.Forms.StatusStrip();
             this.tsl_SystemState = new System.Windows.Forms.ToolStripStatusLabel();
             this.barStaticItem1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -66,7 +64,6 @@
             this.grb_Log = new System.Windows.Forms.GroupBox();
             this.split_Main = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.menuMain.SuspendLayout();
             this.toolMain.SuspendLayout();
             this.statusMain.SuspendLayout();
@@ -85,8 +82,7 @@
             this.menuMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btn_User,
             this.btn_System,
-            this.barSubItem3,
-            this.barSubItem4});
+            this.btn_Help});
             this.menuMain.Location = new System.Drawing.Point(0, 0);
             this.menuMain.Name = "menuMain";
             this.menuMain.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
@@ -135,7 +131,7 @@
             // btn_System
             // 
             this.btn_System.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.barButtonItem1,
+            this.btn_SystemParam,
             this.btn_File,
             this.tsm_SystemState});
             this.btn_System.Image = global::Vision.Properties.Resources.系统配置;
@@ -143,12 +139,12 @@
             this.btn_System.Size = new System.Drawing.Size(108, 28);
             this.btn_System.Text = "系统(S)";
             // 
-            // barButtonItem1
+            // btn_SystemParam
             // 
-            this.barButtonItem1.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.barButtonItem1.Name = "barButtonItem1";
-            this.barButtonItem1.Size = new System.Drawing.Size(182, 34);
-            this.barButtonItem1.Text = "系统参数";
+            this.btn_SystemParam.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btn_SystemParam.Name = "btn_SystemParam";
+            this.btn_SystemParam.Size = new System.Drawing.Size(182, 34);
+            this.btn_SystemParam.Text = "系统参数";
             // 
             // btn_File
             // 
@@ -167,36 +163,12 @@
             this.tsm_SystemState.Text = "系统在线";
             this.tsm_SystemState.Click += new System.EventHandler(this.btn_SystemOnline_Click);
             // 
-            // barSubItem3
+            // btn_Help
             // 
-            this.barSubItem3.Image = global::Vision.Properties.Resources.帮助;
-            this.barSubItem3.Name = "barSubItem3";
-            this.barSubItem3.Size = new System.Drawing.Size(139, 28);
-            this.barSubItem3.Text = "帮助(Help)";
-            // 
-            // barSubItem4
-            // 
-            this.barSubItem4.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btn_Chinese,
-            this.btn_English});
-            this.barSubItem4.Image = global::Vision.Properties.Resources.语言;
-            this.barSubItem4.Name = "barSubItem4";
-            this.barSubItem4.Size = new System.Drawing.Size(107, 28);
-            this.barSubItem4.Text = "语言(L)";
-            // 
-            // btn_Chinese
-            // 
-            this.btn_Chinese.Name = "btn_Chinese";
-            this.btn_Chinese.Size = new System.Drawing.Size(146, 34);
-            this.btn_Chinese.Text = "中文";
-            this.btn_Chinese.Click += new System.EventHandler(this.btn_Chinese_Click);
-            // 
-            // btn_English
-            // 
-            this.btn_English.Name = "btn_English";
-            this.btn_English.Size = new System.Drawing.Size(146, 34);
-            this.btn_English.Text = "英文";
-            this.btn_English.Click += new System.EventHandler(this.btn_English_Click);
+            this.btn_Help.Image = global::Vision.Properties.Resources.帮助;
+            this.btn_Help.Name = "btn_Help";
+            this.btn_Help.Size = new System.Drawing.Size(139, 28);
+            this.btn_Help.Text = "帮助(Help)";
             // 
             // toolMain
             // 
@@ -208,11 +180,11 @@
             this.btn_CreateVar,
             this.btn_Station,
             this.btn_HardwareCamera,
-            this.tsm_Comm,
-            this.tsm_LightControl,
-            this.tsm_DLModel,
+            this.btn_HardwareComm,
+            this.btn_LightConfig,
+            this.btn_DnnModel,
             this.btn_UI,
-            this.toolStripButton1});
+            this.btn_TestStrobe});
             this.toolMain.Location = new System.Drawing.Point(0, 32);
             this.toolMain.Name = "toolMain";
             this.toolMain.Size = new System.Drawing.Size(1212, 57);
@@ -264,35 +236,35 @@
             this.btn_HardwareCamera.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btn_HardwareCamera.Click += new System.EventHandler(this.btn_HardwareCamera_ItemClick);
             // 
-            // tsm_Comm
+            // btn_HardwareComm
             // 
-            this.tsm_Comm.Image = global::Vision.Properties.Resources.通讯配置;
-            this.tsm_Comm.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsm_Comm.Name = "tsm_Comm";
-            this.tsm_Comm.Size = new System.Drawing.Size(86, 52);
-            this.tsm_Comm.Text = "通讯硬件";
-            this.tsm_Comm.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.tsm_Comm.Click += new System.EventHandler(this.tsm_Comm_Click);
+            this.btn_HardwareComm.Image = global::Vision.Properties.Resources.通讯配置;
+            this.btn_HardwareComm.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btn_HardwareComm.Name = "btn_HardwareComm";
+            this.btn_HardwareComm.Size = new System.Drawing.Size(86, 52);
+            this.btn_HardwareComm.Text = "通讯硬件";
+            this.btn_HardwareComm.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btn_HardwareComm.Click += new System.EventHandler(this.tsm_Comm_Click);
             // 
-            // tsm_LightControl
+            // btn_LightConfig
             // 
-            this.tsm_LightControl.Image = global::Vision.Properties.Resources.光源;
-            this.tsm_LightControl.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsm_LightControl.Name = "tsm_LightControl";
-            this.tsm_LightControl.Size = new System.Drawing.Size(86, 52);
-            this.tsm_LightControl.Text = "光源配置";
-            this.tsm_LightControl.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.tsm_LightControl.Click += new System.EventHandler(this.tsm_LightControl_Click);
+            this.btn_LightConfig.Image = global::Vision.Properties.Resources.光源;
+            this.btn_LightConfig.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btn_LightConfig.Name = "btn_LightConfig";
+            this.btn_LightConfig.Size = new System.Drawing.Size(86, 52);
+            this.btn_LightConfig.Text = "光源配置";
+            this.btn_LightConfig.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btn_LightConfig.Click += new System.EventHandler(this.tsm_LightControl_Click);
             // 
-            // tsm_DLModel
+            // btn_DnnModel
             // 
-            this.tsm_DLModel.Image = ((System.Drawing.Image)(resources.GetObject("tsm_DLModel.Image")));
-            this.tsm_DLModel.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsm_DLModel.Name = "tsm_DLModel";
-            this.tsm_DLModel.Size = new System.Drawing.Size(86, 52);
-            this.tsm_DLModel.Text = "深度学习";
-            this.tsm_DLModel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.tsm_DLModel.Click += new System.EventHandler(this.tsm_DLModel_Click);
+            this.btn_DnnModel.Image = ((System.Drawing.Image)(resources.GetObject("btn_DnnModel.Image")));
+            this.btn_DnnModel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btn_DnnModel.Name = "btn_DnnModel";
+            this.btn_DnnModel.Size = new System.Drawing.Size(86, 52);
+            this.btn_DnnModel.Text = "深度学习";
+            this.btn_DnnModel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btn_DnnModel.Click += new System.EventHandler(this.tsm_DLModel_Click);
             // 
             // btn_UI
             // 
@@ -302,6 +274,16 @@
             this.btn_UI.Text = "显示设置";
             this.btn_UI.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btn_UI.Click += new System.EventHandler(this.btn_UI_ItemClick);
+            // 
+            // btn_TestStrobe
+            // 
+            this.btn_TestStrobe.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.btn_TestStrobe.Image = ((System.Drawing.Image)(resources.GetObject("btn_TestStrobe.Image")));
+            this.btn_TestStrobe.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btn_TestStrobe.Name = "btn_TestStrobe";
+            this.btn_TestStrobe.Size = new System.Drawing.Size(86, 52);
+            this.btn_TestStrobe.Text = "频闪测试";
+            this.btn_TestStrobe.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // statusMain
             // 
@@ -452,16 +434,6 @@
             this.tableLayoutPanel2.Size = new System.Drawing.Size(1212, 180);
             this.tableLayoutPanel2.TabIndex = 0;
             // 
-            // toolStripButton1
-            // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(86, 52);
-            this.toolStripButton1.Text = "频闪测试";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
-            // 
             // Frm_Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
@@ -504,7 +476,7 @@
         private System.Windows.Forms.ToolStrip toolMain;
         private System.Windows.Forms.StatusStrip statusMain;
         private System.Windows.Forms.ToolStripMenuItem btn_System;
-        private System.Windows.Forms.ToolStripMenuItem barSubItem3;
+        private System.Windows.Forms.ToolStripMenuItem btn_Help;
         private System.Windows.Forms.ToolStripButton btn_SaveSolution;
         private System.Windows.Forms.ToolStripButton btn_CreateVar;
         private System.Windows.Forms.ToolStripButton btn_HardwareCamera;
@@ -514,10 +486,7 @@
         private System.Windows.Forms.ToolStripMenuItem btn_Login;
         private System.Windows.Forms.ToolStripMenuItem btn_Register;
         private System.Windows.Forms.ToolStripMenuItem btn_Permission;
-        private System.Windows.Forms.ToolStripMenuItem barButtonItem1;
-        private System.Windows.Forms.ToolStripMenuItem barSubItem4;
-        private System.Windows.Forms.ToolStripMenuItem btn_Chinese;
-        private System.Windows.Forms.ToolStripMenuItem btn_English;
+        private System.Windows.Forms.ToolStripMenuItem btn_SystemParam;
         private System.Windows.Forms.ToolStripStatusLabel btn_Logout;
         private System.Windows.Forms.ToolStripStatusLabel txt_JobName;
         private System.Windows.Forms.ToolStripStatusLabel txt_RunTime;
@@ -534,9 +503,9 @@
         private System.Windows.Forms.ToolStripStatusLabel txt_Disk;
         private System.Windows.Forms.ToolStripMenuItem tsm_SystemState;
         private System.Windows.Forms.ToolStripStatusLabel tsl_SystemState;
-        private System.Windows.Forms.ToolStripButton tsm_LightControl;
-        private System.Windows.Forms.ToolStripButton tsm_DLModel;
-        private System.Windows.Forms.ToolStripButton tsm_Comm;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripButton btn_LightConfig;
+        private System.Windows.Forms.ToolStripButton btn_DnnModel;
+        private System.Windows.Forms.ToolStripButton btn_HardwareComm;
+        private System.Windows.Forms.ToolStripButton btn_TestStrobe;
     }
 }

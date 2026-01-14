@@ -92,6 +92,11 @@
       <DependentUpon>FugenPinshanLight.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\Logger\Logger.csproj">
+      <Project>{21c53db6-0f97-41fd-b939-fb37ad9fa8bf}</Project>
+      <Name>Logger</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
