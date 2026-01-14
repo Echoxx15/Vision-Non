@@ -731,8 +731,5 @@ public partial class Frm_Tool : Form
 
   private void Frm_Tool_FormClosed(object sender, FormClosedEventArgs e)
   {
-    // 资源释放已在 Dispose 方法中处理，这里不需要重复释放
-    // 仅记录日志
-    System.Diagnostics.Debug.WriteLine("[Frm_Tool] FormClosed - 窗口已关闭");
   }
 }

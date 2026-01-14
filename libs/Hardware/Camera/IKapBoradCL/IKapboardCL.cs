@@ -488,78 +488,113 @@ public class IKapBoradCL : ICamera, IDisposable
                 IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT, ref nFrameHeight);
                 IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BOARD_BIT, ref nImageBit);
 
-                ///获取图像类型
-                int nImageFormat = 0;
-                ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BAYER_PATTERN, ref nImageFormat);
-                IKUtils.CheckIKapBoard(ret);
 
 
-                bool bIsValidImageBit = false;
-                bool bIsColorImage = false; //图像位深是否为24
+
+
                 if (nImageBit == 8 || nImageBit == 24)
                 {
-                    bIsColorImage = true;
-                    //ImageHelper 实现8/24图像位深的实现
-                    bIsValidImageBit = true;
-                    if (nImageFormat == IKapBoard.IKP_BAYER_PATTERN_VAL_RGGB)
+                    ///获取图像类型
+                    int nImageFormat = 0;
+                    ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_TYPE, ref nImageFormat);
+                    IKUtils.CheckIKapBoard(ret);
+                    if (nImageBit == 8)
                     {
-                        #region 图像格式转换
+                        //if (nImageFormat == IKapBoard.IKP_IMAGE_TYPE_VAL_MONOCHROME)
+                        //{
+                        //    var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, false);
+                        //    // 使用 Action 回调
+                        //    OnFrameGrabed?.Invoke(image);
+                        //}
+                        //else
+                        //{
 
-                        _stopwatch.Restart();
-                        // 图像行高，宽幅
-                        int bufferWidth = 0;
-                        int bufferHeight = 0;
+                            ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_BAYER_PATTERN,
+                                ref nImageFormat);
+                            IKUtils.CheckIKapBoard(ret);
+                            if (nImageFormat != IKapBoard.IKP_IMAGE_TYPE_VAL_RGB)
+                            {
+                                //转换RGB8格式
+                                if (nImageFormat == IKapBoard.IKP_BAYER_PATTERN_VAL_RGGB)
+                                {
+                                    #region 图像格式转换
 
-                        ITKBUFFER m_grayer = new ITKBUFFER();
-                        ITKBUFFER m_color = new ITKBUFFER();
+                                    _stopwatch.Restart();
+                                    // 图像行高，宽幅
+                                    int bufferWidth = 0;
+                                    int bufferHeight = 0;
 
-                        //缓冲区建立
-                        ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT,
-                            ref bufferHeight);
-                        IKUtils.CheckIKapBoard(ret);
+                                    ITKBUFFER m_grayer = new ITKBUFFER();
+                                    ITKBUFFER m_color = new ITKBUFFER();
 
-                        ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_WIDTH, ref bufferWidth);
-                        IKUtils.CheckIKapBoard(ret);
+                                    //缓冲区建立
+                                    ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_HEIGHT,
+                                        ref bufferHeight);
+                                    IKUtils.CheckIKapBoard(ret);
 
-                        res = IKapC.ItkBufferNew(bufferWidth, bufferHeight, IKapC.ITKBUFFER_VAL_FORMAT_BAYER_RG8,
-                            ref m_grayer);
-                        IKUtils.CheckIKapC(res);
-                        res = IKapC.ItkBufferNew(bufferWidth, bufferHeight, IKapC.ITKBUFFER_VAL_FORMAT_RGB888,
-                            ref m_color);
-                        IKUtils.CheckIKapC(res);
+                                    ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_IMAGE_WIDTH,
+                                        ref bufferWidth);
+                                    IKUtils.CheckIKapBoard(ret);
 
-                        res = IKapC.ItkBufferWrite(m_grayer, 0, pUserBuffer, (uint)nFrameSize);
-                        IKUtils.CheckIKapC(res);
+                                    res = IKapC.ItkBufferNew(bufferWidth, bufferHeight,
+                                        IKapC.ITKBUFFER_VAL_FORMAT_BAYER_RG8,
+                                        ref m_grayer);
+                                    IKUtils.CheckIKapC(res);
+                                    res = IKapC.ItkBufferNew(bufferWidth, bufferHeight,
+                                        IKapC.ITKBUFFER_VAL_FORMAT_RGB888,
+                                        ref m_color);
+                                    IKUtils.CheckIKapC(res);
 
-
-                        res = IKapC.ItkBufferBayerConvert(m_grayer, m_color, IKapC.ITKBUFFER_VAL_BAYER_RGGB);
-                        IKUtils.CheckIKapC(res);
-
-                        ITK_BUFFER_INFO bufferInfo = new ITK_BUFFER_INFO();
-                        res = IKapC.ItkBufferGetInfo(m_color, bufferInfo);
-                        IKUtils.CheckIKapC(res);
+                                    res = IKapC.ItkBufferWrite(m_grayer, 0, pUserBuffer, (uint)nFrameSize);
+                                    IKUtils.CheckIKapC(res);
 
 
-                        var image = CreateCogImage(bufferInfo.ImageAddress, nFrameWidth, nFrameHeight, true);
+                                    res = IKapC.ItkBufferBayerConvert(m_grayer, m_color,
+                                        IKapC.ITKBUFFER_VAL_BAYER_RGGB);
+                                    IKUtils.CheckIKapC(res);
 
-                        _stopwatch.Stop();
-                        Console.Write($"转换耗时:{_stopwatch.ElapsedMilliseconds}");
-                        // 使用 Action 回调
-                        OnFrameGrabed?.Invoke(image);
-                        GC.Collect();
-                        return;
+                                    ITK_BUFFER_INFO bufferInfo = new ITK_BUFFER_INFO();
+                                    res = IKapC.ItkBufferGetInfo(m_color, bufferInfo);
+                                    IKUtils.CheckIKapC(res);
 
-                        #endregion
+
+                                    var image = CreateCogImage(bufferInfo.ImageAddress, nFrameWidth, nFrameHeight,
+                                        true);
+
+                                    _stopwatch.Stop();
+                                    Console.Write($"转换耗时:{_stopwatch.ElapsedMilliseconds}");
+                                    // 使用 Action 回调
+                                    OnFrameGrabed?.Invoke(image);
+
+
+                                    /// \~chinese 需要调用ItkStreamClearBuffer将Buffer释放     \~english need to call ItkStreamClearBuffer to release buffer
+                                    IKapC.ItkBufferFree(m_grayer);
+                                    IKapC.ItkBufferFree(m_color);
+
+                                    #endregion
+                                }
+                            }
+                            else
+                            {
+                                var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, true);
+                                // 使用 Action 回调
+                                OnFrameGrabed?.Invoke(image);
+                            }
+                        }
+                    //}
+                    else
+                    {
+                        if (nImageFormat == IKapBoard.IKP_IMAGE_TYPE_VAL_RGB)
+                        {
+                            var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, true);
+                            // 使用 Action 回调
+                            OnFrameGrabed?.Invoke(image);
+                        }
                     }
                 }
 
-                if (bIsValidImageBit)
-                {
-                    var image = CreateCogImage(pUserBuffer, nFrameWidth, nFrameHeight, bIsColorImage);
-                    // 使用 Action 回调
-                    OnFrameGrabed?.Invoke(image);
-                }
-
+                /// \~chinese 释放buffer				       \~english release buffer
+                IKapBoard.IKapReleaseBuffer(cam.g_hBoard, nFrameIndex);
                 GC.Collect();
             }
         }
@@ -658,8 +693,12 @@ public class IKapBoradCL : ICamera, IDisposable
 
         var image = new CogImage24PlanarColor();
         image.SetRoots(redRoot, greenRoot, blueRoot);
-
-        return image;
+        var colorImage = image.Copy(CogImageCopyModeConstants.CopyPixels);
+        Marshal.FreeHGlobal(redPtr);
+        Marshal.FreeHGlobal(greenPtr);
+        Marshal.FreeHGlobal(bluePtr);
+        
+        return colorImage;
     }
 
     #endregion

@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Cognex.VisionPro;
+using Logger;
 
 namespace UserControls.Display;
 
 [Description("视图窗体")]
 public partial class ImageDisplay : UserControl
 {
-    private readonly List<ICogRecord> _recordList = new List<ICogRecord>();
+    private readonly List<ICogRecord> _recordList = [];
     private int _currentIndex = 0;
 
     public int TotalCount => _recordList.Count;
@@ -17,27 +18,57 @@ public partial class ImageDisplay : UserControl
 
     public ICogImage CogImage
     {
-        get => cogRecordDisplay.Image;
+        get => cogRecordDisplay?.Image;
         set
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => CogImage = value)); return; }
-            cogRecordDisplay.StaticGraphics.Clear();
-            cogRecordDisplay.InteractiveGraphics.Clear();
-            cogRecordDisplay.Image = value;
-            cogRecordDisplay.Fit(true);
+            
+            try
+            {
+                if (cogRecordDisplay is { IsDisposed: false })
+                {
+                    cogRecordDisplay.StaticGraphics?.Clear();
+                    cogRecordDisplay.InteractiveGraphics?.Clear();
+                    cogRecordDisplay.Image = value;
+                    cogRecordDisplay.Fit(true);
+                }
+            }
+            catch (AccessViolationException ex)
+            {
+                LogHelper.Warn($"[ImageDisplay] CogImage setter 访问冲突: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warn($"[ImageDisplay] CogImage setter 异常: {ex.Message}");
+            }
         }
     }
 
     public ICogRecord Record
     {
-        get => cogRecordDisplay.Record;
+        get => cogRecordDisplay?.Record;
         set
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => Record = value)); return; }
-            cogRecordDisplay.StaticGraphics.Clear();
-            cogRecordDisplay.InteractiveGraphics.Clear();
-            cogRecordDisplay.Record = value;
-            cogRecordDisplay.Fit(true);
+            
+            try
+            {
+                if (cogRecordDisplay is { IsDisposed: false })
+                {
+                    cogRecordDisplay.StaticGraphics?.Clear();
+                    cogRecordDisplay.InteractiveGraphics?.Clear();
+                    cogRecordDisplay.Record = value;
+                    cogRecordDisplay.Fit(true);
+                }
+            }
+            catch (AccessViolationException ex)
+            {
+                LogHelper.Warn($"[ImageDisplay] Record setter 访问冲突: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warn($"[ImageDisplay] Record setter 异常: {ex.Message}");
+            }
         }
     }
     
@@ -92,14 +123,14 @@ public partial class ImageDisplay : UserControl
         ShowNext();
     }
 
-    public void ShowPrevious()
+    private void ShowPrevious()
     {
         if (_recordList.Count == 0) return;
         _currentIndex = (_currentIndex - 1 + _recordList.Count) % _recordList.Count;
         ShowCurrentRecord();
     }
 
-    public void ShowNext()
+    private void ShowNext()
     {
         if (_recordList.Count == 0) return;
         _currentIndex = (_currentIndex + 1) % _recordList.Count;
@@ -121,12 +152,23 @@ public partial class ImageDisplay : UserControl
             return;
         }
 
-        if (_recordList.Count > 0 && _currentIndex >= 0 && _currentIndex < _recordList.Count)
+        try
         {
-            cogRecordDisplay.StaticGraphics.Clear();
-            cogRecordDisplay.InteractiveGraphics.Clear();
-            cogRecordDisplay.Record = _recordList[_currentIndex];
-            cogRecordDisplay.Fit(true);
+            if (cogRecordDisplay is { IsDisposed: false } && _recordList.Count > 0 && _currentIndex >= 0 && _currentIndex < _recordList.Count)
+            {
+                cogRecordDisplay.StaticGraphics?.Clear();
+                cogRecordDisplay.InteractiveGraphics?.Clear();
+                cogRecordDisplay.Record = _recordList[_currentIndex];
+                cogRecordDisplay.Fit(true);
+            }
+        }
+        catch (AccessViolationException ex)
+        {
+            LogHelper.Warn($"[ImageDisplay] ShowCurrentRecord() 访问冲突: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[ImageDisplay] ShowCurrentRecord() 异常: {ex.Message}");
         }
         UpdateIndexLabel();
     }
@@ -155,10 +197,27 @@ public partial class ImageDisplay : UserControl
 
         _recordList.Clear();
         _currentIndex = 0;
-        cogRecordDisplay.StaticGraphics.Clear();
-        cogRecordDisplay.InteractiveGraphics.Clear();
-        cogRecordDisplay.Record = null;
-        cogRecordDisplay.Image = null;
+        
+        // 防止屏保或控件销毁时的 AccessViolationException
+        try
+        {
+            if (cogRecordDisplay is { IsDisposed: false })
+            {
+                cogRecordDisplay.StaticGraphics?.Clear();
+                cogRecordDisplay.InteractiveGraphics?.Clear();
+                cogRecordDisplay.Record = null;
+                cogRecordDisplay.Image = null;
+            }
+        }
+        catch (AccessViolationException ex)
+        {
+            LogHelper.Warn($"[ImageDisplay] Clear() 访问冲突: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[ImageDisplay] Clear() 异常: {ex.Message}");
+        }
+        
         UpdateIndexLabel();
     }
 

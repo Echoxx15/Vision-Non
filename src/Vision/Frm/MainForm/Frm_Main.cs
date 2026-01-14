@@ -22,7 +22,6 @@ using DnnInterfaceNet; // 深度学习插件接口
 using Vision.Frm.DLModel;
 using Vision.Frm.Station;
 using HardwareCommNet;
-using UserControls;
 using UserControls.Display;
 using UserControls.LightTestForm; // 通讯配置接口
 
@@ -395,14 +394,23 @@ public partial class Frm_Main : Form
             if (MessageBox.Show("是否保存解决方案", "", MessageBoxButtons.YesNo) != DialogResult.Yes)
                 return;
 
-            // 保存当前方案
-            SolutionManager.Instance.SaveCurrent();
-            MessageBox.Show("保存方案成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                btn_SaveSolution.Enabled = false;
+                // 保存当前方案
+                SolutionManager.Instance.SaveCurrent();
+                btn_SaveSolution.Enabled = true;
+                MessageBox.Show("保存方案成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                btn_SaveSolution.Enabled = true;
+            }
         }
         catch (Exception ex)
         {
             LogHelper.Error(ex, "保存方案失败");
-            MessageBox.Show("保存方案失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("保存方案失败: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -496,7 +504,7 @@ public partial class Frm_Main : Form
     /// </summary>
     private void btn_Chinese_Click(object sender, EventArgs e)
     {
-        LocalizationManager.SetCulture("zh-CN");
+        LanguageService.Instance.SetLanguage("zh-CN");
     }
 
     /// <summary>
@@ -505,7 +513,7 @@ public partial class Frm_Main : Form
     /// </summary>
     private void btn_English_Click(object sender, EventArgs e)
     {
-        LocalizationManager.SetCulture("en-US");
+        LanguageService.Instance.SetLanguage("en-US");
     }
 
     /// <summary>
@@ -617,20 +625,23 @@ public partial class Frm_Main : Form
     {
         try
         {
+            var lang = LanguageService.Instance;
+            
             // 1. 当前方案名称（从SolutionInfo列表获取，确保显示最新修改后的名称）
             var sol = SolutionManager.Instance.Current;
             var solutionName = GetCurrentSolutionDisplayName(sol);
-            txt_JobName.Text = $"当前方案:{solutionName}";
+            txt_JobName.Text = $"{lang.Get(LangKeys.Main_CurrentSolution)}{solutionName}";
 
             // 2. 运行时间（天时分格式）
             var span = DateTime.Now - _startTime;
-            txt_RunTime.Text = $"运行时间:{(int)span.TotalDays}天{span.Hours:D2}时{span.Minutes:D2}分";
+            var dayText = lang.Get(LangKeys.Common_Day);
+            txt_RunTime.Text = $"{lang.Get(LangKeys.Main_RunTime)}{(int)span.TotalDays}{dayText}{span.Hours:D2}:{span.Minutes:D2}";
 
             // 3. 内存占用（进程工作集，单位MB）
             using (var p = Process.GetCurrentProcess())
             {
                 var memMb = p.WorkingSet64 / (1024.0 * 1024.0);
-                txt_Memory.Text = $"内存:{memMb:F1}MB";
+                txt_Memory.Text = $"{lang.Get(LangKeys.Main_MemoryUsage)}:{memMb:F1}MB";
             }
 
 // 4. CPU占用率
@@ -640,7 +651,7 @@ public partial class Frm_Main : Form
             {
                 try
                 {
-                    cpuText = $"CPU:{_cpuCounter.NextValue():F1}%";
+                    cpuText = $"{lang.Get(LangKeys.Main_CPUUsage)}:{_cpuCounter.NextValue():F1}%";
                 }
                 catch
                 {
@@ -730,11 +741,12 @@ public partial class Frm_Main : Form
     {
         try
         {
+            var lang = LanguageService.Instance;
             // 获取系统在线状态
             var isOnline = SystemStateManager.Instance.IsOnline;
             if (tsl_SystemState != null)
             {
-                tsl_SystemState.Text = $"系统:{(isOnline ? "在线" : "离线")}";
+                tsl_SystemState.Text = isOnline ? lang.Get(LangKeys.Main_StatusOnline) : lang.Get(LangKeys.Main_StatusOffline);
                 tsl_SystemState.ForeColor = isOnline ? Color.Green : Color.Red;
             }
         }
@@ -768,6 +780,8 @@ public partial class Frm_Main : Form
                 Invoke(new Action<bool>(OnSystemOnlineStateChanged), isOnline);
                 return;
             }
+            
+            var lang = LanguageService.Instance;
 
             // 1. 更新工具栏启用状态
             // 在线时禁用工具栏，防止误操作修改配置
@@ -779,7 +793,7 @@ public partial class Frm_Main : Form
             // 3. 更新菜单项文本（显示相反状态，点击后切换）
             if (tsm_SystemState != null)
             {
-                tsm_SystemState.Text = isOnline ? "系统离线" : "系统在线";
+                tsm_SystemState.Text = isOnline ? lang.Get(LangKeys.Main_SystemOffline) : lang.Get(LangKeys.Main_SystemOnline);
             }
 
             LogHelper.Info($"[主界面] 响应系统状态变化: {(isOnline ? "在线" : "离线")}");
@@ -850,6 +864,7 @@ public partial class Frm_Main : Form
     /// 1. 创建日志窗体并嵌入到日志容器
     /// 2. 创建硬件状态窗体并嵌入到状态容器
     /// 3. 启用自动本地化
+    /// 4. 添加语言切换菜单
     /// </summary>
     private void InitFormUI()
     {
@@ -889,6 +904,101 @@ public partial class Frm_Main : Form
         {
             LogHelper.Error(ex, "初始化硬件状态窗体失败");
         }
+
+        try
+        {
+            // 3. 添加语言切换菜单到主菜单
+            var languageMenu = new LanguageMenuItem();
+            menuMain.Items.Add(languageMenu);
+            
+            // 注册语言变更后刷新界面
+            LanguageService.Instance.LanguageChanged += (_, _) =>
+            {
+                if (InvokeRequired)
+                    BeginInvoke(new Action(RefreshUIOnLanguageChanged));
+                else
+                    RefreshUIOnLanguageChanged();
+            };
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(ex, "初始化语言菜单失败");
+        }
+    }
+
+    /// <summary>
+    /// 语言切换后刷新界面
+    /// </summary>
+    private void RefreshUIOnLanguageChanged()
+    {
+        try
+        {
+            var lang = LanguageService.Instance;
+            
+            // ========== 菜单项 ==========
+            // 用户菜单
+            btn_User.Text = lang.Get(LangKeys.Main_User);
+            btn_Login.Text = lang.Get(LangKeys.User_Login);
+            btn_Register.Text = lang.Get(LangKeys.User_Register);
+            btn_Permission.Text = lang.Get(LangKeys.User_Permission);
+            btn_Logout.Text = lang.Get(LangKeys.User_Logout);
+            
+            // 系统菜单
+            btn_System.Text = lang.Get(LangKeys.Main_System);
+            btn_SystemParam.Text = lang.Get(LangKeys.Main_SystemParams);
+            btn_File.Text = lang.Get(LangKeys.Main_FileParams);
+            
+            // 语言菜单
+            barSubItem4.Text = lang.Get(LangKeys.Main_Language);
+            btn_Chinese.Text = lang.Get(LangKeys.Main_Chinese);
+            btn_English.Text = lang.Get(LangKeys.Main_English);
+            
+            // ========== 工具栏按钮 ==========
+            btn_SolutionList.Text = lang.Get(LangKeys.Main_SolutionList);
+            btn_SaveSolution.Text = lang.Get(LangKeys.Main_SaveSolution);
+            btn_CreateVar.Text = lang.Get(LangKeys.Main_GlobalVariables);
+            btn_Station.Text = lang.Get(LangKeys.Main_StationConfig);
+            btn_HardwareCamera.Text = lang.Get(LangKeys.Main_CameraHardware);
+            btn_HardwareComm.Text = lang.Get(LangKeys.Main_CommHardware);
+            btn_LightConfig.Text = lang.Get(LangKeys.Main_LightConfig);
+            btn_DnnModel.Text = lang.Get(LangKeys.Main_DeepLearning);
+            btn_UI.Text = lang.Get(LangKeys.Main_DisplaySettings);
+            btn_TestStrobe.Text = lang.Get(LangKeys.Main_StrobeTest);
+            
+            // 在线/离线按钮
+            UpdateSystemStateDisplay();
+            
+            // ========== 面板标题 ==========
+            grb_State.Text = lang.Get(LangKeys.Main_HardwareStatus);
+            grb_Log.Text = lang.Get(LangKeys.Main_LogPanel);
+            
+            // ========== 状态栏 ==========
+            UpdateStatusBarLabels();
+            
+            // 刷新其他子窗体
+            if (frm_Log != null && !frm_Log.IsDisposed)
+                LocalizationManager.Apply(frm_Log);
+            if (frm_HardwareState != null && !frm_HardwareState.IsDisposed)
+                LocalizationManager.Apply(frm_HardwareState);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[Frm_Main] 刷新语言失败: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新状态栏标签文本
+    /// </summary>
+    private void UpdateStatusBarLabels()
+    {
+        var lang = LanguageService.Instance;
+        
+        // 用户状态
+        var currentUser = UserManager.Instance.CurrentUser;
+        barStaticItem1.Text = currentUser != null 
+            ? $"{lang.Get(LangKeys.User_Title)}:{currentUser.Username}" 
+            : lang.Get(LangKeys.Main_NoUser);
     }
 
     #region 显示窗口布局

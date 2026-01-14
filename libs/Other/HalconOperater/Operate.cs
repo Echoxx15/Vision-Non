@@ -287,11 +287,14 @@ public class Operate
         hv_reImage = tiledImage;
     }
 
-    public static void ArrayPointToPolygonXld(double[,] Array2D, out double Area)
+    /// <summary>
+    /// 点集转halcon轮廓
+    /// </summary>
+    /// <param name="Array2D"></param>
+    /// <param name="Area"></param>
+    public static HObject ArrayPointToXld(double[,] Array2D)
     {
-        HObject region;
-        HTuple area, row, col, p;
-        int Num = Array2D.Length;
+        int Num = Array2D.GetLength(0);
         double[] xArray = new double[Num];
         double[] yArray = new double[Num];
         for (int j = 0; j < Num; j++)
@@ -302,8 +305,19 @@ public class Operate
         // 创建Halcon多边形
         HTuple hvRow = new HTuple(yArray);
         HTuple hvCol = new HTuple(xArray);
-        HalconDotNet.HOperatorSet.GenContourPolygonXld(out region, hvRow, hvCol);
-        HOperatorSet.AreaCenterXld(region, out area, out row, out col, out p);
-        Area = area.D;
+        HOperatorSet.GenContourPolygonXld(out var xld, hvRow, hvCol);
+        return xld;
+    }
+
+    /// <summary>
+    /// 获取多边形区域的面积
+    /// </summary>
+    /// <param name="Array2D"></param>  多边形点集
+    /// <param name="area"></param>
+    public static void GetXldRegionArea(double[,] Array2D, ref double area)
+    {
+        HOperatorSet.GenRegionContourXld(ArrayPointToXld(Array2D), out var hv_Region, "filled");
+        HOperatorSet.AreaCenter(hv_Region, out var hv_Area, out _, out _);
+        area = hv_Area.D;
     }
 }

@@ -375,48 +375,45 @@ public class IRAYPLECamera : ICamera, IDisposable
     {
         while (!_processThreadExit)
         {
-            lock (this)
+            if (frameQueue.TryDequeue(out var frame))
             {
-                if (frameQueue.TryDequeue(out var frame))
+                try
                 {
-                    try
-                    {
-                        _stopwatch.Restart();
-                        Bitmap bmp = null;
-                        ConvertToBitmap(ref frame, ref bmp);
+                    _stopwatch.Restart();
+                    Bitmap bmp = null;
+                    ConvertToBitmap(ref frame, ref bmp);
 
-                        if (bmp != null)
+                    if (bmp != null)
+                    {
+                        ICogImage img;
+                        if (bmp.PixelFormat == PixelFormat.Format24bppRgb)
                         {
-                            ICogImage img;
-                            if (bmp.PixelFormat == PixelFormat.Format24bppRgb)
-                            {
-                                img = new CogImage24PlanarColor(bmp);
-                            }
-                            else
-                            {
-                                img = new CogImage8Grey(bmp);
-                            }
+                            img = new CogImage24PlanarColor(bmp);
+                        }
+                        else
+                        {
+                            img = new CogImage8Grey(bmp);
+                        }
 
-                            // 使用 Action 回调
-                            OnFrameGrabed?.Invoke(img);
-                            _stopwatch.Stop();
-                            bmp.Dispose();
-                            GC.Collect();
-                            Console.WriteLine("回调转换耗时:{0}", _stopwatch.ElapsedMilliseconds);
-                        }
+                        // 使用 Action 回调
+                        OnFrameGrabed?.Invoke(img);
+                        _stopwatch.Stop();
+                        bmp.Dispose();
+                        GC.Collect();
+                        Console.WriteLine("回调转换耗时:{0}", _stopwatch.ElapsedMilliseconds);
                     }
-                    catch (Exception e)
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                finally
+                {
+                    //释放克隆帧
+                    var res = device.IMV_ReleaseFrame(ref frame);
+                    if (res != IMVDefine.IMV_OK)
                     {
-                        Console.WriteLine(e);
-                    }
-                    finally
-                    {
-                        //释放克隆帧
-                        var res = device.IMV_ReleaseFrame(ref frame);
-                        if (res != IMVDefine.IMV_OK)
-                        {
-                            Console.WriteLine($"Release cloned frame failed: {res}");
-                        }
+                        Console.WriteLine($"Release cloned frame failed: {res}");
                     }
                 }
             }

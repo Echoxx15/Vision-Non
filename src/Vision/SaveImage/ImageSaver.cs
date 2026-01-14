@@ -304,50 +304,24 @@ public static class ImageSaver
 
         try
         {
-            // 计算截止日期：保留N天意味着N天前（含）的数据应删除
-            // 例如：保留7天 + 今天12-17，则 12-10 及之前的数据应删除（保留12-11到12-17共7天）
-            var cutoffRaw = DateTime.Now.Date.AddDays(-cfg.RawRetentionDays);
-            var cutoffDeal = DateTime.Now.Date.AddDays(-cfg.DealRetentionDays);
-            
-            Logger.LogHelper.Info($"[ImageSaver] 开始清理过期图片，Raw保留{cfg.RawRetentionDays}天(截止{cutoffRaw:yyyy-MM-dd})，Deal保留{cfg.DealRetentionDays}天(截止{cutoffDeal:yyyy-MM-dd})");
+            // 按“最后写入时间”判断是否过期，避免仅凭日期目录名导致误删
+            // Raw/Deal 各自独立保留策略
+            var rawCutoff = DateTime.Now.AddDays(-cfg.RawRetentionDays);
+            var dealCutoff = DateTime.Now.AddDays(-cfg.DealRetentionDays);
 
-            int deletedCount = 0;
+            Logger.LogHelper.Info($"[ImageSaver] 开始清理过期图片，Raw保留{cfg.RawRetentionDays}天(截止{rawCutoff:yyyy-MM-dd HH:mm:ss})，Deal保留{cfg.DealRetentionDays}天(截止{dealCutoff:yyyy-MM-dd HH:mm:ss})");
+
+            int deletedDirCount = 0;
+
+            // 遍历 root 下的日期目录（yyyy-MM-dd 等），但不再直接删除日期目录
             foreach (var dayDir in Directory.EnumerateDirectories(root))
             {
                 var folderName = Path.GetFileName(dayDir);
-                if (!TryParseDateFolderName(folderName, out var day)) continue;
+                if (!TryParseDateFolderName(folderName, out _)) continue;
 
-                // 按 Raw / Deal 分别判断，使用 <= 确保截止日期当天的也被删除
-                var rawDir = Path.Combine(dayDir, "Raw");
-                var dealDir = Path.Combine(dayDir, "Deal");
-                
-                if (day <= cutoffRaw && Directory.Exists(rawDir))
-                {
-                    try 
-                    { 
-                        Directory.Delete(rawDir, true);
-                        deletedCount++;
-                        Logger.LogHelper.Info($"[ImageSaver] 已删除过期Raw目录: {rawDir}");
-                    } 
-                    catch (Exception ex)
-                    {
-                        Logger.LogHelper.Warn($"[ImageSaver] 删除Raw目录失败: {rawDir}, 原因: {ex.Message}");
-                    }
-                }
-                
-                if (day <= cutoffDeal && Directory.Exists(dealDir))
-                {
-                    try 
-                    { 
-                        Directory.Delete(dealDir, true);
-                        deletedCount++;
-                        Logger.LogHelper.Info($"[ImageSaver] 已删除过期Deal目录: {dealDir}");
-                    } 
-                    catch (Exception ex)
-                    {
-                        Logger.LogHelper.Warn($"[ImageSaver] 删除Deal目录失败: {dealDir}, 原因: {ex.Message}");
-                    }
-                }
+                // 逐层清理 dayDir/Raw/* 及 dayDir/Deal/*
+                deletedDirCount += DeleteExpiredSubFolders(Path.Combine(dayDir, "Raw"), rawCutoff);
+                deletedDirCount += DeleteExpiredSubFolders(Path.Combine(dayDir, "Deal"), dealCutoff);
 
                 // 清理空的日期目录
                 try
@@ -360,13 +334,76 @@ public static class ImageSaver
                 }
                 catch { }
             }
-            
-            if (deletedCount > 0)
-                Logger.LogHelper.Info($"[ImageSaver] 清理完成，共删除{deletedCount}个过期目录");
+
+            if (deletedDirCount > 0)
+                Logger.LogHelper.Info($"[ImageSaver] 清理完成，共删除{deletedDirCount}个过期目录");
         }
         catch (Exception ex)
         {
             Logger.LogHelper.Error(ex, "[ImageSaver] 清理过期图片异常");
         }
+    }
+
+    /// <summary>
+    /// 删除指定目录下“最后写入时间早于 cutoff”的子目录。
+    /// 例如：root/yyyy-MM-dd/Raw/工位/OK 这种层级下，会递归扫描并删除叶子目录。
+    /// </summary>
+    private static int DeleteExpiredSubFolders(string parentDir, DateTime cutoff)
+    {
+        if (string.IsNullOrWhiteSpace(parentDir) || !Directory.Exists(parentDir)) return 0;
+
+        int deletedCount = 0;
+
+        try
+        {
+            // 递归遍历，优先删除最深层目录（通常是 OK/NG 或工位目录）
+            foreach (var dir in Directory.EnumerateDirectories(parentDir, "*", SearchOption.AllDirectories)
+                                         .OrderByDescending(p => p.Length))
+            {
+                try
+                {
+                    if (!Directory.Exists(dir)) continue;
+
+                    // 以目录最后写入时间作为“最新图片时间”的近似值（创建/写入文件会更新）
+                    var lastWrite = Directory.GetLastWriteTime(dir);
+                    if (lastWrite >= cutoff) continue;
+
+                    Directory.Delete(dir, true);
+                    deletedCount++;
+                    Logger.LogHelper.Info($"[ImageSaver] 已删除过期目录: {dir} (LastWrite={lastWrite:yyyy-MM-dd HH:mm:ss})");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogHelper.Warn($"[ImageSaver] 删除目录失败: {dir}, 原因: {ex.Message}");
+                }
+            }
+
+            // 删除 parentDir 下已空的子目录（从浅到深清理）
+            foreach (var dir in Directory.EnumerateDirectories(parentDir, "*", SearchOption.AllDirectories)
+                                         .OrderByDescending(p => p.Length))
+            {
+                try
+                {
+                    if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                }
+                catch { }
+            }
+
+            // parentDir 本身若为空也清理
+            try
+            {
+                if (Directory.Exists(parentDir) && !Directory.EnumerateFileSystemEntries(parentDir).Any())
+                {
+                    Directory.Delete(parentDir, true);
+                }
+            }
+            catch { }
+        }
+        catch { }
+
+        return deletedCount;
     }
 }
