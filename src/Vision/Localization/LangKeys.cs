@@ -68,7 +68,7 @@ public static class LangKeys
     public const string Main_Chinese = "Main.Chinese";
     public const string Main_English = "Main.English";
     public const string Main_Help = "Main.Help";
-
+    
     // 工具栏
     public const string Main_SolutionList = "Main.SolutionList";
     public const string Main_GlobalVariables = "Main.GlobalVariables";

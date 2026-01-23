@@ -13,13 +13,13 @@ public partial class Frm_File : Form, ILocalizable
         InitializeComponent();
         
         // 订阅语言变更事件
-        UITranslationService.Instance.LanguageChanged += OnLanguageChanged;
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
         
         // 窗体关闭时取消订阅
-        FormClosed += (_, _) => UITranslationService.Instance.LanguageChanged -= OnLanguageChanged;
+        FormClosed += (_, _) => LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
     
-    private void OnLanguageChanged(object sender, string languageCode)
+    private void OnLanguageChanged(object sender, LanguageChangedEventArgs e)
     {
         if (IsDisposed) return;
         if (InvokeRequired)
@@ -48,39 +48,41 @@ public partial class Frm_File : Form, ILocalizable
     /// </summary>
     public void ApplyLanguage()
     {
+        var lang = LanguageService.Instance;
+        
         // 窗体标题
-        Text = this.T("Title");
+        Text = lang.Get(LangKeys.File_Title);
         
         // 分组框
-        groupBox3.Text = this.T("groupBox3");
-        groupBox1.Text = this.T("groupBox1");
-        groupBox2.Text = this.T("groupBox2");
+        groupBox3.Text = lang.Get(LangKeys.File_SavePath);
+        groupBox1.Text = lang.Get(LangKeys.File_StorageSettings);
+        groupBox2.Text = lang.Get(LangKeys.File_DiskAlarmSettings);
         
         // 存储设置
-        chk_SaveRawImage.Text = this.T("chk_SaveRawImage");
-        chk_SaveDealImage.Text = this.T("chk_SaveDealImage");
-        chk_Delete.Text = this.T("chk_Delete");
-        chk_SaveOKNG.Text = this.T("chk_SaveOKNG");
-        label12.Text = this.T("label12");
-        label5.Text = this.T("label5");
-        label3.Text = this.T("label3");
-        label23.Text = this.T("label23");
-        label2.Text = this.T("label2");
-        label4.Text = this.T("label4");
+        chk_SaveRawImage.Text = lang.Get(LangKeys.File_SaveRawImage);
+        chk_SaveDealImage.Text = lang.Get(LangKeys.File_SaveResultImage);
+        chk_Delete.Text = lang.Get(LangKeys.File_DeleteImages);
+        chk_SaveOKNG.Text = lang.Get(LangKeys.File_SeparateOKNG);
+        label12.Text = lang.Get(LangKeys.File_RawImageRetention);
+        label5.Text = lang.Get(LangKeys.File_ResultImageRetention);
+        label3.Text = lang.Get(LangKeys.File_RawImageType);
+        label23.Text = lang.Get(LangKeys.File_ResultImageType);
+        label2.Text = $"{lang.Get(LangKeys.Common_Unit)}/({lang.Get(LangKeys.Common_Day)})";
+        label4.Text = $"{lang.Get(LangKeys.Common_Unit)}/({lang.Get(LangKeys.Common_Day)})";
         
         // 磁盘报警设置
-        label6.Text = this.T("label6");
-        rtn_true.Text = this.T("rtn_true");
-        rtn_false.Text = this.T("rtn_false");
-        label8.Text = this.T("label8");
-        label7.Text = this.T("label7");
-        label10.Text = this.T("label10");
-        label11.Text = this.T("label11");
-        label9.Text = this.T("label9");
+        label6.Text = lang.Get(LangKeys.File_DiskMonitorEnabled);
+        rtn_true.Text = lang.Get(LangKeys.Common_Yes);
+        rtn_false.Text = lang.Get(LangKeys.Common_No);
+        label8.Text = lang.Get(LangKeys.File_AlarmThreshold);
+        label7.Text = $"{lang.Get(LangKeys.Common_Unit)}/(M)";
+        label10.Text = lang.Get(LangKeys.File_CheckTime1);
+        label11.Text = lang.Get(LangKeys.File_CheckTime2);
+        label9.Text = lang.Get(LangKeys.File_ThresholdNote);
         
         // 按钮
-        btn_Select.Text = this.T("btn_Select");
-        btn_SaveConfig.Text = this.T("btn_SaveConfig");
+        btn_Select.Text = lang.Get(LangKeys.Common_Select);
+        btn_SaveConfig.Text = lang.Get(LangKeys.Common_Save);
     }
 
     private void LoadSettingsToUI()
@@ -107,7 +109,7 @@ public partial class Frm_File : Form, ILocalizable
     private void Btn_Select_Click(object sender, EventArgs e)
     {
         using var dlg = new FolderBrowserDialog();
-        dlg.Description = UITranslationExtensions.TC("Select", "选择文件夹");
+        dlg.Description = LanguageService.Instance.Get(LangKeys.Common_Select);
         dlg.SelectedPath = string.IsNullOrWhiteSpace(txt_Path.Text) ? FileSettingsManager.Current.SavePath : txt_Path.Text;
         if (dlg.ShowDialog(this) == DialogResult.OK)
         {
@@ -117,6 +119,7 @@ public partial class Frm_File : Form, ILocalizable
 
     private void Btn_SaveConfig_Click(object sender, EventArgs e)
     {
+        var lang = LanguageService.Instance;
         var s = new FileSettings();
         s.SavePath = txt_Path.Text;
         s.SaveRawImage = chk_SaveRawImage.Checked;
@@ -133,6 +136,6 @@ public partial class Frm_File : Form, ILocalizable
         s.PollTime2 = dtp_PollTime2.Value.TimeOfDay;
 
         FileSettingsManager.Update(s);
-        MessageBox.Show(UITranslationExtensions.TC("SaveSuccess"), UITranslationExtensions.TC("Info"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(lang.Get(LangKeys.Msg_SaveSuccess), lang.Get(LangKeys.Common_Info), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }

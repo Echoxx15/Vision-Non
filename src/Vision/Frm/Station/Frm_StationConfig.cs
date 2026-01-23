@@ -36,11 +36,11 @@ public partial class Frm_StationConfig : Form, ILocalizable
   contextMenuStrip2.Opening += ContextMenuStrip2_Opening;
   
   // 订阅语言变更事件
-  UITranslationService.Instance.LanguageChanged += OnLanguageChanged;
-  this.FormClosed += (_, _) => UITranslationService.Instance.LanguageChanged -= OnLanguageChanged;
+  LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+  this.FormClosed += (_, _) => LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
  }
  
- private void OnLanguageChanged(object sender, string languageCode)
+ private void OnLanguageChanged(object sender, LanguageChangedEventArgs e)
  {
   if (IsDisposed) return;
   if (InvokeRequired)
@@ -54,17 +54,19 @@ public partial class Frm_StationConfig : Form, ILocalizable
  /// </summary>
  public void ApplyLanguage()
  {
+  var lang = LanguageService.Instance;
+  
   // 窗体标题
-  this.Text = this.T("Title");
+  this.Text = lang.Get(LangKeys.Station_Config);
   
   // 右键菜单项
-  tsb_Add.Text = this.T("tsb_Add");
-  tsm_Remove.Text = this.T("tsm_Remove");
-  tsm_ReName.Text = this.T("tsm_ReName");
-  tsm_LoadImageRun.Text = this.T("tsm_LoadImageRun");
-  tsm_TriggerCameraRun.Text = this.T("tsm_TriggerCameraRun");
-  tsm_SimulateFlyCapture.Text = this.T("tsm_SimulateFlyCapture");
-  tsm_OpenForm.Text = this.T("tsm_OpenForm");
+  tsb_Add.Text = lang.Get(LangKeys.Common_Add);
+  tsm_Remove.Text = lang.Get(LangKeys.Common_Delete);
+  tsm_ReName.Text = lang.Get(LangKeys.Common_Rename);
+  tsm_LoadImageRun.Text = lang.Get(LangKeys.Station_RunDetection_LoadImage);
+  tsm_TriggerCameraRun.Text = lang.Get(LangKeys.Station_RunDetection_TriggerCamera);
+  tsm_SimulateFlyCapture.Text = lang.Get(LangKeys.Station_SimulateFlyCapture);
+  tsm_OpenForm.Text = lang.Get(LangKeys.Station_OpenConfig);
  }
 
  private void Tree_Station_DrawNode(object sender, DrawTreeNodeEventArgs e)
