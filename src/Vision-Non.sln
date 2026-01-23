@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vision", "Vision\Vision.csproj", "{36061D54-D489-4474-97DE-703DE4FEA48F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HardwareCameraNet", "..\libs\Hardware\Camera\HardwareCameraNet\HardwareCameraNet.csproj", "{02D11C38-CC51-4BA5-AC42-C5091B86ABBB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HardwareCommNet", "..\libs\Hardware\Communication\HardwareCommNet\HardwareCommNet.csproj", "{0EAE8ED3-2B63-46CA-B4CA-C8C94A7EC6A4}"
@@ -35,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserControls", "..\libs\Oth
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger", "..\libs\Logger\Logger.csproj", "{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vision", "Vision\Vision.csproj", "{36061D54-D489-4474-97DE-703DE4FEA48F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,18 +45,6 @@ Global
 		remote|x64 = remote|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|x64.ActiveCfg = Debug|x64
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|x64.Build.0 = Debug|x64
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|x64.ActiveCfg = Release|x64
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|x64.Build.0 = Release|x64
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|Any CPU.ActiveCfg = remote|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|Any CPU.Build.0 = remote|Any CPU
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|x64.ActiveCfg = remote|x64
-		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|x64.Build.0 = remote|x64
 		{02D11C38-CC51-4BA5-AC42-C5091B86ABBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{02D11C38-CC51-4BA5-AC42-C5091B86ABBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02D11C38-CC51-4BA5-AC42-C5091B86ABBB}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -237,6 +225,18 @@ Global
 		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|Any CPU.Build.0 = Debug|Any CPU
 		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|x64.ActiveCfg = Debug|Any CPU
 		{21C53DB6-0F97-41FD-B939-FB37AD9FA8BF}.remote|x64.Build.0 = Debug|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|x64.ActiveCfg = Debug|x64
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Debug|x64.Build.0 = Debug|x64
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|x64.ActiveCfg = Release|x64
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.Release|x64.Build.0 = Release|x64
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|Any CPU.ActiveCfg = remote|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|Any CPU.Build.0 = remote|Any CPU
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|x64.ActiveCfg = remote|x64
+		{36061D54-D489-4474-97DE-703DE4FEA48F}.remote|x64.Build.0 = remote|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
