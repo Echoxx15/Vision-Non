@@ -16,7 +16,7 @@ public class JsonLanguageProvider : ILanguageProvider
     private readonly string _languagesFolder;
     private const string TranslationFileName = "ui-translations.json";
 
-    public JsonLanguageProvider() : this(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Language"))
+    public JsonLanguageProvider() : this(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages"))
     {
     }
 

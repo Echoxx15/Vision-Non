@@ -67,6 +67,9 @@ static class Program
       
       // Initialize language service (JSON-based multi-language support)
       LanguageService.Instance.Initialize();
+      
+      // Initialize UI translation service (form-based multi-language support)
+      UITranslationService.Instance.Initialize();
 
       // Register additional dll probing paths: Debug\Libraly and Debug\Runtime (and subfolders)
       // Note: Folder name kept as provided: "Libraly"

@@ -120,7 +120,7 @@ public sealed class UITranslationService
     }
 
     /// <summary>
-    /// 切换语言
+    /// 切换语言（只保存配置，重启软件后生效）
     /// </summary>
     public void SetLanguage(string languageCode)
     {
@@ -133,20 +133,13 @@ public sealed class UITranslationService
 
         try
         {
-            _currentLanguage = languageCode;
-            ApplyThreadCulture();
-
-            // 保存设置
+            // 只保存设置，不立即加载和应用
             File.WriteAllText(_configPath, languageCode);
-
-            LogHelper.Info($"[UITranslationService] 切换语言: {languageCode}");
-
-            // 触发事件
-            LanguageChanged?.Invoke(this, languageCode);
+            LogHelper.Info($"[UITranslationService] 语言设置已保存: {languageCode}，重启软件后生效");
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"[UITranslationService] 切换语言失败: {languageCode}");
+            LogHelper.Error(ex, $"[UITranslationService] 保存语言设置失败: {languageCode}");
         }
     }
 

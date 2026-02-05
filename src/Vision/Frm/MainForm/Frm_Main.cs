@@ -498,6 +498,8 @@ public partial class Frm_Main : Form, ILocalizable
     private void btn_Chinese_Click(object sender, EventArgs e)
     {
         LanguageService.Instance.SetLanguage("zh-CN");
+        UITranslationService.Instance.SetLanguage("zh-CN");
+        MessageBox.Show("语言设置已保存，重启软件后生效", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     /// <summary>
@@ -507,6 +509,8 @@ public partial class Frm_Main : Form, ILocalizable
     private void btn_English_Click(object sender, EventArgs e)
     {
         LanguageService.Instance.SetLanguage("en-US");
+        UITranslationService.Instance.SetLanguage("en-US");
+        MessageBox.Show("语言设置已保存，重启软件后生效", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     /// <summary>
@@ -985,6 +989,13 @@ public partial class Frm_Main : Form, ILocalizable
     /// </summary>
     private void OnDisplayControlsChanged()
     {
+        // 线程安全：确保在UI线程执行
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action(OnDisplayControlsChanged));
+            return;
+        }
+        
         var sol = SolutionManager.Instance.Current;
         if (sol == null || tlp_Display == null) return;
 
