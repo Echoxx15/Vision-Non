@@ -40,7 +40,7 @@ namespace Vision.Frm.MainForm;
 /// 5. 系统在线/离线控制（生产/调试模式切换）
 /// 6. 自动注销机制（3分钟无操作自动退出登录）
 /// </summary>
-public partial class Frm_Main : Form, ILocalizable
+public partial class Frm_Main : Form
 {
     /// <summary>
     /// 启_animation screen form reference

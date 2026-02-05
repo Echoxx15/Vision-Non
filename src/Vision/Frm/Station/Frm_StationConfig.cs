@@ -16,7 +16,7 @@ using Vision.Solutions.TaskFlow;
 
 namespace Vision.Frm.Station;
 
-public partial class Frm_StationConfig : Form, ILocalizable
+public partial class Frm_StationConfig : Form
 {
  private BindingList<StationConfig> _models;
  private CancellationTokenSource _flyCaptureCts;

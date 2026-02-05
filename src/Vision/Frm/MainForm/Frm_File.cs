@@ -6,7 +6,7 @@ using Vision.Settings;
 
 namespace Vision.Frm.MainForm;
 
-public partial class Frm_File : Form, ILocalizable
+public partial class Frm_File : Form
 {
     public Frm_File()
     {

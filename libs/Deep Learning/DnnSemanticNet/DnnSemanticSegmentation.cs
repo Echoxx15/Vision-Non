@@ -379,7 +379,7 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
                 croppedImages = CropImagesFromSource(image, colCoords, rowCoords, cropWidth, cropHeight);
                 
                 // 调试模式：保存裁剪的小图（路径为空时使用默认路径）
-                SaveDebugCroppedImages(croppedImages, colCoords, rowCoords);
+                //SaveDebugCroppedImages(croppedImages, colCoords, rowCoords);
                 
                 // 为每张图像创建样本字典（关键修复！）
                 GenDlSampleBatchFromImages(croppedImages, out dlSampleBatch);
@@ -602,10 +602,10 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
                     HOperatorSet.ZoomImageSize(map, out results[i], tw, th, "constant");
                     
                     // 调试模式：保存每个小图的推理结果（路径为空时使用默认路径）
-                    if (colCoords != null && rowCoords != null && i < colCoords.Length)
-                    {
-                        SaveDebugResultImage(results[i], i, colCoords[i], rowCoords[i]);
-                    }
+                    //if (colCoords != null && rowCoords != null && i < colCoords.Length)
+                    //{
+                    //    SaveDebugResultImage(results[i], i, colCoords[i], rowCoords[i]);
+                    //}
                 }
                 finally { seg?.Dispose(); map?.Dispose(); }
             }
