@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>SemanticSegmentationDemo</AssemblyName>
+    <RootNamespace>SemanticSegmentationDemo</RootNamespace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <ApplicationIcon />
+    <StartupObject>SemanticSegmentationDemo.Program</StartupObject>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Cognex.VisionPro">
+      <HintPath>C:\Program Files\Cognex\VisionPro\ReferencedAssemblies\Cognex.VisionPro.dll</HintPath>
+    </Reference>
+    <Reference Include="Cognex.VisionPro.Core">
+      <HintPath>C:\Program Files\Cognex\VisionPro\ReferencedAssemblies\Cognex.VisionPro.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="halcondotnet">
+      <HintPath>C:\Program Files\MVTec\HALCON-24.11-Progress-Steady\bin\dotnet35\halcondotnet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DnnSemanticNet\DnnSemanticNet.csproj" />
+    <ProjectReference Include="..\DnnInterfaceNet\DnnInterfaceNet.csproj" />
+    <Content Include="Program.cs" />
+    <Content Include="MainForm.cs" />
+    <Content Include="obj\SemanticSegmentationDemo.csproj.nuget.g.targets" />
+    <Content Include="obj\SemanticSegmentationDemo.csproj.nuget.g.props" />
+    <Content Include="obj\SemanticSegmentationDemo.csproj.nuget.dgspec.json" />
+    <Content Include="obj\project.nuget.cache" />
+    <Content Include="obj\project.assets.json" />
+    <Content Include="bin\Debug\DnnSemanticNet.pdb" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.csproj.AssemblyReference.cache" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.assets.cache" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.csproj.CoreCompileInputs.cache" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.AssemblyInfoInputs.cache" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.AssemblyInfo.cs" />
+    <Content Include="obj\Debug\Semantic.59CC004A.Up2Date" />
+    <Content Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
+    <Content Include="bin\Debug\DnnSemanticNet.dll" />
+    <Content Include="bin\Debug\DnnInterfaceNet.pdb" />
+    <Content Include="bin\Debug\DnnInterfaceNet.dll" />
+    <Content Include="bin\Debug\Cognex.VisionPro.xml" />
+    <Content Include="bin\Debug\Cognex.VisionPro.Interop.Core.dll" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.exe" />
+    <Content Include="bin\Debug\Cognex.VisionPro.dll" />
+    <Content Include="bin\Debug\Cognex.VisionPro.Core.xml" />
+    <Content Include="bin\Debug\Cognex.VisionPro.Core.dll" />
+    <Content Include="bin\Debug\HalconOperater.dll" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.sourcelink.json" />
+    <Content Include="bin\Debug\SemanticSegmentationDemo.pdb" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.pdb" />
+    <Content Include="bin\Debug\SemanticSegmentationDemo.exe.config" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.GeneratedMSBuildEditorConfig.editorconfig" />
+    <Content Include="bin\Debug\SemanticSegmentationDemo.exe" />
+    <Content Include="obj\Debug\SemanticSegmentationDemo.exe.withSupportedRuntime.config" />
+    <Content Include="bin\Debug\HalconOperater.pdb" />
+  </ItemGroup>
+</Project>

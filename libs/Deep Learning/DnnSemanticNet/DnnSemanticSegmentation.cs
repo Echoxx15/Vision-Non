@@ -33,6 +33,11 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
     private DnnRuntime _runtime = DnnRuntime.GC;
     private bool _loadOnStartup;
 
+    /// <summary>
+    /// 调试模式：保存中间结果图像的路径，为空则不保存
+    /// </summary>
+    public string DebugSavePath { get; set; }
+
     #endregion
 
     #region 属性
@@ -194,7 +199,7 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
             }
 
             HalconOperate.Operate.ImageConvertVisionPro2HObject(imageObj, out var hoImage);
-            if (!(imageObj is HObject image))
+            if (!(hoImage is HObject image))
             {
                 result.Success = false;
                 result.ErrorMessage = "输入图像必须是 HalconDotNet.HObject 类型";
@@ -373,14 +378,17 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
                 // 裁剪所有子图像
                 croppedImages = CropImagesFromSource(image, colCoords, rowCoords, cropWidth, cropHeight);
                 
+                // 调试模式：保存裁剪的小图（路径为空时使用默认路径）
+                SaveDebugCroppedImages(croppedImages, colCoords, rowCoords);
+                
                 // 为每张图像创建样本字典（关键修复！）
                 GenDlSampleBatchFromImages(croppedImages, out dlSampleBatch);
                 
                 // 预处理所有样本
                 PreprocessDlSampleBatch(dlSampleBatch, _preprocessParam);
                 
-                // 批量推理
-                if (!InferBatchCore(dlSampleBatch, cropWidth, cropHeight, out inferredImages, maskRegions))
+                // 批量推理（传入坐标信息用于调试保存）
+                if (!InferBatchCore(dlSampleBatch, cropWidth, cropHeight, out inferredImages, maskRegions, colCoords, rowCoords))
                 { 
                     result.Success = false; 
                     result.ErrorMessage = "批量推理失败"; 
@@ -569,7 +577,7 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
         }
     }
 
-    private bool InferBatchCore(HTuple batch, int tw, int th, out HObject[] results, List<HObject> masks = null)
+    private bool InferBatchCore(HTuple batch, int tw, int th, out HObject[] results, List<HObject> masks = null, int[] colCoords = null, int[] rowCoords = null)
     {
         results = null; HTuple dlResult = null;
         try
@@ -592,6 +600,12 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
                     }
                     if (masks != null) foreach (var m in masks) if (m != null) HOperatorSet.OverpaintRegion(map, m, 0, "fill");
                     HOperatorSet.ZoomImageSize(map, out results[i], tw, th, "constant");
+                    
+                    // 调试模式：保存每个小图的推理结果（路径为空时使用默认路径）
+                    if (colCoords != null && rowCoords != null && i < colCoords.Length)
+                    {
+                        SaveDebugResultImage(results[i], i, colCoords[i], rowCoords[i]);
+                    }
                 }
                 finally { seg?.Dispose(); map?.Dispose(); }
             }
@@ -642,6 +656,70 @@ public class DnnSemanticSegmentation : IDnnModel, IRenameableDnnModel, IConfigur
             batch.Dispose();
         }
         catch { }
+    }
+
+    // 调试用：当前批次的调试文件夹
+    private string _currentDebugDir;
+
+    /// <summary>
+    /// 保存调试用的裁剪图像
+    /// </summary>
+    private void SaveDebugCroppedImages(HObject croppedImages, int[] colCoords, int[] rowCoords)
+    {
+        try
+        {
+            // 获取保存路径（如果为空则使用默认路径）
+            var basePath = string.IsNullOrEmpty(DebugSavePath) 
+                ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DebugOutput")
+                : DebugSavePath;
+            
+            // 创建新的调试目录（每次批量推理一个目录）
+            _currentDebugDir = Path.Combine(basePath, $"debug_{DateTime.Now:yyyyMMdd_HHmmss}");
+            if (!Directory.Exists(_currentDebugDir))
+                Directory.CreateDirectory(_currentDebugDir);
+
+            HOperatorSet.CountObj(croppedImages, out var count);
+            for (int i = 1; i <= count.I; i++)
+            {
+                HOperatorSet.SelectObj(croppedImages, out var img, i);
+                var fileName = Path.Combine(_currentDebugDir, $"crop_{i - 1:D3}_x{colCoords[i - 1]}_y{rowCoords[i - 1]}.png");
+                HOperatorSet.WriteImage(img, "png", 0, fileName.Replace("\\", "/"));
+                img?.Dispose();
+            }
+            Console.WriteLine($"[{_name}] 已保存 {count.I} 张裁剪图像到: {_currentDebugDir}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{_name}] 保存裁剪图像失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 保存调试用的推理结果图像
+    /// </summary>
+    private void SaveDebugResultImage(HObject resultImage, int index, int col, int row)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_currentDebugDir) || !Directory.Exists(_currentDebugDir))
+            {
+                // 获取保存路径（如果为空则使用默认路径）
+                var basePath = string.IsNullOrEmpty(DebugSavePath)
+                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DebugOutput")
+                    : DebugSavePath;
+                
+                _currentDebugDir = Path.Combine(basePath, $"debug_{DateTime.Now:yyyyMMdd_HHmmss}");
+                if (!Directory.Exists(_currentDebugDir))
+                    Directory.CreateDirectory(_currentDebugDir);
+            }
+
+            var fileName = Path.Combine(_currentDebugDir, $"result_{index:D3}_x{col}_y{row}.png");
+            HOperatorSet.WriteImage(resultImage, "png", 0, fileName.Replace("\\", "/"));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{_name}] 保存结果图像失败: {ex.Message}");
+        }
     }
 
     #endregion
