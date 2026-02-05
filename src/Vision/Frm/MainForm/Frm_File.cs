@@ -19,7 +19,7 @@ public partial class Frm_File : Form, ILocalizable
         FormClosed += (_, _) => LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
     
-    private void OnLanguageChanged(object sender, LanguageChangedEventArgs e)
+    private void OnLanguageChanged(object sender, string languageCode)
     {
         if (IsDisposed) return;
         if (InvokeRequired)
@@ -51,38 +51,38 @@ public partial class Frm_File : Form, ILocalizable
         var lang = LanguageService.Instance;
         
         // 窗体标题
-        Text = lang.Get(LangKeys.File_Title);
+        Text = lang.Get("Title");
         
         // 分组框
-        groupBox3.Text = lang.Get(LangKeys.File_SavePath);
-        groupBox1.Text = lang.Get(LangKeys.File_StorageSettings);
-        groupBox2.Text = lang.Get(LangKeys.File_DiskAlarmSettings);
+        groupBox3.Text = lang.Get("groupBox3");
+        groupBox1.Text = lang.Get("groupBox1");
+        groupBox2.Text = lang.Get("groupBox2");
         
         // 存储设置
-        chk_SaveRawImage.Text = lang.Get(LangKeys.File_SaveRawImage);
-        chk_SaveDealImage.Text = lang.Get(LangKeys.File_SaveResultImage);
-        chk_Delete.Text = lang.Get(LangKeys.File_DeleteImages);
-        chk_SaveOKNG.Text = lang.Get(LangKeys.File_SeparateOKNG);
-        label12.Text = lang.Get(LangKeys.File_RawImageRetention);
-        label5.Text = lang.Get(LangKeys.File_ResultImageRetention);
-        label3.Text = lang.Get(LangKeys.File_RawImageType);
-        label23.Text = lang.Get(LangKeys.File_ResultImageType);
-        label2.Text = $"{lang.Get(LangKeys.Common_Unit)}/({lang.Get(LangKeys.Common_Day)})";
-        label4.Text = $"{lang.Get(LangKeys.Common_Unit)}/({lang.Get(LangKeys.Common_Day)})";
+        chk_SaveRawImage.Text = lang.Get("chk_SaveRawImage");
+        chk_SaveDealImage.Text = lang.Get("chk_SaveDealImage");
+        chk_Delete.Text = lang.Get("chk_Delete");
+        chk_SaveOKNG.Text = lang.Get("chk_SaveOKNG");
+        label12.Text = lang.Get("label12");
+        label5.Text = lang.Get("label5");
+        label3.Text = lang.Get("label3");
+        label23.Text = lang.Get("label23");
+        label2.Text = lang.Get("label2");
+        label4.Text = lang.Get("label4");
         
         // 磁盘报警设置
-        label6.Text = lang.Get(LangKeys.File_DiskMonitorEnabled);
-        rtn_true.Text = lang.Get(LangKeys.Common_Yes);
-        rtn_false.Text = lang.Get(LangKeys.Common_No);
-        label8.Text = lang.Get(LangKeys.File_AlarmThreshold);
-        label7.Text = $"{lang.Get(LangKeys.Common_Unit)}/(M)";
-        label10.Text = lang.Get(LangKeys.File_CheckTime1);
-        label11.Text = lang.Get(LangKeys.File_CheckTime2);
-        label9.Text = lang.Get(LangKeys.File_ThresholdNote);
+        label6.Text = lang.Get("label6");
+        rtn_true.Text = lang.Get("rtn_true");
+        rtn_false.Text = lang.Get("rtn_false");
+        label8.Text = lang.Get("label8");
+        label7.Text = lang.Get("label7");
+        label10.Text = lang.Get("label10");
+        label11.Text = lang.Get("label11");
+        label9.Text = lang.Get("label9");
         
         // 按钮
-        btn_Select.Text = lang.Get(LangKeys.Common_Select);
-        btn_SaveConfig.Text = lang.Get(LangKeys.Common_Save);
+        btn_Select.Text = lang.Get("btn_Select");
+        btn_SaveConfig.Text = lang.Get("btn_SaveConfig");
     }
 
     private void LoadSettingsToUI()
@@ -109,7 +109,7 @@ public partial class Frm_File : Form, ILocalizable
     private void Btn_Select_Click(object sender, EventArgs e)
     {
         using var dlg = new FolderBrowserDialog();
-        dlg.Description = LanguageService.Instance.Get(LangKeys.Common_Select);
+        dlg.Description = LanguageService.Instance.Get("btn_Select");
         dlg.SelectedPath = string.IsNullOrWhiteSpace(txt_Path.Text) ? FileSettingsManager.Current.SavePath : txt_Path.Text;
         if (dlg.ShowDialog(this) == DialogResult.OK)
         {
@@ -136,6 +136,6 @@ public partial class Frm_File : Form, ILocalizable
         s.PollTime2 = dtp_PollTime2.Value.TimeOfDay;
 
         FileSettingsManager.Update(s);
-        MessageBox.Show(lang.Get(LangKeys.Msg_SaveSuccess), lang.Get(LangKeys.Common_Info), MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(lang.Get("Common.SaveSuccess"), lang.Get("Common.Info"), MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }

@@ -40,7 +40,7 @@ public partial class Frm_StationConfig : Form, ILocalizable
   this.FormClosed += (_, _) => LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
  }
  
- private void OnLanguageChanged(object sender, LanguageChangedEventArgs e)
+ private void OnLanguageChanged(object sender, string languageCode)
  {
   if (IsDisposed) return;
   if (InvokeRequired)
@@ -57,16 +57,16 @@ public partial class Frm_StationConfig : Form, ILocalizable
   var lang = LanguageService.Instance;
   
   // 窗体标题
-  this.Text = lang.Get(LangKeys.Station_Config);
+  this.Text = lang.Get("Title");
   
   // 右键菜单项
-  tsb_Add.Text = lang.Get(LangKeys.Common_Add);
-  tsm_Remove.Text = lang.Get(LangKeys.Common_Delete);
-  tsm_ReName.Text = lang.Get(LangKeys.Common_Rename);
-  tsm_LoadImageRun.Text = lang.Get(LangKeys.Station_RunDetection_LoadImage);
-  tsm_TriggerCameraRun.Text = lang.Get(LangKeys.Station_RunDetection_TriggerCamera);
-  tsm_SimulateFlyCapture.Text = lang.Get(LangKeys.Station_SimulateFlyCapture);
-  tsm_OpenForm.Text = lang.Get(LangKeys.Station_OpenConfig);
+  tsb_Add.Text = lang.Get("tsb_Add");
+  tsm_Remove.Text = lang.Get("tsm_Remove");
+  tsm_ReName.Text = lang.Get("tsm_ReName");
+  tsm_LoadImageRun.Text = lang.Get("tsm_LoadImageRun");
+  tsm_TriggerCameraRun.Text = lang.Get("tsm_TriggerCameraRun");
+  tsm_SimulateFlyCapture.Text = lang.Get("tsm_SimulateFlyCapture");
+  tsm_OpenForm.Text = lang.Get("tsm_OpenForm");
  }
 
  private void Tree_Station_DrawNode(object sender, DrawTreeNodeEventArgs e)

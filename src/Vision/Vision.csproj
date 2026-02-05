@@ -126,8 +126,7 @@
       <HintPath>..\packages\HslCommunication.12.5.1\lib\net451\HslCommunication.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Logger, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Logger">
       <HintPath>..\..\libs\Logger\bin\Debug\Logger.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -225,7 +224,6 @@
     </Compile>
     <Compile Include="Localization\ILanguageProvider.cs" />
     <Compile Include="Localization\JsonLanguageProvider.cs" />
-    <Compile Include="Localization\LangKeys.cs" />
     <Compile Include="Localization\LanguageExtensions.cs" />
     <Compile Include="Localization\LanguageInfo.cs" />
     <Compile Include="Localization\LanguageService.cs" />

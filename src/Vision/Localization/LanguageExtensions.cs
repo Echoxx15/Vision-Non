@@ -128,7 +128,7 @@ public class LanguageMenuItem : ToolStripMenuItem
 {
     public LanguageMenuItem() : base()
     {
-        Text = LanguageService.Instance.Get(LangKeys.Main_Language, "语言");
+        Text = LanguageService.Instance.Get("LanguageMenu", "语言");
         InitializeLanguageItems();
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
     }
@@ -159,7 +159,7 @@ public class LanguageMenuItem : ToolStripMenuItem
 
     private void OnLanguageChanged(object sender, string languageCode)
     {
-        Text = LanguageService.Instance.Get(LangKeys.Main_Language, "语言");
+        Text = LanguageService.Instance.Get("LanguageMenu", "语言");
 
         foreach (ToolStripMenuItem item in DropDownItems)
         {

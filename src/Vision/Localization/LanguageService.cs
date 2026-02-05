@@ -90,11 +90,10 @@ public sealed class LanguageService
     }
 
     /// <summary>
-    /// 切换语言
+    /// 切换语言（保存配置，重启软件后生效）
     /// </summary>
     /// <param name="languageCode">语言代码</param>
-    /// <param name="applyToOpenForms">是否应用到已打开的窗体</param>
-    public void SetLanguage(string languageCode, bool applyToOpenForms = true)
+    public void SetLanguage(string languageCode)
     {
         if (string.IsNullOrWhiteSpace(languageCode)) return;
         if (!SupportedLanguages.Any(l => l.Code == languageCode))
@@ -105,27 +104,13 @@ public sealed class LanguageService
 
         try
         {
-            _currentLanguageCode = languageCode;
-            LoadTranslations(languageCode);
-            ApplyThreadCulture();
-
-            // 保存设置
+            // 只保存设置，不立即加载和应用
             File.WriteAllText(_configPath, languageCode);
-
-            LogHelper.Info($"[LanguageService] 切换语言: {languageCode}");
-
-            // 触发事件
-            LanguageChanged?.Invoke(this, languageCode);
-
-            // 更新已打开的窗体
-            if (applyToOpenForms)
-            {
-                ApplyToAllOpenForms();
-            }
+            LogHelper.Info($"[LanguageService] 语言设置已保存: {languageCode}，重启软件后生效");
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, $"[LanguageService] 切换语言失败: {languageCode}");
+            LogHelper.Error(ex, $"[LanguageService] 保存语言设置失败: {languageCode}");
         }
     }
 

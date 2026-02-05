@@ -1,4 +1,4 @@
-{
+﻿{
   "Common.OK": "确定",
   "Common.Cancel": "取消",
   "Common.Save": "保存",
@@ -158,3 +158,4 @@
   "Msg.UnsavedChanges": "有未保存的更改，是否保存？",
   "Msg.ConfirmLogout": "确认注销并退出登录?"
 }
+

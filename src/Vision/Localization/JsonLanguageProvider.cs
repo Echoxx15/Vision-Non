@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Vision.Localization;
 
 /// <summary>
 /// 基于 JSON 文件的语言提供者
-/// 语言文件存放在 Languages 目录下，文件名格式: {languageCode}.json
+/// 读取 ui-translations.json 文件，格式：窗体名 -> 控件名 -> {zh-CN: 中文, en-US: 英文}
 /// </summary>
 public class JsonLanguageProvider : ILanguageProvider
 {
     private readonly string _languagesFolder;
+    private const string TranslationFileName = "ui-translations.json";
 
-    public JsonLanguageProvider() : this(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages"))
+    public JsonLanguageProvider() : this(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Language"))
     {
     }
 
@@ -29,7 +31,7 @@ public class JsonLanguageProvider : ILanguageProvider
 
     public Dictionary<string, string> Load(string languageCode)
     {
-        var filePath = GetFilePath(languageCode);
+        var filePath = Path.Combine(_languagesFolder, TranslationFileName);
         if (!File.Exists(filePath))
         {
             return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -37,46 +39,89 @@ public class JsonLanguageProvider : ILanguageProvider
 
         try
         {
-            var json = File.ReadAllText(filePath);
-            var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-            // 使用忽略大小写的字典
+            var json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+            var root = JObject.Parse(json);
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (dict != null)
+
+            // 遍历所有窗体/分组
+            foreach (var formProp in root.Properties())
             {
-                foreach (var kvp in dict)
+                if (formProp.Name.StartsWith("_")) continue; // 跳过元数据
+
+                var formName = formProp.Name;
+                if (formProp.Value is JObject formObj)
                 {
-                    result[kvp.Key] = kvp.Value;
+                    // 遍历窗体下的所有控件
+                    foreach (var controlProp in formObj.Properties())
+                    {
+                        if (controlProp.Name.StartsWith("_")) continue; // 跳过元数据
+
+                        var controlName = controlProp.Name;
+                        if (controlProp.Value is JObject translations)
+                        {
+                            // 获取当前语言的翻译
+                            var translation = translations[languageCode]?.ToString();
+                            if (!string.IsNullOrEmpty(translation))
+                            {
+                                // 直接使用控件名作为键（如 btn_User）
+                                // 如果有重复，后面的会覆盖前面的
+                                result[controlName] = translation;
+                            }
+                        }
+                    }
                 }
             }
+
             return result;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"加载语言文件失败: {ex.Message}");
             return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
     }
 
     public void Save(string languageCode, Dictionary<string, string> translations)
     {
-        var filePath = GetFilePath(languageCode);
-        var json = JsonConvert.SerializeObject(translations, Formatting.Indented);
-        File.WriteAllText(filePath, json);
+        // ui-translations.json 格式不支持单独保存某个语言
+        // 如需要保存，需要读取整个文件，修改对应语言，再写回
+        throw new NotSupportedException("ui-translations.json格式不支持单独保存语言");
     }
 
     public IEnumerable<string> GetAvailableLanguages()
     {
-        if (!Directory.Exists(_languagesFolder))
+        var filePath = Path.Combine(_languagesFolder, TranslationFileName);
+        if (!File.Exists(filePath))
         {
-            return Enumerable.Empty<string>();
+            return new[] { "zh-CN" }; // 默认返回中文
         }
 
-        return Directory.GetFiles(_languagesFolder, "*.json")
-            .Select(f => Path.GetFileNameWithoutExtension(f))
-            .Where(name => !string.IsNullOrWhiteSpace(name));
-    }
-
-    private string GetFilePath(string languageCode)
-    {
-        return Path.Combine(_languagesFolder, $"{languageCode}.json");
+        try
+        {
+            var json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+            var root = JObject.Parse(json);
+            
+            // 从第一个非元数据项中获取支持的语言列表
+            foreach (var formProp in root.Properties())
+            {
+                if (formProp.Name.StartsWith("_")) continue;
+                
+                if (formProp.Value is JObject formObj)
+                {
+                    foreach (var controlProp in formObj.Properties())
+                    {
+                        if (controlProp.Name.StartsWith("_")) continue;
+                        
+                        if (controlProp.Value is JObject translations)
+                        {
+                            return translations.Properties().Select(p => p.Name).ToList();
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+        
+        return new[] { "zh-CN", "en-US" }; // 默认返回中英文
     }
 }
