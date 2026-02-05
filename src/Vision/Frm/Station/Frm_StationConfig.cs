@@ -34,19 +34,6 @@ public partial class Frm_StationConfig : Form, ILocalizable
   tsm_SimulateFlyCapture.Click += Tsm_SimulateFlyCapture_Click;
   safePropertyGrid1.PropertyValueChanged += safePropertyGrid1_PropertyValueChanged;
   contextMenuStrip2.Opening += ContextMenuStrip2_Opening;
-  
-  // 订阅语言变更事件
-  LanguageService.Instance.LanguageChanged += OnLanguageChanged;
-  this.FormClosed += (_, _) => LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
- }
- 
- private void OnLanguageChanged(object sender, string languageCode)
- {
-  if (IsDisposed) return;
-  if (InvokeRequired)
-   BeginInvoke(new Action(ApplyLanguage));
-  else
-   ApplyLanguage();
  }
  
  /// <summary>
@@ -54,19 +41,17 @@ public partial class Frm_StationConfig : Form, ILocalizable
  /// </summary>
  public void ApplyLanguage()
  {
-  var lang = LanguageService.Instance;
-  
   // 窗体标题
-  this.Text = lang.Get("Title");
+  this.Text = this.T("Title");
   
   // 右键菜单项
-  tsb_Add.Text = lang.Get("tsb_Add");
-  tsm_Remove.Text = lang.Get("tsm_Remove");
-  tsm_ReName.Text = lang.Get("tsm_ReName");
-  tsm_LoadImageRun.Text = lang.Get("tsm_LoadImageRun");
-  tsm_TriggerCameraRun.Text = lang.Get("tsm_TriggerCameraRun");
-  tsm_SimulateFlyCapture.Text = lang.Get("tsm_SimulateFlyCapture");
-  tsm_OpenForm.Text = lang.Get("tsm_OpenForm");
+  tsb_Add.Text = this.T("tsb_Add");
+  tsm_Remove.Text = this.T("tsm_Remove");
+  tsm_ReName.Text = this.T("tsm_ReName");
+  tsm_LoadImageRun.Text = this.T("tsm_LoadImageRun");
+  tsm_TriggerCameraRun.Text = this.T("tsm_TriggerCameraRun");
+  tsm_SimulateFlyCapture.Text = this.T("tsm_SimulateFlyCapture");
+  tsm_OpenForm.Text = this.T("tsm_OpenForm");
  }
 
  private void Tree_Station_DrawNode(object sender, DrawTreeNodeEventArgs e)

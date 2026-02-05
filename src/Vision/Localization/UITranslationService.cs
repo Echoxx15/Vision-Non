@@ -39,6 +39,11 @@ public sealed class UITranslationService
     /// 当前语言代码
     /// </summary>
     public string CurrentLanguage => _currentLanguage;
+    
+    /// <summary>
+    /// 当前语言代码（别名，兼容旧API）
+    /// </summary>
+    public string CurrentLanguageCode => _currentLanguage;
 
     /// <summary>
     /// 支持的语言列表

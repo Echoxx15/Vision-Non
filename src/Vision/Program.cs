@@ -65,10 +65,7 @@ static class Program
       // Initialize localization before any UI is created
       LocalizationManager.Initialize();
       
-      // Initialize language service (JSON-based multi-language support)
-      LanguageService.Instance.Initialize();
-      
-      // Initialize UI translation service (form-based multi-language support)
+      // Initialize UI translation service (unified multi-language support)
       UITranslationService.Instance.Initialize();
 
       // Register additional dll probing paths: Debug\Libraly and Debug\Runtime (and subfolders)

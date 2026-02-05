@@ -497,7 +497,6 @@ public partial class Frm_Main : Form, ILocalizable
     /// </summary>
     private void btn_Chinese_Click(object sender, EventArgs e)
     {
-        LanguageService.Instance.SetLanguage("zh-CN");
         UITranslationService.Instance.SetLanguage("zh-CN");
         MessageBox.Show("语言设置已保存，重启软件后生效", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
@@ -508,7 +507,6 @@ public partial class Frm_Main : Form, ILocalizable
     /// </summary>
     private void btn_English_Click(object sender, EventArgs e)
     {
-        LanguageService.Instance.SetLanguage("en-US");
         UITranslationService.Instance.SetLanguage("en-US");
         MessageBox.Show("语言设置已保存，重启软件后生效", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
@@ -622,23 +620,21 @@ public partial class Frm_Main : Form, ILocalizable
     {
         try
         {
-            var lang = LanguageService.Instance;
-            
             // 1. 当前方案名称（从SolutionInfo列表获取，确保显示最新修改后的名称）
             var sol = SolutionManager.Instance.Current;
             var solutionName = GetCurrentSolutionDisplayName(sol);
-            txt_JobName.Text = $"{lang.Get("txt_JobName")}{solutionName}";
+            txt_JobName.Text = $"{this.T("txt_JobName")}{solutionName}";
 
             // 2. 运行时间（天时分格式）
             var span = DateTime.Now - _startTime;
-            var dayText = lang.Get("txt_RunTime_Day");
-            txt_RunTime.Text = $"{lang.Get("txt_RunTime")}{(int)span.TotalDays}{dayText}{span.Hours:D2}:{span.Minutes:D2}";
+            var dayText = this.T("txt_RunTime_Day");
+            txt_RunTime.Text = $"{this.T("txt_RunTime")}{(int)span.TotalDays}{dayText}{span.Hours:D2}:{span.Minutes:D2}";
 
             // 3. 内存占用（进程工作集，单位MB）
             using (var p = Process.GetCurrentProcess())
             {
                 var memMb = p.WorkingSet64 / (1024.0 * 1024.0);
-                txt_Memory.Text = $"{lang.Get("txt_Memory")}{memMb:F1}MB";
+                txt_Memory.Text = $"{this.T("txt_Memory")}{memMb:F1}MB";
             }
 
             // 4. CPU占用率
@@ -648,7 +644,7 @@ public partial class Frm_Main : Form, ILocalizable
             {
                 try
                 {
-                    cpuText = $"{lang.Get("txt_CPU")}{_cpuCounter.NextValue():F1}%";
+                    cpuText = $"{this.T("txt_CPU")}{_cpuCounter.NextValue():F1}%";
                 }
                 catch
                 {
@@ -738,12 +734,11 @@ public partial class Frm_Main : Form, ILocalizable
     {
         try
         {
-            var lang = LanguageService.Instance;
             // 获取系统在线状态
             var isOnline = SystemStateManager.Instance.IsOnline;
             if (tsl_SystemState != null)
             {
-                tsl_SystemState.Text = isOnline ? lang.Get("tsl_SystemState_Online") : lang.Get("tsl_SystemState_Offline");
+                tsl_SystemState.Text = isOnline ? this.T("tsl_SystemState_Online") : this.T("tsl_SystemState_Offline");
                 tsl_SystemState.ForeColor = isOnline ? Color.Green : Color.Red;
             }
         }
@@ -778,8 +773,6 @@ public partial class Frm_Main : Form, ILocalizable
                 return;
             }
             
-            var lang = LanguageService.Instance;
-
             // 1. 更新工具栏启用状态
             // 在线时禁用工具栏，防止误操作修改配置
             toolMain.Enabled = !isOnline;
@@ -790,7 +783,7 @@ public partial class Frm_Main : Form, ILocalizable
             // 3. 更新菜单项文本（显示相反状态，点击后切换）
             if (tsm_SystemState != null)
             {
-                tsm_SystemState.Text = isOnline ? lang.Get("tsm_SystemState_Offline") : lang.Get("tsm_SystemState_Online");
+                tsm_SystemState.Text = isOnline ? this.T("tsm_SystemState_Offline") : this.T("tsm_SystemState_Online");
             }
 
             LogHelper.Info($"[主界面] 响应系统状态变化: {(isOnline ? "在线" : "离线")}");
@@ -901,11 +894,11 @@ public partial class Frm_Main : Form, ILocalizable
         try
         {
             // 3. 添加语言切换菜单到主菜单
-            var languageMenu = new LanguageMenuItem();
+            var languageMenu = new UILanguageMenuItem();
             menuMain.Items.Add(languageMenu);
             
             // 注册语言变更后刷新界面
-            LanguageService.Instance.LanguageChanged += (_, _) =>
+            UITranslationService.Instance.LanguageChanged += (_, _) =>
             {
                 if (InvokeRequired)
                     BeginInvoke(new Action(RefreshUIOnLanguageChanged));
@@ -940,13 +933,11 @@ public partial class Frm_Main : Form, ILocalizable
     /// </summary>
     private void UpdateStatusBarLabels()
     {
-        var lang = LanguageService.Instance;
-        
         // 用户状态
         var currentUser = UserManager.Instance.CurrentUser;
         barStaticItem1.Text = currentUser != null 
-            ? $"{lang.Get("barStaticItem1_User")}{currentUser.Username}" 
-            : lang.Get("barStaticItem1_NoUser");
+            ? $"{this.T("barStaticItem1_User")}{currentUser.Username}" 
+            : this.T("barStaticItem1_NoUser");
     }
 
     #region 显示窗口布局
@@ -1387,33 +1378,31 @@ public partial class Frm_Main : Form, ILocalizable
     {
         try
         {
-            var lang = LanguageService.Instance;
-            
             // 菜单项
-            btn_User.Text = lang.Get("btn_User");
-            btn_Login.Text = lang.Get("btn_Login");
-            btn_Register.Text = lang.Get("btn_Register");
-            btn_Permission.Text = lang.Get("btn_Permission");
-            btn_Logout.Text = lang.Get("btn_Logout");
-            btn_System.Text = lang.Get("btn_System");
-            btn_SystemParam.Text = lang.Get("btn_SystemParam");
-            btn_File.Text = lang.Get("btn_File");
+            btn_User.Text = this.T("btn_User");
+            btn_Login.Text = this.T("btn_Login");
+            btn_Register.Text = this.T("btn_Register");
+            btn_Permission.Text = this.T("btn_Permission");
+            btn_Logout.Text = this.T("btn_Logout");
+            btn_System.Text = this.T("btn_System");
+            btn_SystemParam.Text = this.T("btn_SystemParam");
+            btn_File.Text = this.T("btn_File");
             
             // 工具栏按钮
-            btn_SolutionList.Text = lang.Get("btn_SolutionList");
-            btn_SaveSolution.Text = lang.Get("btn_SaveSolution");
-            btn_CreateVar.Text = lang.Get("btn_CreateVar");
-            btn_Station.Text = lang.Get("btn_Station");
-            btn_HardwareCamera.Text = lang.Get("btn_HardwareCamera");
-            btn_HardwareComm.Text = lang.Get("btn_HardwareComm");
-            btn_LightConfig.Text = lang.Get("btn_LightConfig");
-            btn_DnnModel.Text = lang.Get("btn_DnnModel");
-            btn_UI.Text = lang.Get("btn_UI");
-            btn_TestStrobe.Text = lang.Get("btn_TestStrobe");
+            btn_SolutionList.Text = this.T("btn_SolutionList");
+            btn_SaveSolution.Text = this.T("btn_SaveSolution");
+            btn_CreateVar.Text = this.T("btn_CreateVar");
+            btn_Station.Text = this.T("btn_Station");
+            btn_HardwareCamera.Text = this.T("btn_HardwareCamera");
+            btn_HardwareComm.Text = this.T("btn_HardwareComm");
+            btn_LightConfig.Text = this.T("btn_LightConfig");
+            btn_DnnModel.Text = this.T("btn_DnnModel");
+            btn_UI.Text = this.T("btn_UI");
+            btn_TestStrobe.Text = this.T("btn_TestStrobe");
             
             // 面板标题
-            grb_State.Text = lang.Get("grb_State");
-            grb_Log.Text = lang.Get("grb_Log");
+            grb_State.Text = this.T("grb_State");
+            grb_Log.Text = this.T("grb_Log");
             
             // 更新状态栏
             UpdateSystemStateDisplay();
