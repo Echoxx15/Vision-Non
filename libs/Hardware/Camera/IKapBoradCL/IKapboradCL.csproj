@@ -53,6 +53,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files\I-TEK OptoElectronics\IKapLibrary\Dll\C#\IKapCDotNet2.dll</HintPath>
     </Reference>
+    <Reference Include="Logger">
+      <HintPath>..\..\..\Logger\bin\Debug\Logger.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms" />

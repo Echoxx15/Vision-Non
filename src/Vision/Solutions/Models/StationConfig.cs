@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Vision.Common;
 using Vision.LightSource;
+using Vision.SaveImage;
 using HardwareCommNet;
 using DnnInterfaceNet;
 
@@ -47,11 +48,18 @@ public class StationConfig
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public StationCameraParams CameraParams { get; set; }
 
-    [Category("采集参数"), DisplayName("是否保存原图")]
+    [Category("存储设置"), DisplayName("是否保存原图")]
     public bool SaveRawImage { get; set; } = false;
 
-    [Category("采集参数"), DisplayName("是否保存处理图")]
+    [Category("存储设置"), DisplayName("原图类型"), Description("当前工位保存原图时使用的图片格式")]
+    public SaveImageType RawImageType { get; set; } = SaveImageType.jpg;
+
+    [Category("存储设置"), DisplayName("是否保存处理图")]
     public bool SaveDealImage { get; set; } = false;
+
+    [Category("存储设置"), DisplayName("处理图类型"), Description("当前工位保存处理图时使用的图片格式")]
+    public SaveImageType DealImageType { get; set; } = SaveImageType.jpg;
+
     [Category("采集参数"), DisplayName("采集触发延时时间-毫秒")]
     public int TrgDelay { get; set; } = 0;
 

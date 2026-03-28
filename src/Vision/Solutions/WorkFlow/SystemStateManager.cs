@@ -24,7 +24,7 @@ public sealed class SystemStateManager
     /// <summary>
     /// 延迟初始化的单例实例，线程安全
     /// </summary>
-    private static readonly Lazy<SystemStateManager> _instance = 
+    private static readonly Lazy<SystemStateManager> _instance =
         new Lazy<SystemStateManager>(() => new SystemStateManager());
 
     /// <summary>
@@ -63,7 +63,7 @@ public sealed class SystemStateManager
 
     #endregion
 
-  #region 状态管理
+    #region 状态管理
 
     /// <summary>
     /// 设置系统在线/离线状态
@@ -71,33 +71,33 @@ public sealed class SystemStateManager
     /// <param name="online">true=在线; false=离线</param>
     public void SetOnlineState(bool online)
     {
-   // 状态未变化，直接返回
+        // 状态未变化，直接返回
         if (IsOnline == online)
         {
             LogHelper.Warn($"[SystemStateManager] 状态未变化，当前为: {(online ? "在线" : "离线")}");
-   return;
+            return;
         }
 
-  // 更新状态
+        // 更新状态
         IsOnline = online;
-  LogHelper.Info($"[SystemStateManager] 状态切换为: {(online ? "在线" : "离线")}");
+        LogHelper.Info($"[SystemStateManager] 状态切换为: {(online ? "在线" : "离线")}");
 
         // 触发状态变化事件（通知UI和通讯模块）
         try
-     {
-  OnlineStateChanged?.Invoke(IsOnline);
+        {
+            OnlineStateChanged?.Invoke(IsOnline);
         }
         catch (Exception ex)
-     {
+        {
             LogHelper.Error(ex, "[SystemStateManager] 状态变化事件异常");
-   }
+        }
     }
 
     /// <summary>
     /// 切换系统在线/离线状态的便捷方法
     /// </summary>
     public void ToggleOnlineState()
- {
+    {
         SetOnlineState(!IsOnline);
     }
 
@@ -112,9 +112,10 @@ public sealed class SystemStateManager
     {
         if (!IsOnline)
         {
-       LogHelper.Warn("[SystemStateManager] 离线，拒绝外部触发信号");
+            LogHelper.Warn("[SystemStateManager] 离线，拒绝外部触发信号");
         }
-      return IsOnline;
+
+        return IsOnline;
     }
 
     #endregion

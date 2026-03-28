@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
 using Vision.SaveImage;
@@ -9,38 +9,39 @@ namespace Vision.Settings;
 public class FileSettings
 {
     /// <summary>
-    /// ��ͼ��Ŀ¼
+    /// 存图根目录
     /// </summary>
     public string SavePath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
     /// <summary>
-    /// �Ƿ񱣴�ԭͼ
+    /// 是否保存原图
     /// </summary>
     public bool SaveRawImage { get; set; } = false;
     /// <summary>
-    /// �Ƿ񱣴洦��ͼ
+    /// 是否保存处理图
     /// </summary>
     public bool SaveDealImage { get; set; } = false;
     /// <summary>
-    /// �Ƿ�����OK\NG
+    /// 是否区分OK\NG
     /// </summary>
     public bool SeparateOkNg { get; set; } = true;
 
-    public SaveImageType RawImageType { get; set; } = SaveImageType.png; // bmp|jpg|png|cdb
-    public SaveImageType DealImageType { get; set; } = SaveImageType.jpg;
+    // 兼容旧配置保留，实际已不再使用，图片格式改由工位单独配置
+    public SaveImageType RawImageType { get; set; } = SaveImageType.png; // legacy
+    public SaveImageType DealImageType { get; set; } = SaveImageType.jpg; // legacy
     /// <summary>
-    /// ԭͼ��������
+    /// 原图保存天数
     /// </summary>
     public int RawRetentionDays { get; set; } = 7;
     /// <summary>
-    /// ����ͼ��������
+    /// 处理图保存天数
     /// </summary>
     public int DealRetentionDays { get; set; } = 7;
     /// <summary>
-    /// �Ƿ��Զ�ɾ��ͼƬ
+    /// 是否自动删除图片
     /// </summary>
     public bool EnableAutoDelete { get; set; } = false;
 
-    // ���̼��
+    // 磁盘监控
     public bool EnableDiskCheck { get; set; } = false;
     public int DiskThresholdMB { get; set; } = 3000; // M
     public TimeSpan PollTime1 { get; set; } = new TimeSpan(8, 0, 0);

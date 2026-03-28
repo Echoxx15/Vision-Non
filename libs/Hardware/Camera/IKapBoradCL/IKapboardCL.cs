@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using Logger;
 using static GeneralConfigureCameraNS.GeneralConfigureCamera;
 using static GeneralGrabWithGrabberNS.GeneralGrabWithGrabber;
 
@@ -130,7 +131,7 @@ public class IKapBoradCL : ICamera, IDisposable
                 continue;
             var cam = new IKCamera();
 
-            cam.g_bufferCount = 5;
+            cam.g_bufferCount = 1;
 
             cam.g_saveFileName = "D:\\CImage.tif";
 
@@ -457,10 +458,8 @@ public class IKapBoradCL : ICamera, IDisposable
 
             ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_FRAME_COUNT, ref nFrameCount);
             IKUtils.CheckIKapBoard(ret);
-
             ret = IKapBoard.IKapGetInfo(cam.g_hBoard, (uint)IKapBoard.IKP_CURRENT_BUFFER_INDEX, ref nFrameIndex);
             IKUtils.CheckIKapBoard(ret);
-
 
             ret = IKapBoard.IKapGetBufferStatus(cam.g_hBoard, nFrameIndex, status);
             IKUtils.CheckIKapBoard(ret);
@@ -580,8 +579,7 @@ public class IKapBoradCL : ICamera, IDisposable
                                 // 使用 Action 回调
                                 OnFrameGrabed?.Invoke(image);
                             }
-                        }
-                    //}
+                    }
                     else
                     {
                         if (nImageFormat == IKapBoard.IKP_IMAGE_TYPE_VAL_RGB)

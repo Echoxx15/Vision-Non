@@ -680,19 +680,22 @@ internal sealed class TaskFlow : IDisposable
                 
                 string savedRawPath = null;
 
+                var rawImageType = station.RawImageType;
+                var dealImageType = station.DealImageType;
+
                 if (cfg.SaveRawImage && station.SaveRawImage)
                 {
                     var rawDir = System.IO.Path.Combine(cfg.SavePath, date, "Raw", StationName, Code, resultFolder);
                     System.IO.Directory.CreateDirectory(rawDir);
                     
-                    var rawFileName = $"{baseFileName}.{cfg.RawImageType}";
+                    var rawFileName = $"{baseFileName}.{rawImageType}";
                     savedRawPath = System.IO.Path.Combine(rawDir, rawFileName);
                     
                     var req = new SaveRequest
                     {
                         FullPath = savedRawPath,
                         VisionProImage = frame.Image,
-                        Type = cfg.RawImageType,
+                        Type = rawImageType,
                         ScalePercent = 100,
                         IsDealImage = false
                     };
@@ -710,7 +713,7 @@ internal sealed class TaskFlow : IDisposable
                                 resultFolder);
                             System.IO.Directory.CreateDirectory(dealDir);
 
-                            var dealFileName = $"{baseFileName}.{cfg.DealImageType}";
+                            var dealFileName = $"{baseFileName}.{dealImageType}";
                             var savedDealPath = System.IO.Path.Combine(dealDir, dealFileName);
 
                             var cogImage = new CogImage24PlanarColor(new Bitmap(img));
@@ -718,7 +721,7 @@ internal sealed class TaskFlow : IDisposable
                             {
                                 FullPath = savedDealPath,
                                 VisionProImage = cogImage,
-                                Type = cfg.DealImageType,
+                                Type = dealImageType,
                                 ScalePercent = 100,
                                 IsDealImage = true
                             };

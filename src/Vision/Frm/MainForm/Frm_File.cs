@@ -15,10 +15,6 @@ public partial class Frm_File : Form
 
     private void Frm_File_Load(object sender, EventArgs e)
     {
-        // 先绑定枚举数据源，再根据配置设置 SelectedItem
-        cmb_ImageType.DataSource = Enum.GetValues(typeof(SaveImageType));
-        cmb_ImageToolType.DataSource = Enum.GetValues(typeof(SaveImageType));
-
         LoadSettingsToUI();
 
         btn_Select.Click += Btn_Select_Click;
@@ -75,9 +71,6 @@ public partial class Frm_File : Form
         chk_SaveRawImage.Checked = s.SaveRawImage;
         chk_SaveDealImage.Checked = s.SaveDealImage;
         chk_SaveOKNG.Checked = s.SeparateOkNg;
-        // 根据配置设置下拉框选中项
-        cmb_ImageType.SelectedItem = s.RawImageType;
-        cmb_ImageToolType.SelectedItem = s.DealImageType;
         txt_days.Text = s.RawRetentionDays.ToString();
         txt_days_Deal.Text = s.DealRetentionDays.ToString();
         chk_Delete.Checked = s.EnableAutoDelete;
@@ -87,6 +80,12 @@ public partial class Frm_File : Form
         nud_Threshold.Value = Math.Max(nud_Threshold.Minimum, Math.Min(nud_Threshold.Maximum, s.DiskThresholdMB));
         dtp_PollTime1.Value = DateTime.Today.Add(s.PollTime1);
         dtp_PollTime2.Value = DateTime.Today.Add(s.PollTime2);
+
+        // 图片格式已移至工位配置，这里从文件参数界面隐藏
+        cmb_ImageType.Visible = false;
+        cmb_ImageToolType.Visible = false;
+        label12.Visible = false;
+        label5.Visible = false;
     }
 
     private void Btn_Select_Click(object sender, EventArgs e)
@@ -107,8 +106,6 @@ public partial class Frm_File : Form
         s.SaveRawImage = chk_SaveRawImage.Checked;
         s.SaveDealImage = chk_SaveDealImage.Checked;
         s.SeparateOkNg = chk_SaveOKNG.Checked;
-        s.RawImageType = (SaveImageType)(cmb_ImageType.SelectedItem ?? SaveImageType.png);
-        s.DealImageType = (SaveImageType)(cmb_ImageToolType.SelectedItem ?? SaveImageType.jpg);
         s.EnableAutoDelete = chk_Delete.Checked;
         s.EnableDiskCheck = rtn_true.Checked;
         s.DiskThresholdMB = (int)nud_Threshold.Value;
